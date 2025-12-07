@@ -34,3 +34,52 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## API Types & Code Generation
+
+This project uses [Orval](https://orval.dev/) to generate TypeScript types and API client functions from the backend's OpenAPI specification.
+
+### Generated Files Location
+
+- **Types/Schemas**: `src/api/generated/schemas/`
+- **API Client Functions**: `src/api/generated/endpoints/`
+- **Custom Fetch Wrapper**: `src/api/customFetch.ts`
+
+### Updating API Types
+
+When the backend API changes, follow these steps:
+
+1. **Download the OpenAPI spec** from the backend's Swagger UI (`/docs` or `/openapi.json`)
+2. **Replace** the `openapi.json` file at the root of this repo
+3. **Regenerate** the API types and client:
+   ```bash
+   npm run generate:api
+   ```
+4. **Type-check** to ensure frontend compatibility:
+   ```bash
+   npm run typecheck
+   ```
+
+If `typecheck` fails, it means the frontend code needs to be updated to match the new API contract.
+
+### Using Generated Types
+
+Import types from the generated schemas:
+
+```typescript
+import type { HelloDto } from "@/api/generated/schemas";
+
+// Use in your component
+const data: HelloDto = { message: "Hello World" };
+```
+
+### Using Generated API Client
+
+Import and use the generated client functions:
+
+```typescript
+import { publicHelloWorldPydanticPublicHelloWorldPydanticGet } from "@/api/generated/endpoints/default/default";
+
+// Call the API
+const response = await publicHelloWorldPydanticPublicHelloWorldPydanticGet({ message: "test" });
+```
