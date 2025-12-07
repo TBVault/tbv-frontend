@@ -4,11 +4,15 @@ import {
   publicHelloWorldPydanticPublicHelloWorldPydanticGet,
   protectedHelloWorldProtectedHelloworldGet,
 } from "@/api/generated/endpoints/default/default";
+import type {
+  publicHelloWorldPydanticPublicHelloWorldPydanticGetResponse,
+  protectedHelloWorldProtectedHelloworldGetResponse,
+} from "@/api/generated/endpoints/default/default";
 
 export default async function Home() {
   const session = await auth();
-  let protectedData = null;
-  let publicData = null;
+  let protectedData: protectedHelloWorldProtectedHelloworldGetResponse | null = null;
+  let publicData: publicHelloWorldPydanticPublicHelloWorldPydanticGetResponse | null = null;
   let publicError: string | null = null;
   let protectedError: string | null = null;
 
@@ -50,7 +54,7 @@ export default async function Home() {
           ) : (
             <div>
               <p><strong>Success!</strong></p>
-              <pre>{JSON.stringify(publicData, null, 2)}</pre>
+              <pre>{publicData?.status === 200 ? publicData.data.message : null}</pre>
             </div>
           )}
         </div>
@@ -68,7 +72,7 @@ export default async function Home() {
             ) : (
               <div>
                 <p><strong>Success!</strong></p>
-                <pre>{JSON.stringify(protectedData, null, 2)}</pre>
+                <pre>{protectedData?.data.message}</pre>
               </div>
             )}
           </div>
