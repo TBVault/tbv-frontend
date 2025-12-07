@@ -86,42 +86,6 @@ export const healthHealthGet = async ( options?: RequestInit): Promise<healthHea
 
 
 /**
- * Public hello world endpoint - Public access
- * @summary Public Hello World
- */
-export type publicHelloWorldPublicHelloworldGetResponse200 = {
-  data: unknown
-  status: 200
-}
-    
-export type publicHelloWorldPublicHelloworldGetResponseSuccess = (publicHelloWorldPublicHelloworldGetResponse200) & {
-  headers: Headers;
-};
-;
-
-export type publicHelloWorldPublicHelloworldGetResponse = (publicHelloWorldPublicHelloworldGetResponseSuccess)
-
-export const getPublicHelloWorldPublicHelloworldGetUrl = () => {
-
-
-  
-
-  return `/public/helloworld`
-}
-
-export const publicHelloWorldPublicHelloworldGet = async ( options?: RequestInit): Promise<publicHelloWorldPublicHelloworldGetResponse> => {
-  
-  return customFetch<publicHelloWorldPublicHelloworldGetResponse>(getPublicHelloWorldPublicHelloworldGetUrl(),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
-/**
  * @summary Public Hello World Pydantic
  */
 export type publicHelloWorldPydanticPublicHelloWorldPydanticGetResponse200 = {
@@ -176,7 +140,7 @@ Returns "helloworld" string.
  * @summary Protected Hello World
  */
 export type protectedHelloWorldProtectedHelloworldGetResponse200 = {
-  data: unknown
+  data: HelloDto
   status: 200
 }
     
