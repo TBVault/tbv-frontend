@@ -15,5 +15,7 @@ export * from './transcriptContent';
 export * from './transcriptSource';
 export * from './transcriptSummary';
 export * from './transcriptTranscriptGetParams';
+export * from './transcriptsPaginated';
+export * from './transcriptsTranscriptsGetParams';
 export * from './validationError';
 export * from './validationErrorLocItem';

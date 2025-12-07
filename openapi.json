@@ -122,6 +122,45 @@
         }
       }
     },
+    "/transcripts": {
+      "get": {
+        "summary": "Transcripts",
+        "operationId": "transcripts_transcripts_get",
+        "parameters": [
+          {
+            "name": "page_number",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Page Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptsPaginated"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/protected/helloworld": {
       "get": {
         "summary": "Protected Hello World",
@@ -262,6 +301,42 @@
           "whisper"
         ],
         "title": "TranscriptSource"
+      },
+      "TranscriptsPaginated": {
+        "properties": {
+          "page_number": {
+            "type": "integer",
+            "title": "Page Number"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "page_count": {
+            "type": "integer",
+            "title": "Page Count"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          },
+          "transcripts": {
+            "items": {
+              "$ref": "#/components/schemas/Transcript"
+            },
+            "type": "array",
+            "title": "Transcripts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "page_number",
+          "page_size",
+          "page_count",
+          "total_count",
+          "transcripts"
+        ],
+        "title": "TranscriptsPaginated"
       },
       "ValidationError": {
         "properties": {
