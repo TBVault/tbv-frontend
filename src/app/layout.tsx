@@ -1,5 +1,7 @@
 import "./globals.css";
+
 import SessionProvider from "@/components/SessionProvider";
+import Header from "@/components/Header";
 
 export default function RootLayout({
   children,
@@ -9,7 +11,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <Header />
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );

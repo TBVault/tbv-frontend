@@ -19,12 +19,16 @@ export const authConfig = {
     } as any,
   ],
   callbacks: {
-    async jwt({ token, account }) {
+    async jwt({ token, account, user }) {
       // Persist tokens when account is available (on sign-in)
       if (account) {
         token.accessToken = account.access_token;
         token.idToken = account.id_token;
         token.refreshToken = account.refresh_token;
+      }
+      // Include user picture if available
+      if (user?.image) {
+        token.picture = user.image;
       }
       // Return existing tokens if account is not available (subsequent requests)
       return token;
@@ -34,6 +38,10 @@ export const authConfig = {
         // Always include tokens from the JWT token
         session.accessToken = token.accessToken as string;
         session.idToken = token.idToken as string;
+        // Ensure user image is included from token
+        if (token.picture) {
+          session.user.image = token.picture as string;
+        }
       }
       return session;
     },
