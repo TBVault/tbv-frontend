@@ -83,6 +83,45 @@
         }
       }
     },
+    "/transcript": {
+      "get": {
+        "summary": "Transcript",
+        "operationId": "transcript_transcript_get",
+        "parameters": [
+          {
+            "name": "public_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Public Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transcript"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/protected/helloworld": {
       "get": {
         "summary": "Protected Hello World",
@@ -138,6 +177,72 @@
           "message"
         ],
         "title": "HelloDto"
+      },
+      "Transcript": {
+        "properties": {
+          "public_id": {
+            "type": "string",
+            "title": "Public Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "duration": {
+            "type": "integer",
+            "title": "Duration"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "content": {
+            "items": {
+              "$ref": "#/components/schemas/TranscriptChunk"
+            },
+            "type": "array",
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "public_id",
+          "title",
+          "duration",
+          "summary",
+          "content"
+        ],
+        "title": "Transcript"
+      },
+      "TranscriptChunk": {
+        "properties": {
+          "speaker": {
+            "type": "string",
+            "title": "Speaker"
+          },
+          "start": {
+            "type": "integer",
+            "title": "Start"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "speaker",
+          "start",
+          "text"
+        ],
+        "title": "TranscriptChunk"
       },
       "ValidationError": {
         "properties": {
