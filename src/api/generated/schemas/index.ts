@@ -11,6 +11,8 @@ export * from './helloDto';
 export * from './publicHelloWorldPydanticPublicHelloWorldPydanticGetParams';
 export * from './transcript';
 export * from './transcriptChunk';
+export * from './transcriptContent';
+export * from './transcriptSource';
 export * from './transcriptSummary';
 export * from './transcriptTranscriptGetParams';
 export * from './validationError';

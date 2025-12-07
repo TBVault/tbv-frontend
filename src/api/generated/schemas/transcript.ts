@@ -6,12 +6,14 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { TranscriptSummary } from './transcriptSummary';
-import type { TranscriptChunk } from './transcriptChunk';
+import type { TranscriptSource } from './transcriptSource';
+import type { TranscriptContent } from './transcriptContent';
 
 export interface Transcript {
   public_id: string;
   title: string;
   duration: number;
   summary: TranscriptSummary;
-  content: TranscriptChunk[];
+  source: TranscriptSource;
+  content: TranscriptContent;
 }

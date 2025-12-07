@@ -203,11 +203,21 @@
             ],
             "title": "Summary"
           },
+          "source": {
+            "$ref": "#/components/schemas/TranscriptSource"
+          },
           "content": {
-            "items": {
-              "$ref": "#/components/schemas/TranscriptChunk"
-            },
-            "type": "array",
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TranscriptChunk"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Content"
           }
         },
@@ -217,6 +227,7 @@
           "title",
           "duration",
           "summary",
+          "source",
           "content"
         ],
         "title": "Transcript"
@@ -243,6 +254,14 @@
           "text"
         ],
         "title": "TranscriptChunk"
+      },
+      "TranscriptSource": {
+        "type": "string",
+        "enum": [
+          "otterai",
+          "whisper"
+        ],
+        "title": "TranscriptSource"
       },
       "ValidationError": {
         "properties": {
