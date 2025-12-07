@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import AuthButton from "@/components/AuthButton";
+import JwtTokenDisplay from "@/components/JwtTokenDisplay";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 if (!BACKEND_URL) {
@@ -60,6 +61,9 @@ export default async function Home() {
     <main>
       <h1>The Bhakti Vault Frontend</h1>
       <AuthButton />
+      
+      {session?.idToken && <JwtTokenDisplay token={session.idToken} />}
+
       <div>
         <h2>Public Endpoint (/public/helloworld)</h2>
         <div>
