@@ -1,7 +1,10 @@
 import { auth } from "@/auth";
 import AuthButton from "@/components/AuthButton";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://tbv-backend-120229979618.us-west1.run.app";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+if (!BACKEND_URL) {
+  throw new Error("NEXT_PUBLIC_BACKEND_URL environment variable is not set");
+}
 
 async function getProtectedData(token: string) {
   try {
