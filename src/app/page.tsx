@@ -1,59 +1,39 @@
 import { auth } from "@/auth";
 import AuthButton from "@/components/AuthButton";
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-if (!BACKEND_URL) {
-  throw new Error("NEXT_PUBLIC_BACKEND_URL environment variable is not set");
-}
-
-async function getProtectedData(token: string) {
-  try {
-    const res = await fetch(`${BACKEND_URL}/protected/helloworld`, {
-      headers: {
-        Authorization: `${token.trim()}`,
-      },
-      cache: "no-store",
-    });
-    
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`HTTP error! status: ${res.status}, message: ${errorText}`);
-    }
-    
-    return await res.json();
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "Failed to fetch data from backend" };
-  }
-}
-
-async function getPublicData() {
-  try {
-    const res = await fetch(`${BACKEND_URL}/public/helloworld`, {
-      cache: "no-store",
-    });
-    
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`HTTP error! status: ${res.status}, message: ${errorText}`);
-    }
-    
-    return await res.json();
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "Failed to fetch data from backend" };
-  }
-}
+import {
+  publicHelloWorldPydanticPublicHelloWorldPydanticGet,
+  protectedHelloWorldProtectedHelloworldGet,
+} from "@/api/generated/endpoints/default/default";
 
 export default async function Home() {
   const session = await auth();
   let protectedData = null;
   let publicData = null;
+  let publicError: string | null = null;
+  let protectedError: string | null = null;
 
-  // Public endpoint - no authentication required
-  publicData = await getPublicData();
+  // Public endpoint using generated client
+  try {
+    const response = await publicHelloWorldPydanticPublicHelloWorldPydanticGet({
+      message: "Hello from frontend!",
+    });
+    publicData = response;
+  } catch (error) {
+    publicError = error instanceof Error ? error.message : "Failed to fetch data";
+  }
 
-  // Protected endpoint - requires authentication
+  // Protected endpoint using generated client
   if (session?.idToken) {
-    protectedData = await getProtectedData(session.idToken);
+    try {
+      const response = await protectedHelloWorldProtectedHelloworldGet({
+        headers: {
+          Authorization: session.idToken.trim(),
+        },
+      });
+      protectedData = response;
+    } catch (error) {
+      protectedError = error instanceof Error ? error.message : "Failed to fetch data";
+    }
   }
 
   return (
@@ -61,11 +41,11 @@ export default async function Home() {
       <h1>The Bhakti Vault Frontend</h1>
       <AuthButton />
       <div>
-        <h2>Public Endpoint (/public/helloworld)</h2>
+        <h2>Public Endpoint (/public/hello_world_pydantic)</h2>
         <div>
-          {publicData?.error ? (
+          {publicError ? (
             <div>
-              <p><strong>Error:</strong> {publicData.error}</p>
+              <p><strong>Error:</strong> {publicError}</p>
             </div>
           ) : (
             <div>
@@ -81,9 +61,9 @@ export default async function Home() {
           <p>Please sign in to access protected data</p>
         ) : (
           <div>
-            {protectedData?.error ? (
+            {protectedError ? (
               <div>
-                <p><strong>Error:</strong> {protectedData.error}</p>
+                <p><strong>Error:</strong> {protectedError}</p>
               </div>
             ) : (
               <div>
