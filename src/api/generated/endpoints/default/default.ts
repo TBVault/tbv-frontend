@@ -8,7 +8,9 @@
 import type {
   HTTPValidationError,
   HelloDto,
-  PublicHelloWorldPydanticPublicHelloWorldPydanticGetParams
+  PublicHelloWorldPydanticPublicHelloWorldPydanticGetParams,
+  Transcript,
+  TranscriptTranscriptGetParams
 } from '../../schemas';
 
 import { customFetch } from '../../../customFetch';
@@ -125,6 +127,55 @@ export const getPublicHelloWorldPydanticPublicHelloWorldPydanticGetUrl = (params
 export const publicHelloWorldPydanticPublicHelloWorldPydanticGet = async (params: PublicHelloWorldPydanticPublicHelloWorldPydanticGetParams, options?: RequestInit): Promise<publicHelloWorldPydanticPublicHelloWorldPydanticGetResponse> => {
   
   return customFetch<publicHelloWorldPydanticPublicHelloWorldPydanticGetResponse>(getPublicHelloWorldPydanticPublicHelloWorldPydanticGetUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+/**
+ * @summary Transcript
+ */
+export type transcriptTranscriptGetResponse200 = {
+  data: Transcript
+  status: 200
+}
+
+export type transcriptTranscriptGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+    
+export type transcriptTranscriptGetResponseSuccess = (transcriptTranscriptGetResponse200) & {
+  headers: Headers;
+};
+export type transcriptTranscriptGetResponseError = (transcriptTranscriptGetResponse422) & {
+  headers: Headers;
+};
+
+export type transcriptTranscriptGetResponse = (transcriptTranscriptGetResponseSuccess | transcriptTranscriptGetResponseError)
+
+export const getTranscriptTranscriptGetUrl = (params: TranscriptTranscriptGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/transcript?${stringifiedParams}` : `/transcript`
+}
+
+export const transcriptTranscriptGet = async (params: TranscriptTranscriptGetParams, options?: RequestInit): Promise<transcriptTranscriptGetResponse> => {
+  
+  return customFetch<transcriptTranscriptGetResponse>(getTranscriptTranscriptGetUrl(params),
   {      
     ...options,
     method: 'GET'
