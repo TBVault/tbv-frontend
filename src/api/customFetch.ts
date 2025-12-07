@@ -31,9 +31,14 @@ export const customFetch = async <T>(
     throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
   }
 
-  // Handle empty responses
+  // Handle empty responses and normalize to { data, status }
   const text = await response.text();
-  return text ? JSON.parse(text) : ({} as T);
+  const body = text ? JSON.parse(text) : null;
+
+  return {
+    data: body,
+    status: response.status,
+  } as T;
 };
 
 export default customFetch;
