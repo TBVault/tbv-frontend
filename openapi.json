@@ -44,25 +44,6 @@
         }
       }
     },
-    "/public/helloworld": {
-      "get": {
-        "summary": "Public Hello World",
-        "description": "Public hello world endpoint - Public access",
-        "operationId": "public_hello_world_public_helloworld_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/public/hello_world_pydantic": {
       "get": {
         "summary": "Public Hello World Pydantic",
@@ -113,7 +94,7 @@
             "content": {
               "application/json": {
                 "schema": {
-
+                  "$ref": "#/components/schemas/HelloDto"
                 }
               }
             }
