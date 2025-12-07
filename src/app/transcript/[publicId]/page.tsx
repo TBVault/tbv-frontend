@@ -34,6 +34,11 @@ export default async function TranscriptPage({ params }: PageProps) {
     error = err instanceof Error ? err.message : "Failed to fetch transcript";
   }
 
+  // If we successfully fetched the transcript but content is missing, error the page out
+  if (transcriptData?.status === 200 && !transcriptData.data.content) {
+    throw new Error("Transcript content is missing");
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-background-secondary via-background to-background-secondary">
       <div className="max-w-5xl mx-auto px-6 py-10">
@@ -82,7 +87,7 @@ export default async function TranscriptPage({ params }: PageProps) {
             </div>
 
             {/* Transcript Content */}
-            <TranscriptContent content={transcriptData.data.content} duration={transcriptData.data.duration} />
+            <TranscriptContent content={transcriptData!.data.content!} duration={transcriptData!.data.duration} />
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-20">
