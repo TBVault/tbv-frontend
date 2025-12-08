@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
 import type { NextAuthConfig } from "next-auth";
+import { loginAuthLoginPost } from "@/api/generated/endpoints/default/default";
+import type { User } from "@/api/generated/schemas";
 
 export const authConfig = {
   providers: [
@@ -19,12 +21,52 @@ export const authConfig = {
     } as any,
   ],
   callbacks: {
+    async signIn({ account }) {
+      // Verify user exists in backend before allowing sign-in
+      if (account && account.id_token) {
+        try {
+          const loginResponse = await loginAuthLoginPost({
+            headers: {
+              Authorization: `${account.id_token}`,
+            },
+          });
+
+          // Only allow sign-in if login endpoint returns user data
+          return !!(loginResponse.data && loginResponse.data.user);
+        } catch (error) {
+          // Reject sign-in if login endpoint fails
+          console.error("Login endpoint error:", error);
+          return false;
+        }
+      }
+      // Allow sign-in if no account (shouldn't happen, but fallback)
+      return true;
+    },
     async jwt({ token, account, user }) {
       // Persist tokens when account is available (on sign-in)
-      if (account) {
+      if (account && account.id_token) {
         token.accessToken = account.access_token;
         token.idToken = account.id_token;
         token.refreshToken = account.refresh_token;
+
+        // Call the login endpoint with the OIDC token to get user information
+        // This is safe to do here because signIn callback already verified the user exists
+        try {
+          const loginResponse = await loginAuthLoginPost({
+            headers: {
+              Authorization: `${account.id_token}`,
+            },
+          });
+
+          if (loginResponse.data && loginResponse.data.user) {
+            // Store user information from login response
+            token.user = loginResponse.data.user;
+          }
+        } catch (error) {
+          // This shouldn't happen since signIn already verified
+          // But log error just in case
+          console.error("Unexpected login endpoint error in JWT callback:", error);
+        }
       }
       // Include user picture if available
       if (user?.image) {
@@ -38,6 +80,22 @@ export const authConfig = {
         // Always include tokens from the JWT token
         session.accessToken = token.accessToken as string;
         session.idToken = token.idToken as string;
+        // Include user information from login response
+        // If user data is not available, invalidate the session
+        // This handles cases where the session was created before we added the login requirement
+        if (token.user) {
+          session.user = {
+            ...session.user,
+            id: String((token.user as User).id),
+            name: (token.user as User).name,
+            email: (token.user as User).email,
+            role: (token.user as User).role,
+          };
+        } else {
+          // User data not found - invalidate session by returning null
+          // This will require the user to sign in again
+          return null as any;
+        }
         // Ensure user image is included from token
         if (token.picture) {
           session.user.image = token.picture as string;
@@ -47,7 +105,7 @@ export const authConfig = {
     },
   },
   pages: {
-    signIn: "/auth/signin",
+    error: "/auth/error",
   },
 } satisfies NextAuthConfig;
 

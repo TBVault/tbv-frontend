@@ -8,11 +8,13 @@
 import type {
   HTTPValidationError,
   HelloDto,
+  LoginResponse,
   PublicHelloWorldPydanticPublicHelloWorldPydanticGetParams,
   Transcript,
   TranscriptTranscriptGetParams,
   TranscriptsPaginated,
-  TranscriptsTranscriptsGetParams
+  TranscriptsTranscriptsGetParams,
+  User
 } from '../../schemas';
 
 import { customFetch } from '../../../customFetch';
@@ -237,7 +239,7 @@ export const transcriptsTranscriptsGet = async (params: TranscriptsTranscriptsGe
 
 
 /**
- * Protected hello world endpoint - requires valid JWT token.
+ * Protected hello world endpoint - requires valid OIDC JWT token.
 Returns "helloworld" string.
  * @summary Protected Hello World
  */
@@ -264,6 +266,80 @@ export const getProtectedHelloWorldProtectedHelloworldGetUrl = () => {
 export const protectedHelloWorldProtectedHelloworldGet = async ( options?: RequestInit): Promise<protectedHelloWorldProtectedHelloworldGetResponse> => {
   
   return customFetch<protectedHelloWorldProtectedHelloworldGetResponse>(getProtectedHelloWorldProtectedHelloworldGetUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+/**
+ * Login endpoint - validates OIDC JWT token and returns user information.
+Send the Google OIDC token in the Authorization header as: Bearer <token>
+ * @summary Login
+ */
+export type loginAuthLoginPostResponse200 = {
+  data: LoginResponse
+  status: 200
+}
+    
+export type loginAuthLoginPostResponseSuccess = (loginAuthLoginPostResponse200) & {
+  headers: Headers;
+};
+;
+
+export type loginAuthLoginPostResponse = (loginAuthLoginPostResponseSuccess)
+
+export const getLoginAuthLoginPostUrl = () => {
+
+
+  
+
+  return `/auth/login`
+}
+
+export const loginAuthLoginPost = async ( options?: RequestInit): Promise<loginAuthLoginPostResponse> => {
+  
+  return customFetch<loginAuthLoginPostResponse>(getLoginAuthLoginPostUrl(),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+/**
+ * Get the current authenticated user's account information.
+Requires a valid OIDC JWT token.
+ * @summary Get Current Account
+ */
+export type getCurrentAccountAuthMeGetResponse200 = {
+  data: User
+  status: 200
+}
+    
+export type getCurrentAccountAuthMeGetResponseSuccess = (getCurrentAccountAuthMeGetResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getCurrentAccountAuthMeGetResponse = (getCurrentAccountAuthMeGetResponseSuccess)
+
+export const getGetCurrentAccountAuthMeGetUrl = () => {
+
+
+  
+
+  return `/auth/me`
+}
+
+export const getCurrentAccountAuthMeGet = async ( options?: RequestInit): Promise<getCurrentAccountAuthMeGetResponse> => {
+  
+  return customFetch<getCurrentAccountAuthMeGetResponse>(getGetCurrentAccountAuthMeGetUrl(),
   {      
     ...options,
     method: 'GET'
