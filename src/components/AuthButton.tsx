@@ -6,6 +6,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 export default function AuthButton() {
   const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -39,14 +40,17 @@ export default function AuthButton() {
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-full"
+          className="flex items-center focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-full"
           aria-label="User menu"
         >
-          {session.user.image ? (
+          {session.user.image && !imageError ? (
             <img
               src={session.user.image}
               alt={userName || "User"}
               className="w-10 h-10 rounded-full border-2 border-border hover:border-primary-500 transition-colors"
+              onError={() => setImageError(true)}
+              crossOrigin="anonymous"
+              referrerPolicy="no-referrer"
             />
           ) : (
             <div className="w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center font-semibold text-base border-2 border-border hover:border-primary-500 transition-colors">
@@ -81,7 +85,7 @@ export default function AuthButton() {
   return (
     <button
       onClick={() => signIn("oidc")}
-      className="px-4 py-2 text-sm font-medium text-foreground bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+      className="px-4 py-2 text-sm font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg transition-colors"
     >
       Sign in
     </button>

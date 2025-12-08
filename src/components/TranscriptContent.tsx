@@ -24,22 +24,50 @@ interface TranscriptContentProps {
 export default function TranscriptContent({ content, duration }: TranscriptContentProps) {
   const [showTimestamps, setShowTimestamps] = useState(false);
 
-  // Helper to check if speaker changed from previous chunk
-  const shouldShowSpeaker = (index: number): boolean => {
-    const currentSpeaker = content[index].speaker?.trim();
-    if (!currentSpeaker) return false; // Don't show if no speaker
+  // Helper to group consecutive chunks by speaker when timestamps are off
+  const groupChunksBySpeaker = (chunks: TranscriptChunk[]): TranscriptChunk[][] => {
+    if (showTimestamps) {
+      // When timestamps are on, return each chunk as its own group
+      return chunks.map(chunk => [chunk]);
+    }
     
-    if (index === 0) return true;
-    const previousSpeaker = content[index - 1].speaker?.trim();
-    return currentSpeaker !== previousSpeaker;
+    // When timestamps are off, group consecutive chunks with same speaker
+    const groups: TranscriptChunk[][] = [];
+    let currentGroup: TranscriptChunk[] = [];
+    let currentSpeaker: string | null = null;
+    
+    chunks.forEach((chunk) => {
+      const speaker = chunk.speaker?.trim() || null;
+      
+      if (speaker !== currentSpeaker) {
+        // Speaker changed, start a new group
+        if (currentGroup.length > 0) {
+          groups.push(currentGroup);
+        }
+        currentGroup = [chunk];
+        currentSpeaker = speaker;
+      } else {
+        // Same speaker, add to current group
+        currentGroup.push(chunk);
+      }
+    });
+    
+    // Add the last group
+    if (currentGroup.length > 0) {
+      groups.push(currentGroup);
+    }
+    
+    return groups;
   };
+
+  const groupedChunks = groupChunksBySpeaker(content);
 
   return (
     <div className="bg-background rounded-2xl shadow-sm border border-border overflow-hidden">
       <div className="bg-gradient-to-r from-background-secondary to-background-tertiary px-6 py-4 border-b border-border flex justify-between items-center">
         {duration && (
           <div className="flex items-center gap-2">
-            <div className="text-xs font-medium text-foreground-tertiary uppercase tracking-wide">Duration</div>
+            <div className="text-sm font-medium text-foreground-tertiary uppercase tracking-wide">Duration</div>
             <div className="text-sm font-semibold text-foreground">{formatTime(duration)}</div>
           </div>
         )}
@@ -63,36 +91,47 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
       </div>
       
       <div className="space-y-3">
-        {content.map((chunk, index) => {
-          const hasSpeaker = chunk.speaker?.trim();
-          const showSpeakerWhenHidden = !showTimestamps && hasSpeaker && shouldShowSpeaker(index);
-          const showSpeakerWhenVisible = showTimestamps && hasSpeaker;
+        {groupedChunks.map((group, groupIndex) => {
+          const firstChunk = group[0];
+          const hasSpeaker = firstChunk.speaker?.trim();
+          const showSpeaker = !showTimestamps && hasSpeaker;
           
           return (
             <div 
-              key={index} 
+              key={groupIndex} 
               className="group px-6 py-3 hover:bg-gradient-to-r hover:from-primary-50/50 hover:to-transparent transition-all duration-200"
             >
               {/* Speaker and Timestamp */}
               <div className="mb-3" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'nowrap', minHeight: '32px' }}>
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px', flexWrap: 'nowrap' }}>
-                  {showSpeakerWhenVisible && (
-                    <div className="font-semibold text-foreground" style={{ whiteSpace: 'nowrap' }}>{chunk.speaker}</div>
+                  {showTimestamps && hasSpeaker && (
+                    <div className="font-semibold text-foreground" style={{ whiteSpace: 'nowrap' }}>{firstChunk.speaker}</div>
                   )}
-                  {showSpeakerWhenHidden && (
-                    <div className="font-semibold text-foreground" style={{ whiteSpace: 'nowrap' }}>{chunk.speaker}</div>
+                  {showSpeaker && (
+                    <div className="font-semibold text-foreground" style={{ whiteSpace: 'nowrap' }}>{firstChunk.speaker}</div>
                   )}
                 </div>
                 {showTimestamps && (
                   <div className="text-sm font-mono font-medium text-foreground-tertiary px-3 py-1 bg-background-tertiary group-hover:bg-primary-100 rounded-lg transition-colors" style={{ whiteSpace: 'nowrap' }}>
-                    {formatTime(chunk.start)}
+                    {formatTime(firstChunk.start)}
                   </div>
                 )}
               </div>
               
-              {/* Text Content */}
-              <div className="text-foreground-secondary leading-relaxed">
-                {chunk.text}
+              {/* Text Content - all chunks in group */}
+              <div className="text-foreground-secondary leading-relaxed space-y-2">
+                {group.map((chunk, chunkIndex) => (
+                  <div key={chunkIndex}>
+                    {showTimestamps && chunkIndex > 0 && (
+                      <div className="mb-2 flex justify-end">
+                        <div className="text-sm font-mono font-medium text-foreground-tertiary px-3 py-1 bg-background-tertiary group-hover:bg-primary-100 rounded-lg transition-colors" style={{ whiteSpace: 'nowrap' }}>
+                          {formatTime(chunk.start)}
+                        </div>
+                      </div>
+                    )}
+                    <div>{chunk.text}</div>
+                  </div>
+                ))}
               </div>
             </div>
           );
