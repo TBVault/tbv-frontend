@@ -164,7 +164,7 @@
     "/protected/helloworld": {
       "get": {
         "summary": "Protected Hello World",
-        "description": "Protected hello world endpoint - requires valid JWT token.\nReturns \"helloworld\" string.",
+        "description": "Protected hello world endpoint - requires valid OIDC JWT token.\nReturns \"helloworld\" string.",
         "operationId": "protected_hello_world_protected_helloworld_get",
         "responses": {
           "200": {
@@ -173,6 +173,60 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HelloDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login",
+        "description": "Login endpoint - validates OIDC JWT token and returns user information.\nSend the Google OIDC token in the Authorization header as: Bearer \u003Ctoken\u003E",
+        "operationId": "login_auth_login_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Get Current Account",
+        "description": "Get the current authenticated user's account information.\nRequires a valid OIDC JWT token.",
+        "operationId": "get_current_account_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
                 }
               }
             }
@@ -216,6 +270,28 @@
           "message"
         ],
         "title": "HelloDto"
+      },
+      "LoginResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "user"
+        ],
+        "title": "LoginResponse"
       },
       "Transcript": {
         "properties": {
@@ -337,6 +413,34 @@
           "transcripts"
         ],
         "title": "TranscriptsPaginated"
+      },
+      "User": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role"
+        ],
+        "title": "User"
       },
       "ValidationError": {
         "properties": {

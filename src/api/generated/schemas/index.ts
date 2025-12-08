@@ -8,6 +8,7 @@
 
 export * from './hTTPValidationError';
 export * from './helloDto';
+export * from './loginResponse';
 export * from './publicHelloWorldPydanticPublicHelloWorldPydanticGetParams';
 export * from './transcript';
 export * from './transcriptChunk';
@@ -17,5 +18,6 @@ export * from './transcriptSummary';
 export * from './transcriptTranscriptGetParams';
 export * from './transcriptsPaginated';
 export * from './transcriptsTranscriptsGetParams';
+export * from './user';
 export * from './validationError';
 export * from './validationErrorLocItem';
