@@ -55,7 +55,7 @@ export default async function TranscriptPage({ params }: PageProps) {
                 Transcript
               </div>
               
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 leading-tight">
+              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 break-words" style={{ lineHeight: '1.2' }}>
                 {transcriptData.data.title}
               </h1>
 
@@ -72,9 +72,11 @@ export default async function TranscriptPage({ params }: PageProps) {
                     Discussion
                   </div>
                 </div>
-                <div className="px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm font-medium">
-                  OtterAI
-                </div>
+                {transcriptData.data.source && (
+                  <div className="px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm font-medium">
+                    {transcriptData.data.source === 'otterai' ? 'OtterAI' : transcriptData.data.source.charAt(0).toUpperCase() + transcriptData.data.source.slice(1)}
+                  </div>
+                )}
               </div>
 
               {/* Summary */}
