@@ -32,19 +32,23 @@ export const authConfig = {
           });
 
           // Only allow sign-in if login was successful and user data exists
-          return !!(
+          const isAuthorized = !!(
             loginResponse.data?.success === true &&
             loginResponse.data.user &&
             loginResponse.data.user !== null
           );
+
+          // If authorized, allow sign-in and redirect to home
+          // If not authorized, reject and user will see error page
+          return isAuthorized;
         } catch (error) {
           // Reject sign-in if login endpoint fails
           console.error("Login endpoint error:", error);
           return false;
         }
       }
-      // Allow sign-in if no account (shouldn't happen, but fallback)
-      return true;
+      // Reject sign-in if no account
+      return false;
     },
     async jwt({ token, account, user }) {
       // Persist tokens when account is available (on sign-in)
