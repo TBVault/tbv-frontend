@@ -15,11 +15,18 @@ export const authConfig = {
       authorization: {
         params: {
           scope: "openid profile email",
+          access_type: "offline", // Request refresh token from Google
+          prompt: "consent", // Force consent to ensure we get refresh token
+          // Note: Google only provides refresh token on first consent or when prompt=consent
         },
       },
       checks: ["pkce", "state"],
     } as any,
   ],
+  session: {
+    maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
+    updateAge: 24 * 60 * 60, // Update session every 24 hours
+  },
   callbacks: {
     async signIn({ account }) {
       // Verify user exists in backend before allowing sign-in
@@ -50,12 +57,13 @@ export const authConfig = {
       // Reject sign-in if no account
       return false;
     },
-    async jwt({ token, account, user }) {
+    async jwt({ token, account, user, trigger }) {
       // Persist tokens when account is available (on sign-in)
       if (account && account.id_token) {
         token.accessToken = account.access_token;
         token.idToken = account.id_token;
         token.refreshToken = account.refresh_token;
+        token.expiresAt = account.expires_at ? account.expires_at * 1000 : Date.now() + 3600 * 1000; // Default to 1 hour if not provided
 
         // Call the login endpoint with the OIDC token to get user information
         // This is safe to do here because signIn callback already verified the user exists
@@ -80,14 +88,104 @@ export const authConfig = {
           console.error("Unexpected login endpoint error in JWT callback:", error);
         }
       }
+
+      // Check if token needs to be refreshed (expires in less than 5 minutes OR already expired)
+      const expiresAt = token.expiresAt as number | undefined;
+      const refreshThreshold = 5 * 60 * 1000; // 5 minutes - refresh tokens when they expire in less than 5 minutes
+      const shouldRefresh = token.refreshToken && expiresAt && Date.now() >= expiresAt - refreshThreshold;
+
+      if (shouldRefresh && token.refreshToken) {
+        try {
+          // Refresh the token using the refresh token
+          const issuer = process.env.OIDC_ISSUER || "https://accounts.google.com";
+          
+          // Get token endpoint from discovery document
+          const discoveryUrl = issuer.endsWith('/') 
+            ? `${issuer}.well-known/openid-configuration`
+            : `${issuer}/.well-known/openid-configuration`;
+          
+          const discoveryResponse = await fetch(discoveryUrl);
+          if (!discoveryResponse.ok) {
+            throw new Error("Failed to fetch discovery document");
+          }
+          
+          const discovery = await discoveryResponse.json();
+          const tokenUrl = discovery.token_endpoint;
+
+          if (!tokenUrl) {
+            throw new Error("Token endpoint not found in discovery document");
+          }
+
+          const response = await fetch(tokenUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+              client_id: process.env.OIDC_CLIENT_ID!,
+              client_secret: process.env.OIDC_CLIENT_SECRET!,
+              grant_type: "refresh_token",
+              refresh_token: token.refreshToken as string,
+            }),
+          });
+
+          if (response.ok) {
+            const refreshedTokens = await response.json();
+            
+            // Update tokens
+            token.accessToken = refreshedTokens.access_token;
+            token.idToken = refreshedTokens.id_token;
+            token.expiresAt = Date.now() + (refreshedTokens.expires_in || 3600) * 1000;
+            
+            // Update refresh token if a new one is provided
+            if (refreshedTokens.refresh_token) {
+              token.refreshToken = refreshedTokens.refresh_token;
+            }
+
+            // Re-authenticate with backend using new token
+            try {
+              const loginResponse = await loginAuthLoginPost({
+                headers: {
+                  Authorization: `${refreshedTokens.id_token}`,
+                },
+              });
+
+              if (
+                loginResponse.data?.success === true &&
+                loginResponse.data.user &&
+                loginResponse.data.user !== null
+              ) {
+                token.user = loginResponse.data.user;
+              }
+            } catch (error) {
+              console.error("Error re-authenticating with backend after token refresh:", error);
+            }
+          } else {
+            const errorText = await response.text();
+            console.error("Failed to refresh token:", errorText);
+            // Token refresh failed - user will need to sign in again
+            return { ...token, error: "RefreshAccessTokenError" };
+          }
+        } catch (error) {
+          console.error("Error refreshing token:", error);
+          return { ...token, error: "RefreshAccessTokenError" };
+        }
+      }
+
       // Include user picture if available
       if (user?.image) {
         token.picture = user.image;
       }
+      
       // Return existing tokens if account is not available (subsequent requests)
       return token;
     },
     async session({ session, token }) {
+      // If token refresh failed, invalidate the session
+      if (token.error === "RefreshAccessTokenError") {
+        return null as any;
+      }
+
       if (session.user) {
         // Always include tokens from the JWT token
         session.accessToken = token.accessToken as string;
