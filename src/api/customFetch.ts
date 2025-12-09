@@ -28,7 +28,9 @@ export const customFetch = async <T>(
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    const error = new Error(`HTTP error! status: ${response.status}, message: ${errorText}`) as Error & { status?: number };
+    error.status = response.status;
+    throw error;
   }
 
   // Handle empty responses and normalize to { data, status }

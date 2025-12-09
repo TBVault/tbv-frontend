@@ -11,9 +11,9 @@ import type {
   LoginResponse,
   PublicHelloWorldPydanticPublicHelloWorldPydanticGetParams,
   Transcript,
-  TranscriptTranscriptGetParams,
+  TranscriptProtectedTranscriptGetParams,
   TranscriptsPaginated,
-  TranscriptsTranscriptsGetParams,
+  TranscriptsProtectedTranscriptsGetParams,
   User
 } from '../../schemas';
 
@@ -141,104 +141,6 @@ export const publicHelloWorldPydanticPublicHelloWorldPydanticGet = async (params
 
 
 /**
- * @summary Transcript
- */
-export type transcriptTranscriptGetResponse200 = {
-  data: Transcript
-  status: 200
-}
-
-export type transcriptTranscriptGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type transcriptTranscriptGetResponseSuccess = (transcriptTranscriptGetResponse200) & {
-  headers: Headers;
-};
-export type transcriptTranscriptGetResponseError = (transcriptTranscriptGetResponse422) & {
-  headers: Headers;
-};
-
-export type transcriptTranscriptGetResponse = (transcriptTranscriptGetResponseSuccess | transcriptTranscriptGetResponseError)
-
-export const getTranscriptTranscriptGetUrl = (params: TranscriptTranscriptGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/transcript?${stringifiedParams}` : `/transcript`
-}
-
-export const transcriptTranscriptGet = async (params: TranscriptTranscriptGetParams, options?: RequestInit): Promise<transcriptTranscriptGetResponse> => {
-  
-  return customFetch<transcriptTranscriptGetResponse>(getTranscriptTranscriptGetUrl(params),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
-/**
- * @summary Transcripts
- */
-export type transcriptsTranscriptsGetResponse200 = {
-  data: TranscriptsPaginated
-  status: 200
-}
-
-export type transcriptsTranscriptsGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type transcriptsTranscriptsGetResponseSuccess = (transcriptsTranscriptsGetResponse200) & {
-  headers: Headers;
-};
-export type transcriptsTranscriptsGetResponseError = (transcriptsTranscriptsGetResponse422) & {
-  headers: Headers;
-};
-
-export type transcriptsTranscriptsGetResponse = (transcriptsTranscriptsGetResponseSuccess | transcriptsTranscriptsGetResponseError)
-
-export const getTranscriptsTranscriptsGetUrl = (params: TranscriptsTranscriptsGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/transcripts?${stringifiedParams}` : `/transcripts`
-}
-
-export const transcriptsTranscriptsGet = async (params: TranscriptsTranscriptsGetParams, options?: RequestInit): Promise<transcriptsTranscriptsGetResponse> => {
-  
-  return customFetch<transcriptsTranscriptsGetResponse>(getTranscriptsTranscriptsGetUrl(params),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
-/**
  * Protected hello world endpoint - requires valid OIDC JWT token.
 Returns "helloworld" string.
  * @summary Protected Hello World
@@ -276,8 +178,107 @@ export const protectedHelloWorldProtectedHelloworldGet = async ( options?: Reque
 
 
 /**
+ * @summary Transcript
+ */
+export type transcriptProtectedTranscriptGetResponse200 = {
+  data: Transcript
+  status: 200
+}
+
+export type transcriptProtectedTranscriptGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+    
+export type transcriptProtectedTranscriptGetResponseSuccess = (transcriptProtectedTranscriptGetResponse200) & {
+  headers: Headers;
+};
+export type transcriptProtectedTranscriptGetResponseError = (transcriptProtectedTranscriptGetResponse422) & {
+  headers: Headers;
+};
+
+export type transcriptProtectedTranscriptGetResponse = (transcriptProtectedTranscriptGetResponseSuccess | transcriptProtectedTranscriptGetResponseError)
+
+export const getTranscriptProtectedTranscriptGetUrl = (params: TranscriptProtectedTranscriptGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/protected/transcript?${stringifiedParams}` : `/protected/transcript`
+}
+
+export const transcriptProtectedTranscriptGet = async (params: TranscriptProtectedTranscriptGetParams, options?: RequestInit): Promise<transcriptProtectedTranscriptGetResponse> => {
+  
+  return customFetch<transcriptProtectedTranscriptGetResponse>(getTranscriptProtectedTranscriptGetUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+/**
+ * @summary Transcripts
+ */
+export type transcriptsProtectedTranscriptsGetResponse200 = {
+  data: TranscriptsPaginated
+  status: 200
+}
+
+export type transcriptsProtectedTranscriptsGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+    
+export type transcriptsProtectedTranscriptsGetResponseSuccess = (transcriptsProtectedTranscriptsGetResponse200) & {
+  headers: Headers;
+};
+export type transcriptsProtectedTranscriptsGetResponseError = (transcriptsProtectedTranscriptsGetResponse422) & {
+  headers: Headers;
+};
+
+export type transcriptsProtectedTranscriptsGetResponse = (transcriptsProtectedTranscriptsGetResponseSuccess | transcriptsProtectedTranscriptsGetResponseError)
+
+export const getTranscriptsProtectedTranscriptsGetUrl = (params: TranscriptsProtectedTranscriptsGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/protected/transcripts?${stringifiedParams}` : `/protected/transcripts`
+}
+
+export const transcriptsProtectedTranscriptsGet = async (params: TranscriptsProtectedTranscriptsGetParams, options?: RequestInit): Promise<transcriptsProtectedTranscriptsGetResponse> => {
+  
+  return customFetch<transcriptsProtectedTranscriptsGetResponse>(getTranscriptsProtectedTranscriptsGetUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+/**
  * Login endpoint - validates OIDC JWT token and returns user information.
 Send the Google OIDC token in the Authorization header as: Bearer <token>
+Returns a failed login response if the user doesn't exist in the database.
  * @summary Login
  */
 export type loginAuthLoginPostResponse200 = {

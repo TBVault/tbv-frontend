@@ -83,10 +83,45 @@
         }
       }
     },
-    "/transcript": {
+    "/protected/helloworld": {
+      "get": {
+        "summary": "Protected Hello World",
+        "description": "Protected hello world endpoint - requires valid OIDC JWT token.\nReturns \"helloworld\" string.",
+        "operationId": "protected_hello_world_protected_helloworld_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelloDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/protected/transcript": {
       "get": {
         "summary": "Transcript",
-        "operationId": "transcript_transcript_get",
+        "operationId": "transcript_protected_transcript_get",
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "public_id",
@@ -122,10 +157,18 @@
         }
       }
     },
-    "/transcripts": {
+    "/protected/transcripts": {
       "get": {
         "summary": "Transcripts",
-        "operationId": "transcripts_transcripts_get",
+        "operationId": "transcripts_protected_transcripts_get",
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "page_number",
@@ -161,37 +204,10 @@
         }
       }
     },
-    "/protected/helloworld": {
-      "get": {
-        "summary": "Protected Hello World",
-        "description": "Protected hello world endpoint - requires valid OIDC JWT token.\nReturns \"helloworld\" string.",
-        "operationId": "protected_hello_world_protected_helloworld_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HelloDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "OpenIdConnect": []
-          },
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
     "/auth/login": {
       "post": {
         "summary": "Login",
-        "description": "Login endpoint - validates OIDC JWT token and returns user information.\nSend the Google OIDC token in the Authorization header as: Bearer \u003Ctoken\u003E",
+        "description": "Login endpoint - validates OIDC JWT token and returns user information.\nSend the Google OIDC token in the Authorization header as: Bearer \u003Ctoken\u003E\nReturns a failed login response if the user doesn't exist in the database.",
         "operationId": "login_auth_login_post",
         "responses": {
           "200": {
@@ -282,14 +298,20 @@
             "title": "Message"
           },
           "user": {
-            "$ref": "#/components/schemas/User"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/User"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
         "required": [
           "success",
-          "message",
-          "user"
+          "message"
         ],
         "title": "LoginResponse"
       },

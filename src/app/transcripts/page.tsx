@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { transcriptsTranscriptsGet } from '@/api/generated/endpoints/default/default';
+import { transcriptsProtectedTranscriptsGet } from '@/api/generated/endpoints/default/default';
 import type { Transcript } from '@/api/generated/schemas';
 
 // Helper function to format seconds to HH:MM:SS
@@ -24,6 +25,7 @@ function formatSource(source: string): string {
 export default function TranscriptsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { data: session, status: sessionStatus } = useSession();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -44,11 +46,29 @@ export default function TranscriptsPage() {
 
   useEffect(() => {
     const fetchTranscripts = async () => {
+      // Wait for session to load
+      if (sessionStatus === 'loading') {
+        return;
+      }
+
+      // Redirect to auth error if no session
+      if (!session?.idToken) {
+        router.push('/auth/error');
+        return;
+      }
+
       setLoading(true);
       try {
-        const response = await transcriptsTranscriptsGet({
-          page_number: page,
-        });
+        const response = await transcriptsProtectedTranscriptsGet(
+          {
+            page_number: page,
+          },
+          {
+            headers: {
+              Authorization: session.idToken.trim(),
+            },
+          }
+        );
         
         if (response.status === 200) {
           setTranscripts(response.data.transcripts);
@@ -59,8 +79,13 @@ export default function TranscriptsPage() {
           setTranscripts([]);
           setTotalPages(1);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching transcripts:', error);
+        // Check if it's an authentication error (401 or 403)
+        if (error?.status === 401 || error?.status === 403 || error?.message?.includes('401') || error?.message?.includes('403')) {
+          router.push('/auth/error');
+          return;
+        }
         setTranscripts([]);
         setTotalPages(1);
       } finally {
@@ -69,7 +94,7 @@ export default function TranscriptsPage() {
     };
 
     fetchTranscripts();
-  }, [page]);
+  }, [page, session, sessionStatus, router]);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-background-secondary via-background to-background-secondary">
