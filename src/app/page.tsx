@@ -3,6 +3,7 @@ import Link from "next/link";
 import { transcriptsProtectedTranscriptsGet } from "@/api/generated/endpoints/default/default";
 import type { Transcript } from "@/api/generated/schemas";
 import Logo from "@/components/Logo";
+import formatTime from "@/utils/formatTime";
 
 export default async function Home() {
   const session = await auth();
@@ -161,8 +162,8 @@ export default async function Home() {
                   )}
                   
                   <div className="flex items-center gap-2 mt-auto pt-4 border-t border-border">
-                    <div className="px-2 py-1 bg-neutral-200 text-foreground rounded-full text-xs font-medium border border-neutral-300">
-                      {Math.floor(transcript.duration / 3600)}h {Math.floor((transcript.duration % 3600) / 60)}m
+                    <div className="px-2 py-1 bg-neutral-200 text-foreground rounded-full text-xs font-medium">
+                      {formatTime(transcript.duration)}
                     </div>
                     <div className="px-2 py-1 bg-secondary-100 text-secondary-700 rounded-full text-xs font-medium">
                       {transcript.source === 'otterai' ? 'OtterAI' : transcript.source.charAt(0).toUpperCase() + transcript.source.slice(1)}

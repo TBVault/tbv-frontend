@@ -6,14 +6,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { transcriptsProtectedTranscriptsGet } from '@/api/generated/endpoints/default/default';
 import type { Transcript } from '@/api/generated/schemas';
-
-// Helper function to format seconds to HH:MM:SS
-function formatTime(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
+import formatTime from '@/utils/formatTime';
 
 // Helper function to format source
 function formatSource(source: string): string {
@@ -213,7 +206,7 @@ function TranscriptsPageContent() {
                       <>
                         {/* Grid: Duration and Source on same row, aligned left */}
                         <div className="flex items-center gap-2">
-                          <div className="px-2 py-1 bg-neutral-200 text-foreground rounded-full text-xs font-medium border border-neutral-300">
+                          <div className="px-2 py-1 bg-neutral-200 text-foreground rounded-full text-xs font-medium">
                             {formatTime(transcript.duration)}
                           </div>
                           <div className="px-2 py-1 bg-secondary-100 text-secondary-700 rounded-full text-xs font-medium">
@@ -239,7 +232,7 @@ function TranscriptsPageContent() {
                     ) : (
                       <>
                         {/* Row: All items aligned right, each in their own row */}
-                        <div className="px-2 py-1 bg-neutral-200 text-foreground rounded-full text-xs font-medium border border-neutral-300">
+                        <div className="px-2 py-1 bg-neutral-200 text-foreground rounded-full text-xs font-medium">
                           {formatTime(transcript.duration)}
                         </div>
                         <div className="px-2 py-1 bg-secondary-100 text-secondary-700 rounded-full text-xs font-medium">
