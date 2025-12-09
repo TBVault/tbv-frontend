@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -22,7 +22,7 @@ function formatSource(source: string): string {
   return source.charAt(0).toUpperCase() + source.slice(1);
 }
 
-export default function TranscriptsPage() {
+function TranscriptsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
@@ -320,6 +320,26 @@ export default function TranscriptsPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function TranscriptsPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-gradient-to-br from-background-secondary via-background to-background-secondary">
+        <div className="max-w-5xl mx-auto px-6 py-10">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-foreground mb-2">Transcripts</h1>
+            <p className="text-foreground-secondary">Browse and explore all available transcripts</p>
+          </div>
+          <div className="flex items-center justify-center py-20">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-neutral-200 border-t-primary-600"></div>
+          </div>
+        </div>
+      </main>
+    }>
+      <TranscriptsPageContent />
+    </Suspense>
   );
 }
 
