@@ -31,8 +31,12 @@ export const authConfig = {
             },
           });
 
-          // Only allow sign-in if login endpoint returns user data
-          return !!(loginResponse.data && loginResponse.data.user);
+          // Only allow sign-in if login was successful and user data exists
+          return !!(
+            loginResponse.data?.success === true &&
+            loginResponse.data.user &&
+            loginResponse.data.user !== null
+          );
         } catch (error) {
           // Reject sign-in if login endpoint fails
           console.error("Login endpoint error:", error);
@@ -58,8 +62,12 @@ export const authConfig = {
             },
           });
 
-          if (loginResponse.data && loginResponse.data.user) {
-            // Store user information from login response
+          // Store user information if login was successful and user exists
+          if (
+            loginResponse.data?.success === true &&
+            loginResponse.data.user &&
+            loginResponse.data.user !== null
+          ) {
             token.user = loginResponse.data.user;
           }
         } catch (error) {

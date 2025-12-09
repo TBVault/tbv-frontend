@@ -5,10 +5,6 @@
  * FastAPI application with OpenID Connect authentication
  * OpenAPI spec version: 1.0.0
  */
-import type { LoginResponseUser } from './loginResponseUser';
+import type { User } from './user';
 
-export interface LoginResponse {
-  success: boolean;
-  message: string;
-  user?: LoginResponseUser;
-}
+export type LoginResponseUser = User | null;

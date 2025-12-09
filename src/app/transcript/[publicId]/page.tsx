@@ -1,15 +1,8 @@
 import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import TranscriptContent from "@/components/TranscriptContent";
-import { transcriptTranscriptGet } from "@/api/generated/endpoints/default/default";
-import type { transcriptTranscriptGetResponse } from "@/api/generated/endpoints/default/default";
-
-// Helper function to format seconds to HH:MM:SS
-function formatTime(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
+import { transcriptProtectedTranscriptGet } from "@/api/generated/endpoints/default/default";
+import type { transcriptProtectedTranscriptGetResponse } from "@/api/generated/endpoints/default/default";
 
 interface PageProps {
   params: {
@@ -21,16 +14,32 @@ export default async function TranscriptPage({ params }: PageProps) {
   const session = await auth();
   const { publicId } = await params;
 
-  let transcriptData: transcriptTranscriptGetResponse | null = null;
+  // Redirect to auth error if no session or no idToken
+  if (!session?.idToken) {
+    redirect('/auth/error');
+  }
+
+  let transcriptData: transcriptProtectedTranscriptGetResponse | null = null;
   let error: string | null = null;
 
-  // Fetch transcript data using generated client
+  // Fetch transcript data using generated client with authentication
   try {
-    const response = await transcriptTranscriptGet({
-      public_id: publicId,
-    });
+    const response = await transcriptProtectedTranscriptGet(
+      {
+        public_id: publicId,
+      },
+      {
+        headers: {
+          Authorization: session.idToken.trim(),
+        },
+      }
+    );
     transcriptData = response;
-  } catch (err) {
+  } catch (err: any) {
+    // Check if it's an authentication error (401 or 403)
+    if (err?.status === 401 || err?.status === 403 || err?.message?.includes('401') || err?.message?.includes('403')) {
+      redirect('/auth/error');
+    }
     error = err instanceof Error ? err.message : "Failed to fetch transcript";
   }
 
