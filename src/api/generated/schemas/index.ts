@@ -15,6 +15,7 @@ export * from './transcript';
 export * from './transcriptChunk';
 export * from './transcriptContent';
 export * from './transcriptProtectedTranscriptGetParams';
+export * from './transcriptRecordingUrl';
 export * from './transcriptSource';
 export * from './transcriptSummary';
 export * from './transcriptTranscriptGetParams';

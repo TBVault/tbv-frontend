@@ -356,6 +356,17 @@
               }
             ],
             "title": "Content"
+          },
+          "recording_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recording Url"
           }
         },
         "type": "object",
@@ -365,7 +376,8 @@
           "duration",
           "summary",
           "source",
-          "content"
+          "content",
+          "recording_url"
         ],
         "title": "Transcript"
       },

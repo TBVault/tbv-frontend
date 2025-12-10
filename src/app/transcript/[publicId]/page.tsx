@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import TranscriptContent from "@/components/TranscriptContent";
+import AudioPlayer from "@/components/AudioPlayer";
 import { transcriptProtectedTranscriptGet } from "@/api/generated/endpoints/default/default";
 import type { transcriptProtectedTranscriptGetResponse } from "@/api/generated/endpoints/default/default";
 
@@ -127,6 +128,13 @@ export default async function TranscriptPage({ params }: PageProps) {
                 </div>
               )}
             </div>
+
+            {/* Audio Player */}
+            {transcriptData.data.recording_url && (
+              <div className="mb-8">
+                <AudioPlayer recordingUrl={transcriptData.data.recording_url} />
+              </div>
+            )}
 
             {/* Transcript Content */}
             <TranscriptContent content={transcriptData!.data.content!} duration={transcriptData!.data.duration} />

@@ -8,6 +8,7 @@
 import type { TranscriptSummary } from './transcriptSummary';
 import type { TranscriptSource } from './transcriptSource';
 import type { TranscriptContent } from './transcriptContent';
+import type { TranscriptRecordingUrl } from './transcriptRecordingUrl';
 
 export interface Transcript {
   public_id: string;
@@ -16,4 +17,5 @@ export interface Transcript {
   summary: TranscriptSummary;
   source: TranscriptSource;
   content: TranscriptContent;
+  recording_url: TranscriptRecordingUrl;
 }
