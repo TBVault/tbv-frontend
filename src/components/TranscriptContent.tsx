@@ -176,7 +176,12 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
                   chunkRefs.current.set(firstChunk.start, el);
                 }
               }}
-              className={`group px-6 py-3 transition-all duration-200 ${
+              onDoubleClick={() => {
+                if ((window as any).__audioSeekTo) {
+                  (window as any).__audioSeekTo(firstChunk.start);
+                }
+              }}
+              className={`group px-6 py-3 transition-all duration-200 cursor-pointer ${
                 isActive 
                   ? 'bg-gradient-to-r from-primary-100 to-primary-50 border-l-4 border-primary-600' 
                   : 'hover:bg-gradient-to-r hover:from-primary-50/50 hover:to-transparent'
