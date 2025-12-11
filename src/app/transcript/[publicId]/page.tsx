@@ -129,13 +129,6 @@ export default async function TranscriptPage({ params }: PageProps) {
               )}
             </div>
 
-            {/* Audio Player */}
-            {transcriptData.data.recording_url && (
-              <div className="mb-8">
-                <AudioPlayer recordingUrl={transcriptData.data.recording_url} />
-              </div>
-            )}
-
             {/* Transcript Content */}
             <TranscriptContent content={transcriptData!.data.content!} duration={transcriptData!.data.duration} />
           </>
@@ -146,6 +139,11 @@ export default async function TranscriptPage({ params }: PageProps) {
           </div>
         )}
       </div>
+      
+      {/* Audio Player - Fixed at bottom */}
+      {transcriptData?.status === 200 && transcriptData.data.recording_url && (
+        <AudioPlayer recordingUrl={transcriptData.data.recording_url} />
+      )}
     </main>
   );
 }
