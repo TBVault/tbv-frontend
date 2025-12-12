@@ -4,16 +4,63 @@ import TranscriptContent from "@/components/TranscriptContent";
 import AudioPlayer from "@/components/AudioPlayer";
 import { transcriptProtectedTranscriptGet } from "@/api/generated/endpoints/default/default";
 import type { transcriptProtectedTranscriptGetResponse } from "@/api/generated/endpoints/default/default";
+import type { Metadata } from "next";
+import { cache } from "react";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     publicId: string;
+  }>;
+}
+
+// Cached function that fetches transcript data with authentication
+// This deduplicates requests between generateMetadata and the page component
+const getTranscriptData = cache(async (publicId: string) => {
+  const session = await auth();
+  
+  if (!session?.idToken) {
+    return { session: null, data: null, error: null };
+  }
+
+  try {
+    const response = await transcriptProtectedTranscriptGet(
+      {
+        public_id: publicId,
+      },
+      {
+        headers: {
+          Authorization: session.idToken.trim(),
+        },
+        next: {
+          revalidate: 600, // Cache for 10 minutes (transcripts change infrequently)
+          tags: ['transcript', `transcript-${publicId}`],
+        },
+      }
+    );
+    return { session, data: response, error: null };
+  } catch (err: any) {
+    return { session, data: null, error: err };
+  }
+});
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { publicId } = await params;
+  const { data } = await getTranscriptData(publicId);
+  
+  if (data?.status === 200 && data.data.title) {
+    return {
+      title: `${data.data.title} | The Bhakti Vault`,
+    };
+  }
+  
+  return {
+    title: "Transcript | The Bhakti Vault",
   };
 }
 
 export default async function TranscriptPage({ params }: PageProps) {
-  const session = await auth();
   const { publicId } = await params;
+  const { session, data: transcriptData, error: fetchError } = await getTranscriptData(publicId);
 
   // Show gated page if no session
   if (!session?.idToken) {
@@ -51,29 +98,15 @@ export default async function TranscriptPage({ params }: PageProps) {
     );
   }
 
-  let transcriptData: transcriptProtectedTranscriptGetResponse | null = null;
-  let error: string | null = null;
-
-  // Fetch transcript data using generated client with authentication
-  try {
-    const response = await transcriptProtectedTranscriptGet(
-      {
-        public_id: publicId,
-      },
-      {
-        headers: {
-          Authorization: session.idToken.trim(),
-        },
-      }
-    );
-    transcriptData = response;
-  } catch (err: any) {
-    // Check if it's an authentication error (401 or 403)
+  // Check for authentication errors
+  if (fetchError) {
+    const err = fetchError as any;
     if (err?.status === 401 || err?.status === 403 || err?.message?.includes('401') || err?.message?.includes('403')) {
       redirect('/auth/error');
     }
-    error = err instanceof Error ? err.message : "Failed to fetch transcript";
   }
+
+  const error = fetchError ? (fetchError instanceof Error ? fetchError.message : "Failed to fetch transcript") : null;
 
   // If we successfully fetched the transcript but content is missing, error the page out
   if (transcriptData?.status === 200 && !transcriptData.data.content) {

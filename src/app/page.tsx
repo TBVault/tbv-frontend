@@ -19,6 +19,10 @@ export default async function Home() {
           headers: {
             Authorization: session.idToken.trim(),
           },
+          next: {
+            revalidate: 60, // Cache for 1 minute
+            tags: ['transcripts', 'home'],
+          },
         }
       );
       
