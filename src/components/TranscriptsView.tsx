@@ -19,6 +19,137 @@ interface TranscriptsViewProps {
   totalPages: number;
 }
 
+// Pagination Component
+function Pagination({ currentPage, totalPages, onPageChange }: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  const [inputPage, setInputPage] = useState('');
+  
+  const handlePageInput = (e: React.FormEvent) => {
+    e.preventDefault();
+    const pageNum = parseInt(inputPage, 10);
+    if (pageNum >= 1 && pageNum <= totalPages) {
+      onPageChange(pageNum);
+      setInputPage('');
+    }
+  };
+  
+  const displayItems: (number | string)[] = [];
+  
+  // Always show first page
+  displayItems.push(1);
+  
+  if (totalPages <= 7) {
+    // If 7 or fewer pages, show all pages
+    for (let i = 2; i <= totalPages; i++) {
+      displayItems.push(i);
+    }
+  } else {
+    // More complex logic for many pages
+    if (currentPage <= 3) {
+      // Near the beginning: 1 2 3 ... 867
+      displayItems.push(2, 3);
+      displayItems.push('ellipsis');
+      displayItems.push(totalPages);
+    } else if (currentPage >= totalPages - 2) {
+      // Near the end: 1 ... 865 866 867
+      displayItems.push('ellipsis');
+      displayItems.push(totalPages - 2, totalPages - 1, totalPages);
+    } else {
+      // In the middle: 1 ... 346 ... 867
+      displayItems.push('ellipsis');
+      displayItems.push(currentPage);
+      displayItems.push('ellipsis');
+      displayItems.push(totalPages);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-6">
+      {/* Main Pagination */}
+      <div className="flex items-center justify-center gap-2">
+        {/* Previous Button */}
+        <button
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-background border border-border text-foreground hover:bg-background-secondary hover:border-primary-500 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-background disabled:hover:border-border transition-all duration-150"
+          aria-label="Previous page"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        {/* Page Numbers */}
+        <div className="flex items-center gap-1">
+          {displayItems.map((item, index) => {
+            if (item === 'ellipsis') {
+              return (
+                <span key={`ellipsis-${index}`} className="px-2 text-foreground-tertiary font-medium">
+                  ...
+                </span>
+              );
+            }
+            const pageNum = item as number;
+            return (
+              <button
+                key={pageNum}
+                onClick={() => onPageChange(pageNum)}
+                className={`flex items-center justify-center w-10 h-10 rounded-full text-sm font-semibold transition-transform duration-150 ${
+                  currentPage === pageNum
+                    ? 'bg-primary-600 text-white shadow-md'
+                    : 'bg-background border border-border text-foreground hover:bg-background-secondary hover:border-primary-500 hover:scale-105'
+                }`}
+                aria-label={`Page ${pageNum}`}
+                aria-current={currentPage === pageNum ? 'page' : undefined}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Next Button */}
+        <button
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          disabled={currentPage === totalPages}
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-background border border-border text-foreground hover:bg-background-secondary hover:border-primary-500 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-background disabled:hover:border-border transition-all duration-150"
+          aria-label="Next page"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Manual Page Input - Elegant compact design */}
+      <div className="inline-flex items-center gap-3 px-4 py-2 bg-background border border-border rounded-xl shadow-sm">
+        <span className="text-xs font-medium text-foreground-secondary uppercase tracking-wide">Jump to</span>
+        <form onSubmit={handlePageInput} className="flex items-center gap-2">
+          <input
+            type="number"
+            min="1"
+            max={totalPages}
+            value={inputPage}
+            onChange={(e) => setInputPage(e.target.value)}
+            placeholder={currentPage.toString()}
+            className="w-16 h-8 px-2 text-sm text-center border border-border rounded-lg bg-background-secondary text-foreground placeholder:text-foreground-tertiary focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:bg-background transition-all"
+            aria-label="Go to page"
+          />
+          <button
+            type="submit"
+            className="h-8 px-3 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 active:scale-95 transition-all"
+          >
+            Go
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function TranscriptsView({ transcripts, currentPage, totalPages }: TranscriptsViewProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -153,94 +284,14 @@ export default function TranscriptsView({ transcripts, currentPage, totalPages }
         ))}
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-center gap-2 flex-wrap">
-        <button
-          onClick={() => updatePage(Math.max(1, currentPage - 1))}
-          disabled={currentPage === 1}
-          className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-lg hover:bg-background-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          Previous
-        </button>
-
-        <div className="flex items-center gap-1">
-          {(() => {
-            const pageNumbers = new Set<number>();
-            
-            // Always show first page
-            pageNumbers.add(1);
-            
-            // Show previous page
-            if (currentPage > 1) {
-              pageNumbers.add(currentPage - 1);
-            }
-            
-            // Show current page
-            pageNumbers.add(currentPage);
-            
-            // Show next page
-            if (currentPage < totalPages) {
-              pageNumbers.add(currentPage + 1);
-            }
-            
-            // Always show last page
-            if (totalPages > 1) {
-              pageNumbers.add(totalPages);
-            }
-            
-            // Convert to sorted array
-            const sortedPages = Array.from(pageNumbers).sort((a, b) => a - b);
-            
-            // Build the display array with ellipsis
-            const displayItems: (number | string)[] = [];
-            
-            for (let i = 0; i < sortedPages.length; i++) {
-              const currentPageNum = sortedPages[i];
-              const nextPage = sortedPages[i + 1];
-              
-              // Add the current page
-              displayItems.push(currentPageNum);
-              
-              // Add ellipsis if there's a gap
-              if (nextPage && nextPage - currentPageNum > 1) {
-                displayItems.push('ellipsis');
-              }
-            }
-            
-            return displayItems.map((item, index) => {
-              if (item === 'ellipsis') {
-                return (
-                  <span key={`ellipsis-${index}`} className="px-2 text-foreground-tertiary">
-                    ...
-                  </span>
-                );
-              }
-              const pageNum = item as number;
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => updatePage(pageNum)}
-                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    currentPage === pageNum
-                      ? 'bg-primary-600 text-white'
-                      : 'text-foreground bg-background border border-border hover:bg-background-secondary'
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              );
-            });
-          })()}
-        </div>
-
-        <button
-          onClick={() => updatePage(Math.min(totalPages, currentPage + 1))}
-          disabled={currentPage === totalPages}
-          className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-lg hover:bg-background-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          Next
-        </button>
-      </div>
+      {/* Pagination - Bottom */}
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={updatePage}
+        />
+      )}
     </>
   );
 }
