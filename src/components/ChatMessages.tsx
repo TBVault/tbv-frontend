@@ -179,7 +179,7 @@ function MarkdownText({ text }: { text: string }) {
     <div>
       <ReactMarkdown
         components={{
-          p: ({ children }) => <p className="mb-4 last:mb-0 leading-normal">{children}</p>,
+          p: ({ children }) => <p className="mb-2 mt-4 first:mt-0 last:mb-0 leading-normal">{children}</p>,
           ul: ({ children }) => <ul className="list-disc pl-5 mb-1 space-y-0">{children}</ul>,
           ol: ({ children }) => <ol className="list-decimal pl-5 mb-1 space-y-0">{children}</ol>,
           li: ({ children }) => <li className="leading-normal mb-0">{children}</li>,

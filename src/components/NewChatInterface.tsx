@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput, { type ChatInputRef } from '@/components/ChatInput';
-import type { ChatSessionMessage, ChatObject } from '@/api/generated/schemas';
+import type { ChatSessionMessage } from '@/api/generated/schemas';
 import { chatSessionProtectedCreateChatSessionPost } from '@/api/generated/endpoints/default/default';
+import { processStreamBuffer } from '@/utils/streamingHelpers';
 
 export default function NewChatInterface() {
   const { data: session } = useSession();
@@ -114,92 +115,51 @@ export default function NewChatInterface() {
       }
 
       let buffer = '';
-      let chunkCount = 0;
-      let totalObjects = 0;
-      const startTime = Date.now();
-      let lastChunkTime = startTime;
-
-      const processBuffer = (bufferToParse: string, isFinal = false) => {
-        if (!bufferToParse.trim()) return '';
-
-        // Try to extract complete JSON objects from the buffer
-        let remaining = bufferToParse;
-        let braceCount = 0;
-        let startIdx = -1;
-        
-        for (let i = 0; i < bufferToParse.length; i++) {
-          const char = bufferToParse[i];
-          
-          if (char === '{') {
-            if (braceCount === 0) {
-              startIdx = i;
-            }
-            braceCount++;
-          } else if (char === '}') {
-            braceCount--;
-            
-            if (braceCount === 0 && startIdx !== -1) {
-              // We have a complete JSON object
-              const jsonStr = bufferToParse.substring(startIdx, i + 1);
-              
-              try {
-                const chatObject: ChatObject = JSON.parse(jsonStr);
-                totalObjects++;
-                
-                // Update the assistant message with new content
-                setMessages((prev) => {
-                  const updated = [...prev];
-                  const assistantIdx = updated.findIndex(
-                    (msg) => msg.public_id === assistantMessageId
-                  );
-                  
-                  if (assistantIdx !== -1) {
-                    updated[assistantIdx] = {
-                      ...updated[assistantIdx],
-                      content: [...updated[assistantIdx].content, chatObject],
-                    };
-                  }
-                  
-                  return updated;
-                });
-              } catch (e) {
-                // Failed to parse JSON, skip this object
-              }
-              
-              // Remove processed object from remaining buffer
-              remaining = bufferToParse.substring(i + 1);
-              // Recursively process remaining buffer
-              return processBuffer(remaining, isFinal);
-            }
-          }
-        }
-        
-        return remaining;
-      };
 
       while (true) {
         const { done, value } = await reader.read();
-        
-        if (done) {
-          break;
-        }
+        if (done) break;
 
-        chunkCount++;
-        const now = Date.now();
-        const timeSinceStart = now - startTime;
-        const timeSinceLastChunk = now - lastChunkTime;
-        lastChunkTime = now;
-        
         const chunk = decoder.decode(value, { stream: true });
         buffer += chunk;
 
-        // Process any complete JSON objects in the buffer
-        buffer = processBuffer(buffer);
+        buffer = processStreamBuffer(buffer, (chatObject) => {
+          setMessages((prev) => {
+            const updated = [...prev];
+            const assistantIdx = updated.findIndex(
+              (msg) => msg.public_id === assistantMessageId
+            );
+
+            if (assistantIdx !== -1) {
+              updated[assistantIdx] = {
+                ...updated[assistantIdx],
+                content: [...updated[assistantIdx].content, chatObject],
+              };
+            }
+
+            return updated;
+          });
+        });
       }
 
-      // Process any remaining data in buffer
       if (buffer.trim()) {
-        processBuffer(buffer, true);
+        processStreamBuffer(buffer, (chatObject) => {
+          setMessages((prev) => {
+            const updated = [...prev];
+            const assistantIdx = updated.findIndex(
+              (msg) => msg.public_id === assistantMessageId
+            );
+
+            if (assistantIdx !== -1) {
+              updated[assistantIdx] = {
+                ...updated[assistantIdx],
+                content: [...updated[assistantIdx].content, chatObject],
+              };
+            }
+
+            return updated;
+          });
+        });
       }
 
       // Note: We don't redirect to /chat/[id] to avoid interrupting the conversation.

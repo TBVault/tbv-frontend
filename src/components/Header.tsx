@@ -1,44 +1,23 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import AuthButton from "@/components/AuthButton";
 import Logo from "@/components/Logo";
+import { useClickOutside } from "@/utils/useClickOutside";
 
 export default function Header() {
   const { data: session } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null!);
 
-  // Close menu when clicking outside or pressing escape
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        const target = event.target as HTMLElement;
-        // Don't close if clicking the hamburger button
-        if (!target.closest('button[aria-label="Toggle menu"]')) {
-          setIsMobileMenuOpen(false);
-        }
-      }
+  useClickOutside(menuRef, () => {
+    // Don't close if the click came from the hamburger button
+    if (document.activeElement?.getAttribute('aria-label') !== 'Toggle menu') {
+      setIsMobileMenuOpen(false);
     }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setIsMobileMenuOpen(false);
-      }
-    }
-
-    if (isMobileMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleEscape);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [isMobileMenuOpen]);
+  }, isMobileMenuOpen);
 
   return (
     <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border shadow-sm">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Transcript } from '@/api/generated/schemas';
@@ -153,46 +153,12 @@ function Pagination({ currentPage, totalPages, onPageChange }: {
 export default function TranscriptsView({ transcripts, currentPage, totalPages }: TranscriptsViewProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  
   const [viewMode, setViewMode] = useState<'grid' | 'row'>('row');
-  const prevWidthRef = useRef<number | null>(null);
 
   // Set initial view mode based on screen width on mount
   useEffect(() => {
-    const initialWidth = window.innerWidth;
-    prevWidthRef.current = initialWidth;
-    if (initialWidth < 750) {
-      setViewMode('grid');
-    }
+    setViewMode(window.innerWidth < 750 ? 'grid' : 'row');
   }, []);
-
-  // Update view mode on window resize - only when crossing the 750px threshold
-  useEffect(() => {
-    const handleResize = () => {
-      const currentWidth = window.innerWidth;
-      const prevWidth = prevWidthRef.current;
-
-      // Only change view mode when crossing the 750px threshold
-      if (prevWidth !== null) {
-        const wasBelowThreshold = prevWidth < 750;
-        const isBelowThreshold = currentWidth < 750;
-
-        // Crossing from >= 750px to < 750px: switch to grid
-        if (!wasBelowThreshold && isBelowThreshold && viewMode === 'row') {
-          setViewMode('grid');
-        }
-        // Crossing from < 750px to >= 750px: switch to row
-        else if (wasBelowThreshold && !isBelowThreshold && viewMode === 'grid') {
-          setViewMode('row');
-        }
-      }
-
-      prevWidthRef.current = currentWidth;
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [viewMode]);
 
   const updatePage = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
