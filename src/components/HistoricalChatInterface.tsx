@@ -242,7 +242,13 @@ export default function HistoricalChatInterface({ chatSessionId }: HistoricalCha
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
+                    d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 4v16"
                   />
                 </svg>
               </button>
