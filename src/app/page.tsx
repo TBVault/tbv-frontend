@@ -49,7 +49,7 @@ export default async function Home() {
               The Bhakti Vault
             </h1>
             <p className="text-lg text-foreground-secondary mb-2">
-              H.G. Vaisesika Dasa's Lecture Archive
+              H.G. Vaiśeṣika Dāsa's Lecture Archive
             </p>
             <p className="text-sm text-foreground-tertiary">
               A Private Collection for Team Members
@@ -97,7 +97,7 @@ export default async function Home() {
             Welcome back {session.user?.name || 'Friend'}
           </h1>
           <p className="text-foreground-secondary">
-            Access H.G. Vaisesika Dasa's collection of lectures and talks
+            Access H.G. Vaiśeṣika Dāsa's collection of lectures and talks
           </p>
         </div>
 
@@ -156,7 +156,7 @@ export default async function Home() {
                   className="bg-background rounded-xl border border-border p-6 hover:shadow-lg hover:border-primary-500 transition-all duration-200 flex flex-col"
                 >
                   <h3 className="font-bold text-foreground mb-3 line-clamp-2">
-                    {transcript.title}
+                    {transcript.semantic_title || transcript.title}
                   </h3>
                   
                   {transcript.summary && (

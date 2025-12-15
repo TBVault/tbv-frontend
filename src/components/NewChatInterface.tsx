@@ -100,8 +100,6 @@ export default function NewChatInterface() {
       const startTime = Date.now();
       let lastChunkTime = startTime;
 
-      console.log('🚀 Starting stream read at', new Date().toISOString());
-
       const processBuffer = (bufferToParse: string, isFinal = false) => {
         if (!bufferToParse.trim()) return '';
 
@@ -128,7 +126,6 @@ export default function NewChatInterface() {
               try {
                 const chatObject: ChatObject = JSON.parse(jsonStr);
                 totalObjects++;
-                console.log(`  ✨ Object ${totalObjects}:`, chatObject.data.type);
                 
                 // Update the assistant message with new content
                 setMessages((prev) => {
@@ -147,7 +144,7 @@ export default function NewChatInterface() {
                   return updated;
                 });
               } catch (e) {
-                console.warn('❌ Failed to parse JSON:', jsonStr.substring(0, 50));
+                // Failed to parse JSON, skip this object
               }
               
               // Remove processed object from remaining buffer
@@ -158,11 +155,6 @@ export default function NewChatInterface() {
           }
         }
         
-        // If we're in final processing and have unparsed data, warn about it
-        if (isFinal && remaining.trim()) {
-          console.warn('⚠️ Unparsed data remaining:', remaining.substring(0, 100));
-        }
-        
         return remaining;
       };
 
@@ -170,7 +162,6 @@ export default function NewChatInterface() {
         const { done, value } = await reader.read();
         
         if (done) {
-          console.log('✅ Stream done. Total chunks:', chunkCount, 'Total objects:', totalObjects);
           break;
         }
 
@@ -181,7 +172,6 @@ export default function NewChatInterface() {
         lastChunkTime = now;
         
         const chunk = decoder.decode(value, { stream: true });
-        console.log(`📦 Chunk ${chunkCount} received after ${timeSinceLastChunk}ms (total: ${timeSinceStart}ms)`);
         buffer += chunk;
 
         // Process any complete JSON objects in the buffer
@@ -190,7 +180,6 @@ export default function NewChatInterface() {
 
       // Process any remaining data in buffer
       if (buffer.trim()) {
-        console.log('🔄 Processing remaining buffer');
         processBuffer(buffer, true);
       }
 

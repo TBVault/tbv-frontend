@@ -389,14 +389,6 @@ export default function ChatMessages({ messages, userImage, userName }: ChatMess
   const fetchedIds = useRef<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Log when messages change
-  useEffect(() => {
-    console.log('🎨 ChatMessages render - Total messages:', messages.length);
-    messages.forEach((msg, idx) => {
-      console.log(`  Message ${idx} (${msg.role}): ${msg.content.length} objects`);
-    });
-  }, [messages]);
-
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

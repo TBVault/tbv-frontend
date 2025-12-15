@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Transcript } from '@/api/generated/schemas';
@@ -153,7 +153,31 @@ function Pagination({ currentPage, totalPages, onPageChange }: {
 export default function TranscriptsView({ transcripts, currentPage, totalPages }: TranscriptsViewProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  
   const [viewMode, setViewMode] = useState<'grid' | 'row'>('row');
+
+  // Set initial view mode based on screen width on mount
+  useEffect(() => {
+    if (window.innerWidth < 750) {
+      setViewMode('grid');
+    }
+  }, []);
+
+  // Update view mode on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 750 && viewMode === 'row') {
+        // Auto-switch to grid when window becomes smaller than 750px
+        setViewMode('grid');
+      } else if (window.innerWidth >= 750 && viewMode === 'grid') {
+        // Auto-switch to row when window becomes 750px or larger (row is default for >= 750px)
+        setViewMode('row');
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [viewMode]);
 
   const updatePage = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -170,7 +194,7 @@ export default function TranscriptsView({ transcripts, currentPage, totalPages }
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-foreground mb-2">Transcripts</h1>
-          <p className="text-foreground-secondary">Browse H.G. Vaisesika Dasa's lectures and talks</p>
+          <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa's lectures and talks</p>
         </div>
         <div className="flex items-center gap-2 bg-background border border-border rounded-lg p-1">
           <button
@@ -216,7 +240,7 @@ export default function TranscriptsView({ transcripts, currentPage, totalPages }
             <div className={viewMode === 'row' ? 'flex-1' : 'w-full'}>
               {/* Title */}
               <h2 className={`font-bold text-foreground mb-3 break-words overflow-wrap-anywhere ${viewMode === 'grid' ? 'text-xl line-clamp-3' : 'text-2xl'}`} style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                {transcript.title}
+                {transcript.semantic_title || transcript.title}
               </h2>
 
               {/* Summary */}
@@ -228,7 +252,7 @@ export default function TranscriptsView({ transcripts, currentPage, totalPages }
             </div>
 
             {/* Metadata Section */}
-            <div className={`${viewMode === 'grid' ? 'mt-auto space-y-3 pt-4 border-t border-border' : 'flex flex-col items-end gap-2 min-w-[200px]'}`}>
+            <div className={`${viewMode === 'grid' ? 'mt-auto space-y-3 pt-4 border-t border-border' : 'flex flex-col items-end gap-2 min-w-[160px] max-w-[160px]'}`}>
               {viewMode === 'grid' ? (
                 <>
                   {/* Grid: Duration and Source on same row, aligned left */}

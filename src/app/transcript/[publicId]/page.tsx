@@ -47,10 +47,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { publicId } = await params;
   const { data } = await getTranscriptData(publicId);
   
-  if (data?.status === 200 && data.data.title) {
-    return {
-      title: `${data.data.title} | The Bhakti Vault`,
-    };
+  if (data?.status === 200) {
+    const displayTitle = data.data.semantic_title || data.data.title;
+    if (displayTitle) {
+      return {
+        title: `${displayTitle} | The Bhakti Vault`,
+      };
+    }
   }
   
   return {
@@ -130,8 +133,15 @@ export default async function TranscriptPage({ params }: PageProps) {
               </div>
               
               <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 break-words" style={{ lineHeight: '1.2' }}>
-                {transcriptData.data.title}
+                {transcriptData.data.semantic_title || transcriptData.data.title}
               </h1>
+
+              {/* Original Title - shown when semantic title is used */}
+              {transcriptData.data.semantic_title && transcriptData.data.semantic_title !== transcriptData.data.title && (
+                <div className="mb-4">
+                  <p className="text-base text-foreground-secondary italic break-words">{transcriptData.data.title}</p>
+                </div>
+              )}
 
               {/* Tags */}
               <div className="mb-6 flex items-center justify-between flex-wrap gap-3">

@@ -17,9 +17,14 @@ export default function Header() {
             <h2 className="text-lg font-semibold text-neutral-800">The Bhakti Vault</h2>
           </Link>
           {session && (
-            <Link href="/transcripts" className="text-foreground-secondary hover:text-foreground transition-colors font-medium">
-              Transcripts
-            </Link>
+            <>
+              <Link href="/transcripts" className="text-foreground-secondary hover:text-foreground transition-colors font-medium">
+                Transcripts
+              </Link>
+              <Link href="/chat" className="text-foreground-secondary hover:text-foreground transition-colors font-medium">
+                Chat
+              </Link>
+            </>
           )}
         </div>
         <AuthButton />

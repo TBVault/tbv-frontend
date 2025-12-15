@@ -103,7 +103,7 @@ async function TranscriptsContent({ searchParams }: PageProps) {
         <div className="max-w-5xl mx-auto px-6 py-10">
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-foreground mb-2">Transcripts</h1>
-            <p className="text-foreground-secondary">Browse H.G. Vaisesika Dasa's lectures and talks</p>
+            <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa's lectures and talks</p>
           </div>
           <div className="bg-error-50 border-l-4 border-error-500 rounded-r-xl p-6 shadow-sm">
             <h3 className="font-semibold text-error-900 mb-1">Error Loading Transcripts</h3>

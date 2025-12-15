@@ -25,7 +25,7 @@ function AuthErrorContent() {
         return {
           title: "Access Denied",
           message: "Your Google account was authenticated successfully, but you are not authorized to access The Bhakti Vault.",
-          details: "This platform is restricted to H.G. Vaisesika Dasa's team members only.",
+          details: "This platform is restricted to H.G. Vaiśeṣika Dāsa's team members only.",
         };
       case "AccessDenied":
         return {
