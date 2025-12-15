@@ -204,6 +204,166 @@
         }
       }
     },
+    "/protected/create_chat_session": {
+      "post": {
+        "summary": "Chat Session",
+        "operationId": "chat_session_protected_create_chat_session_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatSession"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/protected/chat_sessions": {
+      "get": {
+        "summary": "Chat Sessions",
+        "operationId": "chat_sessions_protected_chat_sessions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChatSession"
+                  },
+                  "type": "array",
+                  "title": "Response Chat Sessions Protected Chat Sessions Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/protected/chat_session/{chat_session_id}": {
+      "get": {
+        "summary": "Chat Session History",
+        "operationId": "chat_session_history_protected_chat_session__chat_session_id__get",
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "chat_session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chat Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatSessionHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/protected/chat_session/{chat_session_id}/new_message": {
+      "post": {
+        "summary": "New Message",
+        "operationId": "new_message_protected_chat_session__chat_session_id__new_message_post",
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "chat_session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chat Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/login": {
       "post": {
         "summary": "Login",
@@ -261,6 +421,154 @@
   },
   "components": {
     "schemas": {
+      "ChatObject": {
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TextDelta"
+              },
+              {
+                "$ref": "#/components/schemas/TranscriptCitation"
+              },
+              {
+                "$ref": "#/components/schemas/WebSearchCitation"
+              },
+              {
+                "$ref": "#/components/schemas/ChatTopic"
+              }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "ChatObject"
+      },
+      "ChatRole": {
+        "type": "string",
+        "enum": [
+          "user",
+          "assistant"
+        ],
+        "title": "ChatRole"
+      },
+      "ChatSession": {
+        "properties": {
+          "public_id": {
+            "type": "string",
+            "title": "Public Id"
+          },
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "chat_topic": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chat Topic"
+          },
+          "created_on": {
+            "type": "integer",
+            "title": "Created On"
+          },
+          "updated_on": {
+            "type": "integer",
+            "title": "Updated On"
+          }
+        },
+        "type": "object",
+        "required": [
+          "public_id",
+          "user_id",
+          "chat_topic",
+          "created_on",
+          "updated_on"
+        ],
+        "title": "ChatSession"
+      },
+      "ChatSessionHistoryResponse": {
+        "properties": {
+          "chat_session": {
+            "$ref": "#/components/schemas/ChatSession"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ChatSessionMessage"
+            },
+            "type": "array",
+            "title": "Messages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "chat_session",
+          "messages"
+        ],
+        "title": "ChatSessionHistoryResponse"
+      },
+      "ChatSessionMessage": {
+        "properties": {
+          "public_id": {
+            "type": "string",
+            "title": "Public Id"
+          },
+          "chat_session_id": {
+            "type": "string",
+            "title": "Chat Session Id"
+          },
+          "role": {
+            "$ref": "#/components/schemas/ChatRole"
+          },
+          "content": {
+            "items": {
+              "$ref": "#/components/schemas/ChatObject"
+            },
+            "type": "array",
+            "title": "Content"
+          },
+          "created_on": {
+            "type": "integer",
+            "title": "Created On"
+          }
+        },
+        "type": "object",
+        "required": [
+          "public_id",
+          "chat_session_id",
+          "role",
+          "content",
+          "created_on"
+        ],
+        "title": "ChatSessionMessage"
+      },
+      "ChatTopic": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "chat_topic",
+            "title": "Type",
+            "default": "chat_topic"
+          },
+          "chat_topic": {
+            "type": "string",
+            "title": "Chat Topic"
+          }
+        },
+        "type": "object",
+        "required": [
+          "chat_topic"
+        ],
+        "title": "ChatTopic"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -315,6 +623,38 @@
         ],
         "title": "LoginResponse"
       },
+      "NewMessageRequest": {
+        "properties": {
+          "user_query": {
+            "type": "string",
+            "title": "User Query"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_query"
+        ],
+        "title": "NewMessageRequest"
+      },
+      "TextDelta": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "text_delta",
+            "title": "Type",
+            "default": "text_delta"
+          },
+          "delta": {
+            "type": "string",
+            "title": "Delta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "delta"
+        ],
+        "title": "TextDelta"
+      },
       "Transcript": {
         "properties": {
           "public_id": {
@@ -324,6 +664,17 @@
           "title": {
             "type": "string",
             "title": "Title"
+          },
+          "semantic_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Semantic Title"
           },
           "duration": {
             "type": "integer",
@@ -373,6 +724,7 @@
         "required": [
           "public_id",
           "title",
+          "semantic_title",
           "duration",
           "summary",
           "source",
@@ -403,6 +755,30 @@
           "text"
         ],
         "title": "TranscriptChunk"
+      },
+      "TranscriptCitation": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "transcript_citation",
+            "title": "Type",
+            "default": "transcript_citation"
+          },
+          "transcript_id": {
+            "type": "string",
+            "title": "Transcript Id"
+          },
+          "chunk_index": {
+            "type": "integer",
+            "title": "Chunk Index"
+          }
+        },
+        "type": "object",
+        "required": [
+          "transcript_id",
+          "chunk_index"
+        ],
+        "title": "TranscriptCitation"
       },
       "TranscriptSource": {
         "type": "string",
@@ -508,6 +884,25 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WebSearchCitation": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "web_search_citation",
+            "title": "Type",
+            "default": "web_search_citation"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "WebSearchCitation"
       }
     },
     "securitySchemes": {

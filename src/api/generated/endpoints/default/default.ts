@@ -6,9 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 import type {
+  ChatSession,
+  ChatSessionHistoryResponse,
   HTTPValidationError,
   HelloDto,
   LoginResponse,
+  NewMessageRequest,
   PublicHelloWorldPydanticPublicHelloWorldPydanticGetParams,
   Transcript,
   TranscriptProtectedTranscriptGetParams,
@@ -271,6 +274,162 @@ export const transcriptsProtectedTranscriptsGet = async (params: TranscriptsProt
     method: 'GET'
     
     
+  }
+);}
+
+
+/**
+ * @summary Chat Session
+ */
+export type chatSessionProtectedCreateChatSessionPostResponse200 = {
+  data: ChatSession
+  status: 200
+}
+    
+export type chatSessionProtectedCreateChatSessionPostResponseSuccess = (chatSessionProtectedCreateChatSessionPostResponse200) & {
+  headers: Headers;
+};
+;
+
+export type chatSessionProtectedCreateChatSessionPostResponse = (chatSessionProtectedCreateChatSessionPostResponseSuccess)
+
+export const getChatSessionProtectedCreateChatSessionPostUrl = () => {
+
+
+  
+
+  return `/protected/create_chat_session`
+}
+
+export const chatSessionProtectedCreateChatSessionPost = async ( options?: RequestInit): Promise<chatSessionProtectedCreateChatSessionPostResponse> => {
+  
+  return customFetch<chatSessionProtectedCreateChatSessionPostResponse>(getChatSessionProtectedCreateChatSessionPostUrl(),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+/**
+ * @summary Chat Sessions
+ */
+export type chatSessionsProtectedChatSessionsGetResponse200 = {
+  data: ChatSession[]
+  status: 200
+}
+    
+export type chatSessionsProtectedChatSessionsGetResponseSuccess = (chatSessionsProtectedChatSessionsGetResponse200) & {
+  headers: Headers;
+};
+;
+
+export type chatSessionsProtectedChatSessionsGetResponse = (chatSessionsProtectedChatSessionsGetResponseSuccess)
+
+export const getChatSessionsProtectedChatSessionsGetUrl = () => {
+
+
+  
+
+  return `/protected/chat_sessions`
+}
+
+export const chatSessionsProtectedChatSessionsGet = async ( options?: RequestInit): Promise<chatSessionsProtectedChatSessionsGetResponse> => {
+  
+  return customFetch<chatSessionsProtectedChatSessionsGetResponse>(getChatSessionsProtectedChatSessionsGetUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+/**
+ * @summary Chat Session History
+ */
+export type chatSessionHistoryProtectedChatSessionChatSessionIdGetResponse200 = {
+  data: ChatSessionHistoryResponse
+  status: 200
+}
+
+export type chatSessionHistoryProtectedChatSessionChatSessionIdGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+    
+export type chatSessionHistoryProtectedChatSessionChatSessionIdGetResponseSuccess = (chatSessionHistoryProtectedChatSessionChatSessionIdGetResponse200) & {
+  headers: Headers;
+};
+export type chatSessionHistoryProtectedChatSessionChatSessionIdGetResponseError = (chatSessionHistoryProtectedChatSessionChatSessionIdGetResponse422) & {
+  headers: Headers;
+};
+
+export type chatSessionHistoryProtectedChatSessionChatSessionIdGetResponse = (chatSessionHistoryProtectedChatSessionChatSessionIdGetResponseSuccess | chatSessionHistoryProtectedChatSessionChatSessionIdGetResponseError)
+
+export const getChatSessionHistoryProtectedChatSessionChatSessionIdGetUrl = (chatSessionId: string,) => {
+
+
+  
+
+  return `/protected/chat_session/${chatSessionId}`
+}
+
+export const chatSessionHistoryProtectedChatSessionChatSessionIdGet = async (chatSessionId: string, options?: RequestInit): Promise<chatSessionHistoryProtectedChatSessionChatSessionIdGetResponse> => {
+  
+  return customFetch<chatSessionHistoryProtectedChatSessionChatSessionIdGetResponse>(getChatSessionHistoryProtectedChatSessionChatSessionIdGetUrl(chatSessionId),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+/**
+ * @summary New Message
+ */
+export type newMessageProtectedChatSessionChatSessionIdNewMessagePostResponse200 = {
+  data: unknown
+  status: 200
+}
+
+export type newMessageProtectedChatSessionChatSessionIdNewMessagePostResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+    
+export type newMessageProtectedChatSessionChatSessionIdNewMessagePostResponseSuccess = (newMessageProtectedChatSessionChatSessionIdNewMessagePostResponse200) & {
+  headers: Headers;
+};
+export type newMessageProtectedChatSessionChatSessionIdNewMessagePostResponseError = (newMessageProtectedChatSessionChatSessionIdNewMessagePostResponse422) & {
+  headers: Headers;
+};
+
+export type newMessageProtectedChatSessionChatSessionIdNewMessagePostResponse = (newMessageProtectedChatSessionChatSessionIdNewMessagePostResponseSuccess | newMessageProtectedChatSessionChatSessionIdNewMessagePostResponseError)
+
+export const getNewMessageProtectedChatSessionChatSessionIdNewMessagePostUrl = (chatSessionId: string,) => {
+
+
+  
+
+  return `/protected/chat_session/${chatSessionId}/new_message`
+}
+
+export const newMessageProtectedChatSessionChatSessionIdNewMessagePost = async (chatSessionId: string,
+    newMessageRequest: NewMessageRequest, options?: RequestInit): Promise<newMessageProtectedChatSessionChatSessionIdNewMessagePostResponse> => {
+  
+  return customFetch<newMessageProtectedChatSessionChatSessionIdNewMessagePostResponse>(getNewMessageProtectedChatSessionChatSessionIdNewMessagePostUrl(chatSessionId),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      newMessageRequest,)
   }
 );}
 

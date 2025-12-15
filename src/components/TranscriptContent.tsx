@@ -27,28 +27,67 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
   const chunkRefs = useRef<Map<number, HTMLDivElement>>(new Map()); // Key: chunk start time, Value: element
   const lastScrolledTimeRef = useRef<number | null>(null);
 
+  // Handle anchor-based navigation (from chat citations)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      
+      if (hash.startsWith('#chunk-')) {
+        const chunkIndex = parseInt(hash.replace('#chunk-', ''), 10);
+        
+        if (!isNaN(chunkIndex) && chunkIndex >= 0 && chunkIndex < content.length) {
+          const chunkStartTime = content[chunkIndex].start;
+          
+          // Retry mechanism for race condition with AudioPlayer
+          const trySeek = (attempt = 0, maxAttempts = 10) => {
+            const audioSeekTo = (window as any).__audioSeekTo;
+            
+            if (audioSeekTo) {
+              audioSeekTo(chunkStartTime, false); // Don't autoplay when navigating via anchor
+            } else if (attempt < maxAttempts - 1) {
+              setTimeout(() => trySeek(attempt + 1, maxAttempts), 100);
+            }
+          };
+          
+          trySeek();
+        }
+      }
+    };
+
+    // Check on mount with a slight delay to allow AudioPlayer to initialize
+    setTimeout(handleHashChange, 100);
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, [content]);
+
   // Helper to group consecutive chunks by speaker when timestamps are off
-  const groupChunksBySpeaker = (chunks: TranscriptChunk[]): TranscriptChunk[][] => {
+  const groupChunksBySpeaker = (chunks: TranscriptChunk[]): { group: TranscriptChunk[], startIndex: number }[] => {
     if (showTimestamps) {
-      // When timestamps are on, return each chunk as its own group
-      return chunks.map(chunk => [chunk]);
+      // When timestamps are on, return each chunk as its own group with its index
+      return chunks.map((chunk, index) => ({ group: [chunk], startIndex: index }));
     }
     
     // When timestamps are off, group consecutive chunks with same speaker
-    const groups: TranscriptChunk[][] = [];
+    const groups: { group: TranscriptChunk[], startIndex: number }[] = [];
     let currentGroup: TranscriptChunk[] = [];
     let currentSpeaker: string | null = null;
+    let groupStartIndex = 0;
     
-    chunks.forEach((chunk) => {
+    chunks.forEach((chunk, index) => {
       const speaker = chunk.speaker?.trim() || null;
       
       if (speaker !== currentSpeaker) {
         // Speaker changed, start a new group
         if (currentGroup.length > 0) {
-          groups.push(currentGroup);
+          groups.push({ group: currentGroup, startIndex: groupStartIndex });
         }
         currentGroup = [chunk];
         currentSpeaker = speaker;
+        groupStartIndex = index;
       } else {
         // Same speaker, add to current group
         currentGroup.push(chunk);
@@ -57,7 +96,7 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
     
     // Add the last group
     if (currentGroup.length > 0) {
-      groups.push(currentGroup);
+      groups.push({ group: currentGroup, startIndex: groupStartIndex });
     }
     
     return groups;
@@ -159,17 +198,18 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
       </div>
       
       <div className="space-y-3">
-        {groupedChunks.map((group, groupIndex) => {
+        {groupedChunks.map(({ group, startIndex }, groupIndex) => {
           const firstChunk = group[0];
           const hasSpeaker = firstChunk.speaker?.trim();
           const showSpeaker = !showTimestamps && hasSpeaker;
           
-          // Check if this group contains the active chunk
+          // Check if this group contains the active chunk (from audio playback or anchor link)
           const isActive = group.some(chunk => chunk.start === activeChunkStart);
           
           return (
             <div 
               key={groupIndex}
+              id={`chunk-${startIndex}`}
               ref={(el) => {
                 if (el) {
                   // Store ref using the first chunk's start time as the key
@@ -215,7 +255,10 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
               {/* Text Content - all chunks in group */}
               <div className="text-foreground-secondary leading-relaxed space-y-2">
                 {group.map((chunk, chunkIndex) => (
-                  <div key={chunkIndex}>
+                  <div 
+                    key={chunkIndex}
+                    id={chunkIndex > 0 ? `chunk-${startIndex + chunkIndex}` : undefined}
+                  >
                     {showTimestamps && chunkIndex > 0 && (
                       <div className="mb-2 flex justify-end">
                         <button

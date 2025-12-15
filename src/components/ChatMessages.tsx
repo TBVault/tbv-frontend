@@ -1,0 +1,589 @@
+'use client';
+
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import type { 
+  ChatSessionMessage, 
+  ChatObject,
+  TextDelta,
+  TranscriptCitation,
+  WebSearchCitation,
+  ChatTopic,
+  Transcript
+} from '@/api/generated/schemas';
+import { transcriptProtectedTranscriptGet } from '@/api/generated/endpoints/default/default';
+
+interface ChatMessagesProps {
+  messages: ChatSessionMessage[];
+  userImage?: string | null;
+  userName?: string | null;
+}
+
+interface TranscriptOverlayProps {
+  citation: TranscriptCitation;
+  citationNumber: number;
+  authToken: string | undefined;
+  preFetchedTranscript?: Transcript | null;
+  onClose: () => void;
+}
+
+// Overlay component for transcript citations
+function TranscriptOverlay({ citation, citationNumber, authToken, preFetchedTranscript, onClose }: TranscriptOverlayProps) {
+  const [transcript, setTranscript] = useState<Transcript | null>(preFetchedTranscript || null);
+  const [loading, setLoading] = useState(!preFetchedTranscript);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // If we already have pre-fetched data, use it
+    if (preFetchedTranscript) {
+      setTranscript(preFetchedTranscript);
+      setLoading(false);
+      return;
+    }
+
+    const fetchTranscript = async () => {
+      if (!authToken) {
+        setError('Not authenticated');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await transcriptProtectedTranscriptGet(
+          { public_id: citation.transcript_id },
+          authToken ? {
+            headers: {
+              Authorization: authToken,
+            },
+          } : undefined
+        );
+        if (response.status === 200) {
+          setTranscript(response.data);
+        }
+      } catch (err) {
+        setError('Failed to load transcript');
+        console.error('Error fetching transcript:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTranscript();
+  }, [citation.transcript_id, authToken, preFetchedTranscript]);
+
+  const chunk = transcript?.content?.[citation.chunk_index];
+  const chunkText = chunk?.text || '';
+  const truncatedText = chunkText.length > 300 
+    ? chunkText.substring(0, 300) + '...' 
+    : chunkText;
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-600 text-white text-xs font-bold rounded-full flex-shrink-0">
+              {citationNumber}
+            </span>
+            <h3 className="text-lg font-semibold text-gray-900 break-words">
+              {loading ? 'Loading...' : transcript?.title || 'Transcript'}
+            </h3>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link
+              href={`/transcript/${citation.transcript_id}#chunk-${citation.chunk_index}`}
+              target="_blank"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Open in new tab"
+            >
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </Link>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          )}
+
+          {error && (
+            <div className="text-red-600 text-center py-4">{error}</div>
+          )}
+
+          {!loading && !error && transcript && (
+            <div>
+              {chunk && (
+                <div className="mb-2">
+                  <span className="text-xs font-semibold text-gray-600 uppercase">
+                    {chunk.speaker}
+                  </span>
+                </div>
+              )}
+              <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                {truncatedText || 'No text available for this chunk.'}
+              </p>
+              {chunkText.length > 300 && (
+                <Link
+                  href={`/transcript/${citation.transcript_id}#chunk-${citation.chunk_index}`}
+                  target="_blank"
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium mt-3 inline-flex items-center gap-1"
+                >
+                  Read more
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface CitationMetadata {
+  type: 'transcript' | 'web';
+  citation: TranscriptCitation | WebSearchCitation;
+  number: number;
+  title?: string;
+}
+
+// Component to render individual ChatObject based on type
+function ChatObjectRenderer({ 
+  chatObject, 
+  citationMap,
+  transcriptTitles,
+  onTranscriptClick
+}: { 
+  chatObject: ChatObject;
+  citationMap: Map<string, CitationMetadata>;
+  transcriptTitles: Map<string, string>;
+  onTranscriptClick: (citation: TranscriptCitation, number: number) => void;
+}) {
+  const data = chatObject.data;
+
+  // Type assertion and rendering for TextDelta
+  if (data.type === 'text_delta') {
+    const textDelta = data as TextDelta;
+    return <span>{textDelta.delta}</span>;
+  }
+
+  // Type assertion and rendering for TranscriptCitation
+  if (data.type === 'transcript_citation') {
+    const citation = data as TranscriptCitation;
+    const key = `transcript-${citation.transcript_id}-${citation.chunk_index}`;
+    const metadata = citationMap.get(key);
+    const title = transcriptTitles.get(citation.transcript_id) || 'Transcript';
+    const truncatedTitle = title.length > 20 ? title.substring(0, 20) + '...' : title;
+    
+    return (
+      <button
+        onClick={() => onTranscriptClick(citation, metadata?.number || 0)}
+        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-full text-sm font-medium transition-colors cursor-pointer"
+      >
+        <span className="inline-flex items-center justify-center w-4 h-4 bg-blue-600 text-white text-xs font-bold rounded-full">
+          {metadata?.number || '?'}
+        </span>
+        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span className="text-xs">{truncatedTitle}</span>
+      </button>
+    );
+  }
+
+  // Type assertion and rendering for WebSearchCitation
+  if (data.type === 'web_search_citation') {
+    const citation = data as WebSearchCitation;
+    const key = `web-${citation.url}`;
+    const metadata = citationMap.get(key);
+    const domain = new URL(citation.url).hostname.replace('www.', '');
+    
+    return (
+      <a
+        href={citation.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 hover:bg-green-200 text-green-800 rounded-full text-sm font-medium transition-colors"
+      >
+        <span className="inline-flex items-center justify-center w-4 h-4 bg-green-600 text-white text-xs font-bold rounded-full">
+          {metadata?.number || '?'}
+        </span>
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+        </svg>
+        <span className="text-xs">{domain}</span>
+      </a>
+    );
+  }
+
+  // ChatTopic should not be rendered in messages (it's metadata)
+  if (data.type === 'chat_topic') {
+    return null;
+  }
+
+  // Fallback for unknown types
+  return null;
+}
+
+// Helper function to format timestamp
+function formatTimestamp(timestamp: number): string {
+  const date = new Date(timestamp * 1000); // Convert Unix timestamp to milliseconds
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// Helper to extract citations from a message
+function extractCitations(message: ChatSessionMessage): CitationMetadata[] {
+  const citations: CitationMetadata[] = [];
+  const seen = new Set<string>();
+  let number = 1;
+
+  message.content.forEach((chatObject) => {
+    const data = chatObject.data;
+    
+    if (data.type === 'transcript_citation') {
+      const citation = data as TranscriptCitation;
+      const key = `transcript-${citation.transcript_id}-${citation.chunk_index}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        citations.push({
+          type: 'transcript',
+          citation,
+          number: number++,
+        });
+      }
+    } else if (data.type === 'web_search_citation') {
+      const citation = data as WebSearchCitation;
+      const key = `web-${citation.url}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        citations.push({
+          type: 'web',
+          citation,
+          number: number++,
+        });
+      }
+    }
+  });
+
+  return citations;
+}
+
+// Sources section component
+function SourcesSection({ 
+  citations,
+  transcriptTitles
+}: { 
+  citations: CitationMetadata[];
+  transcriptTitles: Map<string, string>;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (citations.length === 0) return null;
+
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-200">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center gap-2 w-full text-left mb-2 hover:opacity-70 transition-opacity"
+      >
+        <h4 className="text-xs font-semibold text-gray-500 uppercase">
+          Sources ({citations.length})
+        </h4>
+        <svg
+          className={`w-4 h-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      
+      {isExpanded && (
+        <div className="flex flex-col gap-2">
+          {citations.map((metadata) => {
+            if (metadata.type === 'transcript') {
+              const citation = metadata.citation as TranscriptCitation;
+              const title = transcriptTitles.get(citation.transcript_id) || 'Transcript';
+              return (
+                <Link
+                  key={`source-transcript-${citation.transcript_id}-${citation.chunk_index}`}
+                  href={`/transcript/${citation.transcript_id}#chunk-${citation.chunk_index}`}
+                  target="_blank"
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg text-sm font-medium transition-colors border border-blue-200 w-full"
+                >
+                  <span className="inline-flex items-center justify-center w-5 h-5 bg-blue-600 text-white text-xs font-bold rounded-full flex-shrink-0">
+                    {metadata.number}
+                  </span>
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="flex-1">{title}</span>
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </Link>
+              );
+            } else {
+              const citation = metadata.citation as WebSearchCitation;
+              const domain = new URL(citation.url).hostname.replace('www.', '');
+              return (
+                <a
+                  key={`source-web-${citation.url}`}
+                  href={citation.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-green-50 hover:bg-green-100 text-green-800 rounded-lg text-sm font-medium transition-colors border border-green-200 w-full"
+                >
+                  <span className="inline-flex items-center justify-center w-5 h-5 bg-green-600 text-white text-xs font-bold rounded-full flex-shrink-0">
+                    {metadata.number}
+                  </span>
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                  </svg>
+                  <span className="flex-1">{domain}</span>
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              );
+            }
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ChatMessages({ messages, userImage, userName }: ChatMessagesProps) {
+  const { data: session } = useSession();
+  const [selectedTranscript, setSelectedTranscript] = useState<{
+    citation: TranscriptCitation;
+    number: number;
+  } | null>(null);
+  const [transcriptData, setTranscriptData] = useState<Map<string, Transcript>>(new Map());
+  const fetchedIds = useRef<Set<string>>(new Set());
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Log when messages change
+  useEffect(() => {
+    console.log('🎨 ChatMessages render - Total messages:', messages.length);
+    messages.forEach((msg, idx) => {
+      console.log(`  Message ${idx} (${msg.role}): ${msg.content.length} objects`);
+    });
+  }, [messages]);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Fetch transcript data (including chunks) for all citations in messages
+  useEffect(() => {
+    if (!session?.idToken) return;
+
+    const transcriptIds = new Set<string>();
+    
+    messages.forEach((message) => {
+      message.content.forEach((chatObject) => {
+        if (chatObject.data.type === 'transcript_citation') {
+          const citation = chatObject.data as TranscriptCitation;
+          transcriptIds.add(citation.transcript_id);
+        }
+      });
+    });
+
+    // Fetch full transcript data (including chunks) for transcripts we haven't fetched yet
+    const fetchTranscripts = async () => {
+      const idsToFetch = Array.from(transcriptIds).filter(
+        (id) => !fetchedIds.current.has(id)
+      );
+      
+      if (idsToFetch.length === 0) return;
+      
+      for (const transcriptId of idsToFetch) {
+        fetchedIds.current.add(transcriptId);
+        
+        try {
+          const response = await transcriptProtectedTranscriptGet(
+            { public_id: transcriptId },
+            session.idToken ? {
+              headers: {
+                Authorization: session.idToken,
+              },
+            } : undefined
+          );
+          if (response.status === 200) {
+            setTranscriptData((prev) => new Map(prev).set(transcriptId, response.data));
+          }
+        } catch (err) {
+          console.error(`Error fetching transcript ${transcriptId}:`, err);
+        }
+      }
+    };
+
+    if (transcriptIds.size > 0) {
+      fetchTranscripts();
+    }
+  }, [messages, session?.idToken]);
+
+  // Helper to get transcript titles from stored data
+  const transcriptTitles = useMemo(() => {
+    const titles = new Map<string, string>();
+    transcriptData.forEach((transcript, id) => {
+      titles.set(id, transcript.title);
+    });
+    return titles;
+  }, [transcriptData]);
+
+  const handleTranscriptClick = (citation: TranscriptCitation, number: number) => {
+    setSelectedTranscript({ citation, number });
+  };
+
+  const handleCloseOverlay = () => {
+    setSelectedTranscript(null);
+  };
+  
+  return (
+    <>
+    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      {messages.length === 0 ? (
+        <div className="flex items-center justify-center h-full text-gray-400">
+          <div className="text-center">
+            <svg
+              className="w-16 h-16 mx-auto mb-4 text-gray-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+            <h3 className="text-xl font-medium">Start a conversation</h3>
+            <p className="mt-2">Send a message to begin chatting</p>
+          </div>
+        </div>
+      ) : (
+          messages.map((message) => {
+            const citations = extractCitations(message);
+            const citationMap = new Map<string, CitationMetadata>();
+            
+            citations.forEach((metadata) => {
+              if (metadata.type === 'transcript') {
+                const citation = metadata.citation as TranscriptCitation;
+                const key = `transcript-${citation.transcript_id}-${citation.chunk_index}`;
+                citationMap.set(key, metadata);
+              } else {
+                const citation = metadata.citation as WebSearchCitation;
+                const key = `web-${citation.url}`;
+                citationMap.set(key, metadata);
+              }
+            });
+
+            return (
+          <div
+            key={message.public_id}
+            className={`flex ${
+              message.role === 'user' ? 'justify-end' : 'justify-start'
+            }`}
+          >
+            <div
+              className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+                message.role === 'user'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-900'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <div className="whitespace-pre-wrap break-words space-y-2">
+                    {message.content.length === 0 && message.role === 'assistant' ? (
+                      // Show typing indicator for empty assistant messages (streaming in progress)
+                      <div className="flex items-center gap-1">
+                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                      </div>
+                    ) : (
+                      message.content.map((chatObject, index) => (
+                        <ChatObjectRenderer 
+                          key={index} 
+                          chatObject={chatObject}
+                          citationMap={citationMap}
+                          transcriptTitles={transcriptTitles}
+                          onTranscriptClick={handleTranscriptClick}
+                        />
+                      ))
+                    )}
+                  </div>
+                      
+                      {/* Sources section for assistant messages */}
+                      {message.role === 'assistant' && (
+                        <SourcesSection 
+                          citations={citations}
+                          transcriptTitles={transcriptTitles}
+                        />
+                      )}
+
+                  <p
+                    className={`text-xs mt-2 ${
+                      message.role === 'user'
+                        ? 'text-blue-100'
+                        : 'text-gray-500'
+                    }`}
+                  >
+                    {formatTimestamp(message.created_on)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+            );
+          })
+      )}
+      {/* Scroll anchor for auto-scrolling */}
+      <div ref={messagesEndRef} />
+    </div>
+
+      {/* Transcript Overlay */}
+      {selectedTranscript && (
+        <TranscriptOverlay
+          citation={selectedTranscript.citation}
+          citationNumber={selectedTranscript.number}
+          authToken={session?.idToken}
+          preFetchedTranscript={transcriptData.get(selectedTranscript.citation.transcript_id)}
+          onClose={handleCloseOverlay}
+        />
+      )}
+    </>
+  );
+}
+

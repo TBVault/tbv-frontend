@@ -347,12 +347,14 @@ export default function AudioPlayer({ recordingUrl }: AudioPlayerProps) {
   // Expose seekTo function and current time for external use (e.g., from transcript timestamps)
   useEffect(() => {
     if (audioRef.current) {
-      (window as any).__audioSeekTo = (time: number) => {
+      (window as any).__audioSeekTo = (time: number, autoPlay: boolean = true) => {
         if (audioRef.current) {
           audioRef.current.currentTime = time;
           setCurrentTime(time);
-          if (!isPlaying) {
-            audioRef.current.play();
+          if (autoPlay && !isPlaying) {
+            audioRef.current.play().catch(() => {
+              // Ignore autoplay errors (user hasn't interacted with page yet)
+            });
           }
         }
       };

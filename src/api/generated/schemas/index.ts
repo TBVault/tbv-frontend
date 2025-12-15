@@ -6,16 +6,29 @@
  * OpenAPI spec version: 1.0.0
  */
 
+export * from './chatContent';
+export * from './chatObject';
+export * from './chatObjectData';
+export * from './chatRole';
+export * from './chatSession';
+export * from './chatSessionChatTopic';
+export * from './chatSessionHistoryResponse';
+export * from './chatSessionMessage';
+export * from './chatTopic';
 export * from './hTTPValidationError';
 export * from './helloDto';
 export * from './loginResponse';
 export * from './loginResponseUser';
+export * from './newMessageRequest';
 export * from './publicHelloWorldPydanticPublicHelloWorldPydanticGetParams';
+export * from './textDelta';
 export * from './transcript';
 export * from './transcriptChunk';
+export * from './transcriptCitation';
 export * from './transcriptContent';
 export * from './transcriptProtectedTranscriptGetParams';
 export * from './transcriptRecordingUrl';
+export * from './transcriptSemanticTitle';
 export * from './transcriptSource';
 export * from './transcriptSummary';
 export * from './transcriptTranscriptGetParams';
@@ -25,3 +38,4 @@ export * from './transcriptsTranscriptsGetParams';
 export * from './user';
 export * from './validationError';
 export * from './validationErrorLocItem';
+export * from './webSearchCitation';
