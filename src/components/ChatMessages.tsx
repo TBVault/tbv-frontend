@@ -511,9 +511,9 @@ export default function ChatMessages({ messages, userImage, userName }: ChatMess
   
   return (
     <>
-    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+    <div className="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col">
       {messages.length === 0 ? (
-        <div className="flex items-center justify-center h-full text-gray-400">
+        <div className="flex-1 flex items-center justify-center text-gray-400">
           <div className="text-center">
             <svg
               className="w-16 h-16 mx-auto mb-4 text-gray-300"
