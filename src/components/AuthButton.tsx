@@ -30,7 +30,7 @@ export default function AuthButton() {
 
   if (status === "loading") {
     return (
-      <div className="w-10 h-10 rounded-full bg-neutral-200 animate-pulse"></div>
+      <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-neutral-200 animate-pulse"></div>
     );
   }
 
@@ -49,13 +49,13 @@ export default function AuthButton() {
             <img
               src={session.user.image}
               alt={userName || "User"}
-              className="w-10 h-10 rounded-full border-2 border-border hover:border-primary-500 transition-colors"
+              className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-border hover:border-primary-500 transition-colors"
               onError={() => setImageError(true)}
               crossOrigin="anonymous"
               referrerPolicy="no-referrer"
             />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center font-semibold text-base border-2 border-border hover:border-primary-500 transition-colors">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary-600 text-white flex items-center justify-center font-semibold text-sm md:text-base border-2 border-border hover:border-primary-500 transition-colors">
               {userImage}
             </div>
           )}

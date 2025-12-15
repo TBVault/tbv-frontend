@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatMessages from '@/components/ChatMessages';
-import ChatInput from '@/components/ChatInput';
+import ChatInput, { type ChatInputRef } from '@/components/ChatInput';
 import type { ChatSessionMessage, ChatSession, ChatObject } from '@/api/generated/schemas';
 import { chatSessionHistoryProtectedChatSessionChatSessionIdGet } from '@/api/generated/endpoints/default/default';
 
@@ -22,6 +22,7 @@ export default function HistoricalChatInterface({ chatSessionId }: HistoricalCha
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const chatInputRef = useRef<ChatInputRef>(null);
 
   useEffect(() => {
     const fetchChatHistory = async () => {
@@ -201,6 +202,10 @@ export default function HistoricalChatInterface({ chatSessionId }: HistoricalCha
       console.error('Error sending message:', error);
     } finally {
       setIsLoading(false);
+      // Focus the input after response is complete
+      setTimeout(() => {
+        chatInputRef.current?.focus();
+      }, 100);
     }
   };
 
@@ -286,7 +291,7 @@ export default function HistoricalChatInterface({ chatSessionId }: HistoricalCha
           />
 
           {/* Input */}
-          <ChatInput onSend={handleSendMessage} disabled={isLoading} />
+          <ChatInput ref={chatInputRef} onSend={handleSendMessage} disabled={isLoading} />
         </div>
       </div>
     </main>

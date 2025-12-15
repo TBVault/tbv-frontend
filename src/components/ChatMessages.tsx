@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
 import type { 
   ChatSessionMessage, 
   ChatObject,
@@ -10,7 +11,8 @@ import type {
   TranscriptCitation,
   WebSearchCitation,
   ChatTopic,
-  Transcript
+  Transcript,
+  ChatRole
 } from '@/api/generated/schemas';
 import { transcriptProtectedTranscriptGet } from '@/api/generated/endpoints/default/default';
 
@@ -171,7 +173,55 @@ interface CitationMetadata {
   title?: string;
 }
 
-// Component to render individual ChatObject based on type
+// Component to render accumulated text as markdown (for assistant messages)
+function MarkdownText({ text }: { text: string }) {
+  return (
+    <div>
+      <ReactMarkdown
+        components={{
+          p: ({ children }) => <p className="mb-4 last:mb-0 leading-normal">{children}</p>,
+          ul: ({ children }) => <ul className="list-disc pl-5 mb-1 space-y-0">{children}</ul>,
+          ol: ({ children }) => <ol className="list-decimal pl-5 mb-1 space-y-0">{children}</ol>,
+          li: ({ children }) => <li className="leading-normal mb-0">{children}</li>,
+          code: ({ children, className }) => {
+            const isInline = !className;
+            return isInline ? (
+              <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono">
+                {children}
+              </code>
+            ) : (
+              <code className={className}>{children}</code>
+            );
+          },
+          pre: ({ children }) => (
+            <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg overflow-x-auto mb-1 text-sm">
+              {children}
+            </pre>
+          ),
+          blockquote: ({ children }) => (
+            <blockquote className="border-l-2 border-gray-300 pl-3 italic my-1 text-gray-700">
+              {children}
+            </blockquote>
+          ),
+          a: ({ href, children }) => (
+            <a href={href} className="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">
+              {children}
+            </a>
+          ),
+          h1: ({ children }) => <h1 className="text-xl font-bold mt-10 mb-2 first:mt-0">{children}</h1>,
+          h2: ({ children }) => <h2 className="text-lg font-bold mt-8 mb-1.5 first:mt-0">{children}</h2>,
+          h3: ({ children }) => <h3 className="text-base font-semibold mt-6 mb-1 first:mt-0">{children}</h3>,
+          strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+          em: ({ children }) => <em className="italic">{children}</em>,
+        }}
+      >
+        {text}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+// Component to render individual ChatObject based on type (non-text objects)
 function ChatObjectRenderer({ 
   chatObject, 
   citationMap,
@@ -185,10 +235,9 @@ function ChatObjectRenderer({
 }) {
   const data = chatObject.data;
 
-  // Type assertion and rendering for TextDelta
+  // TextDelta is handled separately by accumulating all text deltas
   if (data.type === 'text_delta') {
-    const textDelta = data as TextDelta;
-    return <span>{textDelta.delta}</span>;
+    return null;
   }
 
   // Type assertion and rendering for TranscriptCitation
@@ -508,15 +557,15 @@ export default function ChatMessages({ messages, userImage, userName }: ChatMess
             }`}
           >
             <div
-              className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+              className={`${
                 message.role === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-900'
+                  ? 'w-full min-[500px]:max-w-[70%] bg-gray-200 text-gray-900 rounded-2xl px-4 py-3'
+                  : 'w-full text-gray-900'
               }`}
             >
               <div className="flex items-start gap-3">
                 <div className="flex-1">
-                  <div className="whitespace-pre-wrap break-words space-y-2">
+                  <div className="break-words">
                     {message.content.length === 0 && message.role === 'assistant' ? (
                       // Show typing indicator for empty assistant messages (streaming in progress)
                       <div className="flex items-center gap-1">
@@ -525,7 +574,28 @@ export default function ChatMessages({ messages, userImage, userName }: ChatMess
                         <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                       </div>
                     ) : (
-                      message.content.map((chatObject, index) => (
+                      <>
+                        {/* Accumulate and render all text deltas as markdown for assistant, plain text for user */}
+                        {(() => {
+                          const textDeltas = message.content
+                            .filter((obj) => obj.data.type === 'text_delta')
+                            .map((obj) => (obj.data as TextDelta).delta)
+                            .join('');
+                          
+                          if (textDeltas) {
+                            return message.role === 'assistant' ? (
+                              <MarkdownText text={textDeltas} />
+                            ) : (
+                              <span>{textDeltas}</span>
+                            );
+                          }
+                          return null;
+                        })()}
+                        
+                        {/* Render non-text objects (citations, etc.) */}
+                        {message.content
+                          .filter((obj) => obj.data.type !== 'text_delta')
+                          .map((chatObject, index) => (
                         <ChatObjectRenderer 
                           key={index} 
                           chatObject={chatObject}
@@ -533,7 +603,8 @@ export default function ChatMessages({ messages, userImage, userName }: ChatMess
                           transcriptTitles={transcriptTitles}
                           onTranscriptClick={handleTranscriptClick}
                         />
-                      ))
+                          ))}
+                      </>
                     )}
                   </div>
                       
@@ -545,15 +616,11 @@ export default function ChatMessages({ messages, userImage, userName }: ChatMess
                         />
                       )}
 
-                  <p
-                    className={`text-xs mt-2 ${
-                      message.role === 'user'
-                        ? 'text-blue-100'
-                        : 'text-gray-500'
-                    }`}
-                  >
-                    {formatTimestamp(message.created_on)}
-                  </p>
+                  {message.role === 'user' && (
+                    <p className="text-xs mt-2 text-gray-500">
+                      {formatTimestamp(message.created_on)}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

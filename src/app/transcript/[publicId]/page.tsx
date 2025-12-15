@@ -147,13 +147,7 @@ export default async function TranscriptPage({ params }: PageProps) {
               <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="px-3 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-sm font-medium">
-                    Philosophy
-                  </div>
-                  <div className="px-3 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-sm font-medium">
                     Spirituality
-                  </div>
-                  <div className="px-3 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-sm font-medium">
-                    Discussion
                   </div>
                 </div>
                 {transcriptData.data.source && (

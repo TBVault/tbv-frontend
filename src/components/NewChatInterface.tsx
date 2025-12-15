@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatMessages from '@/components/ChatMessages';
-import ChatInput from '@/components/ChatInput';
+import ChatInput, { type ChatInputRef } from '@/components/ChatInput';
 import type { ChatSessionMessage, ChatObject } from '@/api/generated/schemas';
 import { chatSessionProtectedCreateChatSessionPost } from '@/api/generated/endpoints/default/default';
 
@@ -16,6 +16,7 @@ export default function NewChatInterface() {
   const [messages, setMessages] = useState<ChatSessionMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const chatSessionIdRef = useRef<string | null>(null);
+  const chatInputRef = useRef<ChatInputRef>(null);
 
   const handleSendMessage = async (content: string) => {
     if (!session?.idToken) {
@@ -212,6 +213,10 @@ export default function NewChatInterface() {
       }
     } finally {
       setIsLoading(false);
+      // Focus the input after response is complete
+      setTimeout(() => {
+        chatInputRef.current?.focus();
+      }, 100);
     }
   };
 
@@ -219,10 +224,10 @@ export default function NewChatInterface() {
     <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
       <ChatSidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
       
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        <div className="bg-white rounded-xl shadow-lg border border-border flex flex-col" style={{ height: 'calc(100vh - var(--header-height) - 5rem)' }}>
+      <div className="max-w-5xl mx-auto px-6 py-10 flex flex-col" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
+        <div className="bg-white rounded-xl shadow-lg border border-border flex flex-col flex-1" style={{ maxHeight: 'calc(100vh - var(--header-height) - 5rem)' }}>
           {/* Header */}
-          <div className="bg-white border-b border-gray-200 p-4 rounded-t-xl flex items-center justify-between">
+          <div className="bg-white border-b border-gray-200 p-4 rounded-t-xl flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -257,7 +262,9 @@ export default function NewChatInterface() {
           />
 
           {/* Input */}
-          <ChatInput onSend={handleSendMessage} disabled={isLoading} />
+          <div className="flex-shrink-0">
+            <ChatInput ref={chatInputRef} onSend={handleSendMessage} disabled={isLoading} />
+          </div>
         </div>
       </div>
     </main>

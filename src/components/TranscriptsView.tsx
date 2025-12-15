@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Transcript } from '@/api/generated/schemas';
@@ -155,24 +155,39 @@ export default function TranscriptsView({ transcripts, currentPage, totalPages }
   const router = useRouter();
   
   const [viewMode, setViewMode] = useState<'grid' | 'row'>('row');
+  const prevWidthRef = useRef<number | null>(null);
 
   // Set initial view mode based on screen width on mount
   useEffect(() => {
-    if (window.innerWidth < 750) {
+    const initialWidth = window.innerWidth;
+    prevWidthRef.current = initialWidth;
+    if (initialWidth < 750) {
       setViewMode('grid');
     }
   }, []);
 
-  // Update view mode on window resize
+  // Update view mode on window resize - only when crossing the 750px threshold
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 750 && viewMode === 'row') {
-        // Auto-switch to grid when window becomes smaller than 750px
-        setViewMode('grid');
-      } else if (window.innerWidth >= 750 && viewMode === 'grid') {
-        // Auto-switch to row when window becomes 750px or larger (row is default for >= 750px)
-        setViewMode('row');
+      const currentWidth = window.innerWidth;
+      const prevWidth = prevWidthRef.current;
+
+      // Only change view mode when crossing the 750px threshold
+      if (prevWidth !== null) {
+        const wasBelowThreshold = prevWidth < 750;
+        const isBelowThreshold = currentWidth < 750;
+
+        // Crossing from >= 750px to < 750px: switch to grid
+        if (!wasBelowThreshold && isBelowThreshold && viewMode === 'row') {
+          setViewMode('grid');
+        }
+        // Crossing from < 750px to >= 750px: switch to row
+        else if (wasBelowThreshold && !isBelowThreshold && viewMode === 'grid') {
+          setViewMode('row');
+        }
       }
+
+      prevWidthRef.current = currentWidth;
     };
 
     window.addEventListener('resize', handleResize);
@@ -196,7 +211,7 @@ export default function TranscriptsView({ transcripts, currentPage, totalPages }
           <h1 className="text-4xl font-bold text-foreground mb-2">Transcripts</h1>
           <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa's lectures and talks</p>
         </div>
-        <div className="flex items-center gap-2 bg-background border border-border rounded-lg p-1">
+        <div className="hidden min-[750px]:flex items-center gap-2 bg-background border border-border rounded-lg p-1">
           <button
             onClick={() => setViewMode('grid')}
             className={`p-2 rounded transition-colors ${
@@ -267,16 +282,7 @@ export default function TranscriptsView({ transcripts, currentPage, totalPages }
                   {/* Tags - hardcoded */}
                   <div className="flex flex-wrap gap-2">
                     <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
-                      Philosophy
-                    </div>
-                    <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
                       Spirituality
-                    </div>
-                    <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
-                      Discussion
-                    </div>
-                    <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
-                      Religion
                     </div>
                   </div>
                 </>
@@ -292,13 +298,7 @@ export default function TranscriptsView({ transcripts, currentPage, totalPages }
                   {/* Tags - hardcoded */}
                   <div className="flex flex-wrap gap-2 justify-end">
                     <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
-                      Philosophy
-                    </div>
-                    <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
                       Spirituality
-                    </div>
-                    <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
-                      Discussion
                     </div>
                   </div>
                 </>
