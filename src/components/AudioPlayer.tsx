@@ -5,9 +5,12 @@ import formatTime from '@/utils/formatTime';
 
 interface AudioPlayerProps {
   recordingUrl: string;
+  title?: string;
+  artist?: string;
+  artwork?: string;
 }
 
-export default function AudioPlayer({ recordingUrl }: AudioPlayerProps) {
+export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', artist = 'H.G. Vaiśeṣika Dāsa', artwork }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -373,6 +376,74 @@ export default function AudioPlayer({ recordingUrl }: AudioPlayerProps) {
       delete (window as any).__audioIsPlaying;
     };
   }, [isPlaying, isDragging, currentTime]);
+
+  // Set up MediaSession API for iOS and other platforms
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      // Get the absolute URL for the artwork
+      const artworkUrl = artwork || `${window.location.origin}/apple-icon.png`;
+      
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: title,
+        artist: artist,
+        artwork: [
+          { src: artworkUrl, sizes: '96x96', type: 'image/png' },
+          { src: artworkUrl, sizes: '128x128', type: 'image/png' },
+          { src: artworkUrl, sizes: '192x192', type: 'image/png' },
+          { src: artworkUrl, sizes: '256x256', type: 'image/png' },
+          { src: artworkUrl, sizes: '384x384', type: 'image/png' },
+          { src: artworkUrl, sizes: '512x512', type: 'image/png' },
+        ],
+      });
+
+      // Set up action handlers for media controls
+      navigator.mediaSession.setActionHandler('play', () => {
+        audioRef.current?.play().catch(console.error);
+      });
+
+      navigator.mediaSession.setActionHandler('pause', () => {
+        audioRef.current?.pause();
+      });
+
+      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+        const skipTime = details.seekOffset || 10;
+        if (audioRef.current) {
+          audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - skipTime);
+        }
+      });
+
+      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+        const skipTime = details.seekOffset || 10;
+        if (audioRef.current && audioDuration) {
+          audioRef.current.currentTime = Math.min(audioDuration, audioRef.current.currentTime + skipTime);
+        }
+      });
+
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details.seekTime !== null && details.seekTime !== undefined && audioRef.current) {
+          audioRef.current.currentTime = details.seekTime;
+        }
+      });
+    }
+  }, [title, artist, artwork, audioDuration]);
+
+  // Update MediaSession playback state
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    }
+  }, [isPlaying]);
+
+  // Update MediaSession position state
+  useEffect(() => {
+    if ('mediaSession' in navigator && audioDuration > 0) {
+      navigator.mediaSession.setPositionState({
+        duration: audioDuration,
+        playbackRate: 1,
+        position: currentTime,
+      });
+    }
+  }, [currentTime, audioDuration]);
 
   return (
     <>

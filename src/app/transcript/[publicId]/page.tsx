@@ -147,7 +147,11 @@ export default async function TranscriptPage({ params }: PageProps) {
       
       {/* Audio Player - Fixed at bottom */}
       {transcriptData?.status === 200 && transcriptData.data.recording_url && (
-        <AudioPlayer recordingUrl={transcriptData.data.recording_url} />
+        <AudioPlayer 
+          recordingUrl={transcriptData.data.recording_url}
+          title={transcriptData.data.semantic_title || transcriptData.data.title}
+          artist="H.G. Vaiśeṣika Dāsa"
+        />
       )}
     </main>
   );

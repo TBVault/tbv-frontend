@@ -7,7 +7,13 @@ export const metadata = {
   title: "The Bhakti Vault",
   description: "H.G. Vaiśeṣika Dāsa's Lecture Archive",
   icons: {
-    icon: '/icon.svg',
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '512x512', type: 'image/png' },
+    ],
   },
 };
 
