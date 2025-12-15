@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
@@ -10,6 +11,7 @@ import { chatSessionProtectedCreateChatSessionPost } from '@/api/generated/endpo
 
 export default function NewChatInterface() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [messages, setMessages] = useState<ChatSessionMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,18 +28,28 @@ export default function NewChatInterface() {
     try {
       // Create chat session if this is the first message
       if (!chatSessionIdRef.current) {
-        const sessionResponse = await chatSessionProtectedCreateChatSessionPost({
-          headers: {
-            Authorization: session.idToken,
-          },
-        });
+        try {
+          const sessionResponse = await chatSessionProtectedCreateChatSessionPost({
+            headers: {
+              Authorization: session.idToken,
+            },
+          });
 
-        if (sessionResponse.status === 200) {
-          chatSessionIdRef.current = sessionResponse.data.public_id;
-        } else {
-          console.error('Failed to create chat session');
-          setIsLoading(false);
-          return;
+          if (sessionResponse.status === 200) {
+            chatSessionIdRef.current = sessionResponse.data.public_id;
+          } else {
+            console.error('Failed to create chat session');
+            setIsLoading(false);
+            return;
+          }
+        } catch (err: any) {
+          // Check for authentication errors
+          if (err?.status === 401 || err?.status === 403 || err?.message?.includes('401') || err?.message?.includes('403')) {
+            router.push('/auth/error');
+            setIsLoading(false);
+            return;
+          }
+          throw err;
         }
       }
 
@@ -84,6 +96,12 @@ export default function NewChatInterface() {
       });
 
       if (!response.ok) {
+        // Check for authentication errors
+        if (response.status === 401 || response.status === 403) {
+          router.push('/auth/error');
+          setIsLoading(false);
+          return;
+        }
         throw new Error(`Failed to send message: ${response.statusText}`);
       }
 
@@ -186,8 +204,12 @@ export default function NewChatInterface() {
       // Note: We don't redirect to /chat/[id] to avoid interrupting the conversation.
       // The chat session is created and messages are saved on the backend.
       // Users can access this conversation later from the chat history sidebar.
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
+      // Check for authentication errors (in case they weren't caught earlier)
+      if (error?.status === 401 || error?.status === 403 || error?.message?.includes('401') || error?.message?.includes('403')) {
+        router.push('/auth/error');
+      }
     } finally {
       setIsLoading(false);
     }

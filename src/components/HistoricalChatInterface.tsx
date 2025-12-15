@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
@@ -14,11 +15,13 @@ interface HistoricalChatInterfaceProps {
 
 export default function HistoricalChatInterface({ chatSessionId }: HistoricalChatInterfaceProps) {
   const { data: session } = useSession();
+  const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [chatSession, setChatSession] = useState<ChatSession | null>(null);
   const [messages, setMessages] = useState<ChatSessionMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchChatHistory = async () => {
@@ -41,8 +44,14 @@ export default function HistoricalChatInterface({ chatSessionId }: HistoricalCha
           setChatSession(response.data.chat_session);
           setMessages(response.data.messages);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching chat history:', error);
+        // Check for authentication errors
+        if (error?.status === 401 || error?.status === 403 || error?.message?.includes('401') || error?.message?.includes('403')) {
+          router.push('/auth/error');
+          return;
+        }
+        setError(error?.message || 'Failed to fetch chat session');
       } finally {
         setLoading(false);
       }
@@ -202,6 +211,19 @@ export default function HistoricalChatInterface({ chatSessionId }: HistoricalCha
           <div className="bg-white rounded-xl shadow-lg border border-border p-8 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading chat...</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
+        <div className="max-w-5xl mx-auto px-6 py-10">
+          <div className="bg-error-50 border-l-4 border-error-500 rounded-r-xl p-6 shadow-sm">
+            <h3 className="font-semibold text-error-900 mb-1">Error Loading Chat</h3>
+            <p className="text-error-800">{error}</p>
           </div>
         </div>
       </main>
