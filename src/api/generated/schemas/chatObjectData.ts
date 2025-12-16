@@ -9,5 +9,6 @@ import type { TextDelta } from './textDelta';
 import type { TranscriptCitation } from './transcriptCitation';
 import type { WebSearchCitation } from './webSearchCitation';
 import type { ChatTopic } from './chatTopic';
+import type { ChatProgress } from './chatProgress';
 
-export type ChatObjectData = TextDelta | TranscriptCitation | WebSearchCitation | ChatTopic;
+export type ChatObjectData = TextDelta | TranscriptCitation | WebSearchCitation | ChatTopic | ChatProgress;

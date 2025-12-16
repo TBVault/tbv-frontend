@@ -251,8 +251,6 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
           {/* Messages */}
           <ChatMessages
             messages={messages}
-            userImage={session?.user?.image}
-            userName={session?.user?.name}
           />
 
           {/* Input */}

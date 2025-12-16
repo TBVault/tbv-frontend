@@ -23,6 +23,10 @@ export default async function ChatPage() {
       headers: {
         Authorization: session.idToken.trim(),
       },
+      next: {
+        revalidate: 10, // Cache for 10 seconds
+        tags: ['chat-sessions'],
+      },
     });
 
     if (response.status === 200) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useClickOutside } from "@/utils/useClickOutside";
@@ -32,13 +33,14 @@ export default function AuthButton() {
           aria-label="User menu"
         >
           {session.user.image && !imageError ? (
-            <img
+            <Image
               src={session.user.image}
               alt={userName || "User"}
+              width={40}
+              height={40}
               className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-border hover:border-primary-500 transition-colors"
               onError={() => setImageError(true)}
               crossOrigin="anonymous"
-              referrerPolicy="no-referrer"
             />
           ) : (
             <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary-600 text-white flex items-center justify-center font-semibold text-sm md:text-base border-2 border-border hover:border-primary-500 transition-colors">

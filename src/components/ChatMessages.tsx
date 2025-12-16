@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
@@ -10,14 +10,13 @@ import type {
   TextDelta,
   TranscriptCitation,
   WebSearchCitation,
-  Transcript
+  Transcript,
+  ChatProgress
 } from '@/api/generated/schemas';
 import { transcriptProtectedTranscriptGet } from '@/api/generated/endpoints/default/default';
 
 interface ChatMessagesProps {
   messages: ChatSessionMessage[];
-  userImage?: string | null;
-  userName?: string | null;
   preFetchedTranscripts?: Map<string, Transcript>;
 }
 
@@ -239,6 +238,11 @@ function ChatObjectRenderer({
     return null;
   }
 
+  // ChatProgress is handled separately at the top of messages
+  if (data.type === 'chat_progress') {
+    return null;
+  }
+
   // Type assertion and rendering for TranscriptCitation
   if (data.type === 'transcript_citation') {
     const citation = data as TranscriptCitation;
@@ -427,10 +431,11 @@ function SourcesSection({
   );
 }
 
-export default function ChatMessages({
+function ChatMessages({
   messages,
-  preFetchedTranscripts = new Map()
+  preFetchedTranscripts = new Map<string, Transcript>()
 }: ChatMessagesProps) {
+
   const { data: session } = useSession();
   const [selectedTranscript, setSelectedTranscript] = useState<{
     citation: TranscriptCitation;
@@ -439,11 +444,75 @@ export default function ChatMessages({
   const [transcriptData, setTranscriptData] = useState<Map<string, Transcript>>(preFetchedTranscripts);
   const fetchedIds = useRef<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const userHasScrolledUpRef = useRef(false);
+  const isAutoScrollingRef = useRef(false);
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom when messages change (including during streaming)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = scrollContainerRef.current;
+    if (!container) {
+      return;
+    }
+    
+    if (userHasScrolledUpRef.current) {
+      return;
+    }
+
+    // Set flag to prevent scroll event handler from interfering
+    isAutoScrollingRef.current = true;
+    
+    // Scroll to bottom - use RAF to ensure DOM is updated
+    requestAnimationFrame(() => {
+      if (container && !userHasScrolledUpRef.current) {
+        container.scrollTop = container.scrollHeight;
+        // Reset flag after scroll completes
+        setTimeout(() => {
+          isAutoScrollingRef.current = false;
+        }, 50);
+      }
+    });
   }, [messages]);
+
+  // Track user scroll position
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      // Ignore our own programmatic scrolls
+      if (isAutoScrollingRef.current) {
+        return;
+      }
+
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+      
+      // If user scrolled up more than 150px from bottom, mark as scrolled up
+      // If they're near the bottom, mark as not scrolled up (re-enable auto-scroll)
+      userHasScrolledUpRef.current = distanceFromBottom > 150;
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // On mount, ensure we start at bottom
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    
+    userHasScrolledUpRef.current = false;
+    
+    // Scroll to bottom after a brief delay to let content render
+    const timeoutId = setTimeout(() => {
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, []); // Only on mount, not when messages change
 
   // Initialize fetchedIds with pre-fetched transcripts
   useEffect(() => {
@@ -520,7 +589,7 @@ export default function ChatMessages({
   
   return (
     <>
-    <div className="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col">
+    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col">
       {messages.length === 0 ? (
         <div className="flex-1 flex items-center justify-center text-gray-400">
           <div className="text-center">
@@ -575,46 +644,85 @@ export default function ChatMessages({
               <div className="flex items-start gap-3">
                 <div className="flex-1">
                   <div className="break-words">
-                    {message.content.length === 0 && message.role === 'assistant' ? (
-                      // Show typing indicator for empty assistant messages (streaming in progress)
-                      <div className="flex items-center gap-1">
-                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    {(() => {
+                      // Check for ChatProgress in assistant messages
+                      const chatProgress = message.content.find(
+                        (obj) => obj.data.type === 'chat_progress'
+                      )?.data as ChatProgress | undefined;
+                      
+                      const hasContent = message.content.some(
+                        (obj) => obj.data.type !== 'chat_progress'
+                      );
+                      
+                      // Show progress or typing indicator for assistant messages with no content yet
+                      if (message.role === 'assistant' && !hasContent) {
+                        if (chatProgress?.progress) {
+                          return (
+                            <div className="text-gray-600 animate-pulse">
+                              {chatProgress.progress}
+                            </div>
+                          );
+                        }
+                        // Fallback to typing indicator if no progress
+                        return (
+                      <div className="flex items-center gap-1.5 py-1">
+                        <span className="typing-dot w-2 h-2 bg-gray-500 rounded-full"></span>
+                        <span className="typing-dot w-2 h-2 bg-gray-500 rounded-full"></span>
+                        <span className="typing-dot w-2 h-2 bg-gray-500 rounded-full"></span>
                       </div>
-                    ) : (
+                        );
+                      }
+                      
+                      // Check if there's any actual content (text deltas or citations)
+                      const hasTextDeltas = message.content.some(
+                        (obj) => obj.data.type === 'text_delta'
+                      );
+                      const hasCitations = message.content.some(
+                        (obj) => obj.data.type === 'transcript_citation' || obj.data.type === 'web_search_citation'
+                      );
+                      const hasActualContent = hasTextDeltas || hasCitations;
+                      
+                      return (
                       <>
+                          {/* Show ChatProgress at the top for assistant messages, but only if no content has appeared yet */}
+                          {message.role === 'assistant' && chatProgress?.progress && !hasActualContent && (
+                            <div className="text-gray-600 mb-2 animate-pulse">
+                              {chatProgress.progress}
+                            </div>
+                          )}
+                          
                         {/* Accumulate and render all text deltas as markdown for assistant, plain text for user */}
                         {(() => {
                           const textDeltas = message.content
                             .filter((obj) => obj.data.type === 'text_delta')
                             .map((obj) => (obj.data as TextDelta).delta)
                             .join('');
+                            
+                            if (textDeltas) {
+                              return message.role === 'assistant' ? (
+                                <MarkdownText text={textDeltas} />
+                              ) : (
+                                <span>{textDeltas}</span>
+                              );
+                            }
+                            return null;
+                          })()}
                           
-                          if (textDeltas) {
-                            return message.role === 'assistant' ? (
-                              <MarkdownText text={textDeltas} />
-                            ) : (
-                              <span>{textDeltas}</span>
-                            );
-                          }
-                          return null;
-                        })()}
-                        
-                        {/* Render non-text objects (citations, etc.) */}
-                        {message.content
-                          .filter((obj) => obj.data.type !== 'text_delta')
-                          .map((chatObject, index) => (
-                        <ChatObjectRenderer 
-                          key={index} 
-                          chatObject={chatObject}
-                          citationMap={citationMap}
-                          transcriptTitles={transcriptTitles}
-                          onTranscriptClick={handleTranscriptClick}
-                        />
-                          ))}
-                      </>
-                    )}
+                          {/* Render non-text objects (citations, etc.) - exclude chat_progress */}
+                          {message.content
+                            .filter((obj) => obj.data.type !== 'text_delta' && obj.data.type !== 'chat_progress')
+                            .map((chatObject, index) => (
+                          <ChatObjectRenderer 
+                            key={index} 
+                            chatObject={chatObject}
+                            citationMap={citationMap}
+                            transcriptTitles={transcriptTitles}
+                            onTranscriptClick={handleTranscriptClick}
+                          />
+                            ))}
+                        </>
+                      );
+                    })()}
                   </div>
                       
                       {/* Sources section for assistant messages */}
@@ -654,4 +762,20 @@ export default function ChatMessages({
     </>
   );
 }
+
+// Simple memo - only skip update if messages array reference is the same
+// During streaming, content changes so we need to allow updates
+// But we can skip updates when only the reference changes (parent re-render with same data)
+export default memo(ChatMessages, (prevProps, nextProps) => {
+  // Fast path: same references = skip update
+  if (prevProps.messages === nextProps.messages && 
+      prevProps.preFetchedTranscripts === nextProps.preFetchedTranscripts) {
+    return true; // Skip update
+  }
+  
+  // During streaming, messages array reference changes but we need updates
+  // So we always allow updates - memo is mainly to prevent unnecessary re-renders
+  // when parent re-renders with identical props
+  return false; // Allow update
+});
 

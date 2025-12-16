@@ -436,6 +436,9 @@
               },
               {
                 "$ref": "#/components/schemas/ChatTopic"
+              },
+              {
+                "$ref": "#/components/schemas/ChatProgress"
               }
             ],
             "title": "Data"
@@ -446,6 +449,25 @@
           "data"
         ],
         "title": "ChatObject"
+      },
+      "ChatProgress": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "chat_progress",
+            "title": "Type",
+            "default": "chat_progress"
+          },
+          "progress": {
+            "type": "string",
+            "title": "Progress"
+          }
+        },
+        "type": "object",
+        "required": [
+          "progress"
+        ],
+        "title": "ChatProgress"
       },
       "ChatRole": {
         "type": "string",

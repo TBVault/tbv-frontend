@@ -31,7 +31,7 @@ const getChatSessionData = cache(async (chatSessionId: string) => {
           Authorization: session.idToken.trim(),
         },
         next: {
-          revalidate: 10, // Cache for 10 seconds
+          revalidate: 0, // Don't cache
           tags: ['chat-session', `chat-session-${chatSessionId}`],
         },
       }
@@ -140,6 +140,10 @@ export default async function HistoricalChatPage({ params }: PageProps) {
     const response = await chatSessionsProtectedChatSessionsGet({
       headers: {
         Authorization: session.idToken.trim(),
+      },
+      next: {
+        revalidate: 10, // Cache for 10 seconds
+        tags: ['chat-sessions'],
       },
     });
 

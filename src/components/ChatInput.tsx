@@ -60,6 +60,8 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled =
           <div className="flex-1 relative">
             <textarea
               ref={textareaRef}
+              id="chat-message-input"
+              name="message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={(e) => {

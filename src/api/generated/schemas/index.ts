@@ -9,6 +9,7 @@
 export * from './chatContent';
 export * from './chatObject';
 export * from './chatObjectData';
+export * from './chatProgress';
 export * from './chatRole';
 export * from './chatSession';
 export * from './chatSessionChatTopic';

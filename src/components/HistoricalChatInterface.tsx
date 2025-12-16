@@ -40,13 +40,14 @@ export default function HistoricalChatInterface({
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const Container = ({ children }: { children: React.ReactNode }) => (
+  // Stable Container component - defined outside render to prevent remounts
+  const Container = useCallback(({ children }: { children: React.ReactNode }) => (
     <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
       <div className="max-w-5xl mx-auto px-6 py-10">
         {children}
       </div>
     </main>
-  );
+  ), []);
 
   const handleError = useCallback((error: { status?: number; message?: string }) => {
     const status = error?.status;
@@ -287,9 +288,8 @@ export default function HistoricalChatInterface({
 
           {/* Messages */}
           <ChatMessages
+            key={`chat-messages-${chatSessionId}`}
             messages={messages}
-            userImage={session?.user?.image}
-            userName={session?.user?.name}
             preFetchedTranscripts={preFetchedTranscripts}
           />
 
