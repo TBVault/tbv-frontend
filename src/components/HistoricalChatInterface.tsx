@@ -36,6 +36,7 @@ export default function HistoricalChatInterface({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chatNotFound, setChatNotFound] = useState(false);
+  const [chatTopic, setChatTopic] = useState<string | null>(initialChatSession?.chat_topic || null);
   const chatInputRef = useRef<ChatInputRef>(null);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
@@ -101,6 +102,7 @@ export default function HistoricalChatInterface({
         if (response.status === 200) {
           setChatSession(response.data.chat_session);
           setMessages(response.data.messages);
+          setChatTopic(response.data.chat_session?.chat_topic || null);
           setLoading(false);
         }
       } catch (error: unknown) {
@@ -280,7 +282,7 @@ export default function HistoricalChatInterface({
               </button>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
-                  {chatSession?.chat_topic || 'Conversation'}
+                  {chatTopic || chatSession?.chat_topic || 'Conversation'}
                 </h1>
               </div>
             </div>
@@ -291,6 +293,7 @@ export default function HistoricalChatInterface({
             key={`chat-messages-${chatSessionId}`}
             messages={messages}
             preFetchedTranscripts={preFetchedTranscripts}
+            onChatTopic={setChatTopic}
           />
 
           {/* Input */}

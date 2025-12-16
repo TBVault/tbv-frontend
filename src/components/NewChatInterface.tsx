@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput, { type ChatInputRef } from '@/components/ChatInput';
 import ChatSidebar from '@/components/ChatSidebar';
@@ -17,13 +17,60 @@ interface NewChatInterfaceProps {
 export default function NewChatInterface({ initialChatSessions = [] }: NewChatInterfaceProps) {
   const { data: session } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [messages, setMessages] = useState<ChatSessionMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [chatTopic, setChatTopic] = useState<string | null>(null);
   const chatSessionIdRef = useRef<string | null>(null);
   const chatInputRef = useRef<ChatInputRef>(null);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+  // Handle page reload: redirect to chat history if there's an active session
+  useEffect(() => {
+    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+    const isReload = navigation?.type === 'reload';
+
+    if (isReload) {
+      const storedSessionId = localStorage.getItem('currentChatSessionId');
+      if (storedSessionId) {
+        // Clear localStorage and redirect to the chat history page
+        localStorage.removeItem('currentChatSessionId');
+        router.replace(`/chat/${storedSessionId}`);
+        return;
+      }
+    }
+    
+    // For regular navigation, reset chat state to ensure fresh chat
+    setMessages([]);
+    setChatTopic(null);
+    chatSessionIdRef.current = null;
+    localStorage.removeItem('currentChatSessionId');
+  }, [router]);
+
+  // Reset state when the reset query parameter changes (for same-route navigation)
+  useEffect(() => {
+    const resetParam = searchParams.get('reset');
+    if (resetParam) {
+      setMessages([]);
+      setChatTopic(null);
+      chatSessionIdRef.current = null;
+      localStorage.removeItem('currentChatSessionId');
+      
+      // Clean up the URL by removing the query parameter
+      router.replace('/chat');
+    }
+  }, [searchParams, router]);
+
+  // Auto-focus input when new chat loads
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      chatInputRef.current?.focus();
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Stable Container component - defined outside render to prevent remounts
   const Container = useCallback(({ children }: { children: React.ReactNode }) => (
@@ -50,25 +97,6 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
     content: role === 'user' && content ? [{ data: { type: 'text_delta', delta: content } }] : [],
     created_on: Math.floor(Date.now() / 1000),
   });
-
-  // Check for stored session ID on mount (only on reload)
-  useEffect(() => {
-    // Check if this is a page reload by looking at performance navigation
-    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-    const isReload = navigation?.type === 'reload';
-
-    if (isReload) {
-      const storedSessionId = localStorage.getItem('currentChatSessionId');
-      if (storedSessionId) {
-        // Clear localStorage and redirect to the chat page
-        localStorage.removeItem('currentChatSessionId');
-        router.replace(`/chat/${storedSessionId}`);
-      }
-    } else {
-      // If this is navigation (not reload), clear any stored session
-      localStorage.removeItem('currentChatSessionId');
-    }
-  }, [router]);
 
   const handleSendMessage = async (content: string) => {
     if (!session?.idToken) {
@@ -243,7 +271,7 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
               </button>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
-                  {chatSessionIdRef.current ? 'Continue Chat' : 'New Chat'}
+                  {chatTopic || 'New Chat'}
                 </h1>
               </div>
             </div>
@@ -253,6 +281,7 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
           <ChatMessages
             key={chatSessionIdRef.current || 'new-chat'}
             messages={messages}
+            onChatTopic={setChatTopic}
           />
 
           {/* Input */}

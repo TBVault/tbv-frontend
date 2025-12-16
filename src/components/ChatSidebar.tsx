@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import type { ChatSession } from '@/api/generated/schemas';
 
 interface ChatSidebarProps {
@@ -25,9 +25,24 @@ export default function ChatSidebar({
   initialLoading = false
 }: ChatSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   // Use initialChatSessions directly as initial state
   const [chatSessions] = useState<ChatSession[]>(() => initialChatSessions);
   const [loading] = useState(initialLoading);
+
+  // Handle clicking "New Chat" button
+  const handleNewChat = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault(); // Prevent default Link navigation
+    localStorage.removeItem('currentChatSessionId');
+    onToggle(); // Close the sidebar
+    
+    // If already on /chat, use router to navigate with a timestamp to force reset
+    if (pathname === '/chat') {
+      router.push(`/chat?reset=${Date.now()}`);
+    } else {
+      router.push('/chat');
+    }
+  };
 
   return (
     <>
@@ -74,6 +89,7 @@ export default function ChatSidebar({
           <div className="p-4">
             <Link
               href="/chat"
+              onClick={handleNewChat}
               className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg font-medium"
             >
               <svg

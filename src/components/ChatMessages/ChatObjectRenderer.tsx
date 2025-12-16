@@ -1,0 +1,94 @@
+import type { 
+  ChatObject,
+  TranscriptCitation,
+  WebSearchCitation,
+} from '@/api/generated/schemas';
+import type { CitationMetadata } from './types';
+
+// Component to render individual ChatObject based on type (non-text objects)
+export function ChatObjectRenderer({ 
+  chatObject, 
+  citationMap,
+  transcriptTitles,
+  webTitles,
+  onTranscriptClick
+}: { 
+  chatObject: ChatObject;
+  citationMap: Map<string, CitationMetadata>;
+  transcriptTitles: Map<string, string>;
+  webTitles: Map<string, string>;
+  onTranscriptClick: (citation: TranscriptCitation, number: number) => void;
+}) {
+  const data = chatObject.data;
+
+  // TextDelta is handled separately by accumulating all text deltas
+  if (data.type === 'text_delta') {
+    return null;
+  }
+
+  // ChatProgress is handled separately at the top of messages
+  if (data.type === 'chat_progress') {
+    return null;
+  }
+
+  // Type assertion and rendering for TranscriptCitation
+  if (data.type === 'transcript_citation') {
+    const citation = data as TranscriptCitation;
+    const key = `transcript-${citation.transcript_id}-${citation.chunk_index}`;
+    const metadata = citationMap.get(key);
+    const title = transcriptTitles.get(citation.transcript_id) || 'Transcript';
+    const truncatedTitle = title.length > 20 ? title.substring(0, 20) + '...' : title;
+    
+    return (
+      <button
+        onClick={() => onTranscriptClick(citation, metadata?.number || 0)}
+        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-full text-sm font-medium transition-colors cursor-pointer"
+      >
+        <span className="inline-flex items-center justify-center w-4 h-4 bg-blue-600 text-white text-xs font-bold rounded-full">
+          {metadata?.number || '?'}
+        </span>
+        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span className="text-xs">{truncatedTitle}</span>
+      </button>
+    );
+  }
+
+  // Type assertion and rendering for WebSearchCitation
+  if (data.type === 'web_search_citation') {
+    const citation = data as WebSearchCitation;
+    const key = `web-${citation.url}`;
+    const metadata = citationMap.get(key);
+    const title = webTitles.get(citation.url);
+    const displayText = title || new URL(citation.url).hostname.replace('www.', '');
+    const truncatedText = displayText.length > 20 ? displayText.substring(0, 20) + '...' : displayText;
+    
+    return (
+      <a
+        href={citation.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 hover:bg-green-200 text-green-800 rounded-full text-sm font-medium transition-colors"
+        title={title || citation.url}
+      >
+        <span className="inline-flex items-center justify-center w-4 h-4 bg-green-600 text-white text-xs font-bold rounded-full">
+          {metadata?.number || '?'}
+        </span>
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+        </svg>
+        <span className="text-xs">{truncatedText}</span>
+      </a>
+    );
+  }
+
+  // ChatTopic should not be rendered in messages (it's metadata)
+  if (data.type === 'chat_topic') {
+    return null;
+  }
+
+  // Fallback for unknown types
+  return null;
+}
+
