@@ -29,7 +29,7 @@ export function processStreamBuffer(
         try {
           const chatObject: ChatObject = JSON.parse(jsonStr);
           onObject(chatObject);
-        } catch (e) {
+        } catch {
           // Skip invalid JSON
         }
 

@@ -30,7 +30,7 @@ export default async function Home() {
         recentTranscripts = response.data.transcripts.slice(0, 3);
         totalCount = response.data.total_count;
       }
-    } catch (error: any) {
+    } catch {
       // Silently handle token expiration - user will be prompted to re-auth when they navigate
       console.log('Unable to fetch transcripts - session may have expired');
     }
@@ -49,7 +49,7 @@ export default async function Home() {
               The Bhakti Vault
             </h1>
             <p className="text-lg text-foreground-secondary mb-2">
-              H.G. Vaiśeṣika Dāsa's Lecture Archive
+              H.G. Vaiśeṣika Dāsa&apos;s Lecture Archive
             </p>
             <p className="text-sm text-foreground-tertiary">
               A Private Collection for Team Members
@@ -97,7 +97,7 @@ export default async function Home() {
             Welcome back {session.user?.name || 'Friend'}
           </h1>
           <p className="text-foreground-secondary">
-            Access H.G. Vaiśeṣika Dāsa's collection of lectures and talks
+            Access H.G. Vaiśeṣika Dāsa&apos;s collection of lectures and talks
           </p>
         </div>
 

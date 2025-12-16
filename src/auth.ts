@@ -1,5 +1,5 @@
 import NextAuth from "next-auth";
-import type { NextAuthConfig } from "next-auth";
+import type { NextAuthConfig, Session } from "next-auth";
 import { loginAuthLoginPost } from "@/api/generated/endpoints/default/default";
 import type { User } from "@/api/generated/schemas";
 
@@ -20,8 +20,8 @@ export const authConfig = {
           // Note: Google only provides refresh token on first consent or when prompt=consent
         },
       },
-      checks: ["pkce", "state"],
-    } as any,
+      checks: ["pkce", "state"]
+    } as const,
   ],
   session: {
     maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
@@ -57,7 +57,7 @@ export const authConfig = {
       // Reject sign-in if no account
       return false;
     },
-    async jwt({ token, account, user, trigger }) {
+    async jwt({ token, account }) {
       // Persist tokens when account is available (on sign-in)
       if (account && account.id_token) {
         token.accessToken = account.access_token;
@@ -172,9 +172,9 @@ export const authConfig = {
         }
       }
 
-      // Include user picture if available
-      if (user?.image) {
-        token.picture = user.image;
+      // Include user picture if available from account (initial sign-in)
+      if (account?.picture && typeof account.picture === 'string') {
+        token.picture = account.picture;
       }
       
       // Return existing tokens if account is not available (subsequent requests)
@@ -183,7 +183,7 @@ export const authConfig = {
     async session({ session, token }) {
       // If token refresh failed, invalidate the session
       if (token.error === "RefreshAccessTokenError") {
-        return null as any;
+        return null as unknown as Session;
       }
 
       if (session.user) {
@@ -204,7 +204,7 @@ export const authConfig = {
         } else {
           // User data not found - invalidate session by returning null
           // This will require the user to sign in again
-          return null as any;
+          return null as unknown as Session;
         }
         // Ensure user image is included from token
         if (token.picture) {

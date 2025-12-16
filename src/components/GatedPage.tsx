@@ -1,4 +1,5 @@
 import { signIn } from '@/auth';
+import Link from 'next/link';
 
 interface GatedPageProps {
   title: string;
@@ -36,19 +37,19 @@ export default function GatedPage({ title, description, showSignInButton = true 
             </div>
 
             <p className="text-sm text-foreground-tertiary">
-              Don't have access? Contact your administrator.
+              Don&apos;t have access? Contact your administrator.
             </p>
           </>
         )}
 
         {!showSignInButton && (
           <div className="bg-background rounded-xl border border-border p-8 shadow-lg mb-6">
-            <a
+            <Link
               href="/"
               className="block w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-md hover:shadow-lg text-center"
             >
               Sign In to Continue
-            </a>
+            </Link>
           </div>
         )}
       </div>

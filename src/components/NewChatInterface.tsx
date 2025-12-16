@@ -1,23 +1,73 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import ChatSidebar from '@/components/ChatSidebar';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput, { type ChatInputRef } from '@/components/ChatInput';
-import type { ChatSessionMessage } from '@/api/generated/schemas';
+import ChatSidebar from '@/components/ChatSidebar';
+import type { ChatSessionMessage, ChatSession } from '@/api/generated/schemas';
 import { chatSessionProtectedCreateChatSessionPost } from '@/api/generated/endpoints/default/default';
 import { processStreamBuffer } from '@/utils/streamingHelpers';
 
-export default function NewChatInterface() {
+interface NewChatInterfaceProps {
+  initialChatSessions?: ChatSession[];
+}
+
+export default function NewChatInterface({ initialChatSessions = [] }: NewChatInterfaceProps) {
   const { data: session } = useSession();
   const router = useRouter();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [messages, setMessages] = useState<ChatSessionMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const chatSessionIdRef = useRef<string | null>(null);
   const chatInputRef = useRef<ChatInputRef>(null);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+  const Container = ({ children }: { children: React.ReactNode }) => (
+    <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
+      <div className="max-w-5xl mx-auto px-6 py-10 flex flex-col" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
+        {children}
+      </div>
+    </main>
+  );
+
+  const handleAuthError = (error: { status?: number; message?: string }) => {
+    if (error?.status === 401 || error?.status === 403 ||
+        error?.message?.includes('401') || error?.message?.includes('403')) {
+      router.push('/auth/error');
+      return true;
+    }
+    return false;
+  };
+
+  const createMessage = (role: 'user' | 'assistant', content: string | null, sessionId: string): ChatSessionMessage => ({
+    public_id: `temp-${role}-${Date.now()}`,
+    chat_session_id: sessionId,
+    role,
+    content: role === 'user' && content ? [{ data: { type: 'text_delta', delta: content } }] : [],
+    created_on: Math.floor(Date.now() / 1000),
+  });
+
+  // Check for stored session ID on mount (only on reload)
+  useEffect(() => {
+    // Check if this is a page reload by looking at performance navigation
+    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+    const isReload = navigation?.type === 'reload';
+
+    if (isReload) {
+      const storedSessionId = localStorage.getItem('currentChatSessionId');
+      if (storedSessionId) {
+        // Clear localStorage and redirect to the chat page
+        localStorage.removeItem('currentChatSessionId');
+        router.replace(`/chat/${storedSessionId}`);
+      }
+    } else {
+      // If this is navigation (not reload), clear any stored session
+      localStorage.removeItem('currentChatSessionId');
+    }
+  }, [router]);
 
   const handleSendMessage = async (content: string) => {
     if (!session?.idToken) {
@@ -39,15 +89,15 @@ export default function NewChatInterface() {
 
           if (sessionResponse.status === 200) {
             chatSessionIdRef.current = sessionResponse.data.public_id;
+            // Store the session ID so it persists across page reloads
+            localStorage.setItem('currentChatSessionId', sessionResponse.data.public_id);
           } else {
             console.error('Failed to create chat session');
             setIsLoading(false);
             return;
           }
-        } catch (err: any) {
-          // Check for authentication errors
-          if (err?.status === 401 || err?.status === 403 || err?.message?.includes('401') || err?.message?.includes('403')) {
-            router.push('/auth/error');
+        } catch (err: unknown) {
+          if (handleAuthError(err as { status?: number; message?: string })) {
             setIsLoading(false);
             return;
           }
@@ -57,35 +107,11 @@ export default function NewChatInterface() {
 
       const chatSessionId = chatSessionIdRef.current;
 
-      // Create user message for display
-      const userMessage: ChatSessionMessage = {
-        public_id: `temp-user-${Date.now()}`,
-        chat_session_id: chatSessionId,
-        role: 'user',
-        content: [
-          {
-            data: {
-              type: 'text_delta',
-              delta: content,
-            },
-          },
-        ],
-        created_on: Math.floor(Date.now() / 1000),
-      };
+      const userMessage = createMessage('user', content, chatSessionId);
+      const assistantMessage = createMessage('assistant', null, chatSessionId);
+      const assistantMessageId = assistantMessage.public_id;
 
-      setMessages((prev) => [...prev, userMessage]);
-
-      // Create initial assistant message
-      const assistantMessageId = `temp-assistant-${Date.now()}`;
-      const assistantMessage: ChatSessionMessage = {
-        public_id: assistantMessageId,
-        chat_session_id: chatSessionId,
-        role: 'assistant',
-        content: [],
-        created_on: Math.floor(Date.now() / 1000),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, userMessage, assistantMessage]);
 
       // Send message and handle streaming response via Next.js API route (avoids CORS)
       const response = await fetch(`/api/chat/${chatSessionId}/new_message`, {
@@ -98,7 +124,6 @@ export default function NewChatInterface() {
       });
 
       if (!response.ok) {
-        // Check for authentication errors
         if (response.status === 401 || response.status === 403) {
           router.push('/auth/error');
           setIsLoading(false);
@@ -162,15 +187,12 @@ export default function NewChatInterface() {
         });
       }
 
-      // Note: We don't redirect to /chat/[id] to avoid interrupting the conversation.
+      // Note: We store the session ID locally so it persists across page reloads.
       // The chat session is created and messages are saved on the backend.
-      // Users can access this conversation later from the chat history sidebar.
-    } catch (error: any) {
+      // Users can access this conversation later from the chat history sidebar, or it will be restored on reload.
+    } catch (error: unknown) {
       console.error('Error sending message:', error);
-      // Check for authentication errors (in case they weren't caught earlier)
-      if (error?.status === 401 || error?.status === 403 || error?.message?.includes('401') || error?.message?.includes('403')) {
-        router.push('/auth/error');
-      }
+      handleAuthError(error as { status?: number; message?: string });
     } finally {
       setIsLoading(false);
       // Focus the input after response is complete
@@ -181,16 +203,20 @@ export default function NewChatInterface() {
   };
 
   return (
-    <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
-      <ChatSidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-      
-      <div className="max-w-5xl mx-auto px-6 py-10 flex flex-col" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
+    <>
+      <ChatSidebar 
+        isOpen={isSidebarOpen} 
+        onToggle={toggleSidebar}
+        chatSessions={initialChatSessions}
+        initialLoading={false}
+      />
+      <Container>
         <div className="bg-white rounded-xl shadow-lg border border-border flex flex-col flex-1" style={{ maxHeight: 'calc(100vh - var(--header-height) - 5rem)' }}>
           {/* Header */}
           <div className="bg-white border-b border-gray-200 p-4 rounded-t-xl flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                onClick={toggleSidebar}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 aria-label="Toggle sidebar"
               >
@@ -215,14 +241,16 @@ export default function NewChatInterface() {
                 </svg>
               </button>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">New Chat</h1>
+                <h1 className="text-xl font-bold text-gray-900">
+                  {chatSessionIdRef.current ? 'Continue Chat' : 'New Chat'}
+                </h1>
               </div>
             </div>
           </div>
 
           {/* Messages */}
-          <ChatMessages 
-            messages={messages} 
+          <ChatMessages
+            messages={messages}
             userImage={session?.user?.image}
             userName={session?.user?.name}
           />
@@ -232,8 +260,7 @@ export default function NewChatInterface() {
             <ChatInput ref={chatInputRef} onSend={handleSendMessage} disabled={isLoading} />
           </div>
         </div>
-      </div>
-    </main>
+      </Container>
+    </>
   );
 }
-

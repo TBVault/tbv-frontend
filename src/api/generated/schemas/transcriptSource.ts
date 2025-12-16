@@ -8,8 +8,6 @@
 
 export type TranscriptSource = typeof TranscriptSource[keyof typeof TranscriptSource];
 
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const TranscriptSource = {
   otterai: 'otterai',
   whisper: 'whisper',

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useRef, ReactNode } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
 
 interface AudioContextType {
   audioRef: React.RefObject<HTMLAudioElement>;

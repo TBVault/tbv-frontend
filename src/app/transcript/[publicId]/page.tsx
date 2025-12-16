@@ -38,7 +38,7 @@ const getTranscriptData = cache(async (publicId: string) => {
       }
     );
     return { session, data: response, error: null };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return { session, data: null, error: err };
   }
 });
@@ -71,7 +71,7 @@ export default async function TranscriptPage({ params }: PageProps) {
 
   // Check for authentication errors
   if (fetchError) {
-    const err = fetchError as any;
+    const err = fetchError as { status?: number; message?: string };
     if (err?.status === 401 || err?.status === 403 || err?.message?.includes('401') || err?.message?.includes('403')) {
       redirect('/auth/error');
     }

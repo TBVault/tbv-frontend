@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Transcript } from '@/api/generated/schemas';
@@ -153,12 +153,13 @@ function Pagination({ currentPage, totalPages, onPageChange }: {
 export default function TranscriptsView({ transcripts, currentPage, totalPages }: TranscriptsViewProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [viewMode, setViewMode] = useState<'grid' | 'row'>('row');
-
-  // Set initial view mode based on screen width on mount
-  useEffect(() => {
-    setViewMode(window.innerWidth < 750 ? 'grid' : 'row');
-  }, []);
+  const [viewMode, setViewMode] = useState<'grid' | 'row'>(() => {
+    // Initialize based on screen width if available (client-side)
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 750 ? 'grid' : 'row';
+    }
+    return 'row';
+  });
 
   const updatePage = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -175,7 +176,7 @@ export default function TranscriptsView({ transcripts, currentPage, totalPages }
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-foreground mb-2">Transcripts</h1>
-          <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa's lectures and talks</p>
+          <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa&apos;s lectures and talks</p>
         </div>
         <div className="hidden min-[750px]:flex items-center gap-2 bg-background border border-border rounded-lg p-1">
           <button

@@ -55,9 +55,10 @@ async function TranscriptsContent({ searchParams }: PageProps) {
     }
     
     throw new Error('Failed to fetch transcripts');
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Check if it's an authentication error
-    if (error?.status === 401 || error?.status === 403 || error?.message?.includes('401') || error?.message?.includes('403')) {
+    const err = error as { status?: number; message?: string };
+    if (err?.status === 401 || err?.status === 403 || err?.message?.includes('401') || err?.message?.includes('403')) {
       redirect('/auth/error');
     }
     
@@ -67,11 +68,11 @@ async function TranscriptsContent({ searchParams }: PageProps) {
         <div className="max-w-5xl mx-auto px-6 py-10">
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-foreground mb-2">Transcripts</h1>
-            <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa's lectures and talks</p>
+            <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa&apos;s lectures and talks</p>
           </div>
           <div className="bg-error-50 border-l-4 border-error-500 rounded-r-xl p-6 shadow-sm">
             <h3 className="font-semibold text-error-900 mb-1">Error Loading Transcripts</h3>
-            <p className="text-error-800">{error.message || 'An unexpected error occurred'}</p>
+            <p className="text-error-800">{(error as { message?: string })?.message || 'An unexpected error occurred'}</p>
           </div>
         </div>
       </main>

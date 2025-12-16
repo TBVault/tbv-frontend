@@ -10,6 +10,12 @@
     "generate:api": "orval",
     "typecheck": "tsc --noEmit"
   },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "eslint"
+    ]
+  },
   "dependencies": {
     "next": "^16.0.7",
     "next-auth": "^5.0.0-beta.30",
@@ -24,6 +30,7 @@
     "autoprefixer": "^10.4.22",
     "eslint": "^9",
     "eslint-config-next": "16.0.4",
+    "lint-staged": "^16.2.7",
     "orval": "^7.17.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.18",

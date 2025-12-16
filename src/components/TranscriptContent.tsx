@@ -10,6 +10,12 @@ function formatTime(seconds: number): string {
   return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
+interface WindowWithAudio extends Window {
+  __audioSeekTo?: (time: number, autoPlay?: boolean) => void;
+  __audioCurrentTime?: () => number;
+  __audioIsPlaying?: () => boolean;
+}
+
 interface TranscriptChunk {
   speaker: string;
   start: number;
@@ -40,7 +46,7 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
           
           // Retry mechanism for race condition with AudioPlayer
           const trySeek = (attempt = 0, maxAttempts = 10) => {
-            const audioSeekTo = (window as any).__audioSeekTo;
+            const audioSeekTo = (window as WindowWithAudio).__audioSeekTo;
             
             if (audioSeekTo) {
               audioSeekTo(chunkStartTime, false); // Don't autoplay when navigating via anchor
@@ -107,8 +113,9 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
   // Auto-scroll and highlight current audio position
   useEffect(() => {
     const checkAndScroll = () => {
-      const getCurrentTime = (window as any).__audioCurrentTime;
-      const getIsPlaying = (window as any).__audioIsPlaying;
+      const win = window as unknown as WindowWithAudio;
+      const getCurrentTime = win.__audioCurrentTime;
+      const getIsPlaying = win.__audioIsPlaying;
       if (!getCurrentTime || !getIsPlaying) return;
       
       const currentTime = getCurrentTime();
@@ -217,8 +224,9 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
                 }
               }}
               onDoubleClick={() => {
-                if ((window as any).__audioSeekTo) {
-                  (window as any).__audioSeekTo(firstChunk.start);
+                const win = window as unknown as WindowWithAudio;
+                if (win.__audioSeekTo) {
+                  win.__audioSeekTo(firstChunk.start);
                 }
               }}
               className={`group px-6 py-3 transition-all duration-200 cursor-pointer ${
@@ -240,8 +248,9 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
                 {showTimestamps && (
                   <button
                     onClick={() => {
-                      if ((window as any).__audioSeekTo) {
-                        (window as any).__audioSeekTo(firstChunk.start);
+                      const win = window as unknown as WindowWithAudio;
+                      if (win.__audioSeekTo) {
+                        win.__audioSeekTo(firstChunk.start);
                       }
                     }}
                     className="text-sm font-mono font-medium text-foreground-tertiary px-3 py-1 bg-background-tertiary group-hover:bg-primary-100 rounded-lg transition-colors hover:bg-primary-200 cursor-pointer"
@@ -263,8 +272,9 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
                       <div className="mb-2 flex justify-end">
                         <button
                           onClick={() => {
-                            if ((window as any).__audioSeekTo) {
-                              (window as any).__audioSeekTo(chunk.start);
+                            const win = window as unknown as WindowWithAudio;
+                            if (win.__audioSeekTo) {
+                              win.__audioSeekTo(chunk.start);
                             }
                           }}
                           className="text-sm font-mono font-medium text-foreground-tertiary px-3 py-1 bg-background-tertiary group-hover:bg-primary-100 rounded-lg transition-colors hover:bg-primary-200 cursor-pointer"

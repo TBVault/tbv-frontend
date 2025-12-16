@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ChatSession } from '@/api/generated/schemas';
-import { chatSessionsProtectedChatSessionsGet } from '@/api/generated/endpoints/default/default';
-import { useSession } from 'next-auth/react';
 
 interface ChatSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
+  chatSessions?: ChatSession[];
+  initialLoading?: boolean;
 }
 
 // Helper function to format timestamp
@@ -18,40 +18,16 @@ function formatDate(timestamp: number): string {
   return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export default function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
+export default function ChatSidebar({
+  isOpen,
+  onToggle,
+  chatSessions: initialChatSessions = [],
+  initialLoading = false
+}: ChatSidebarProps) {
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchChatSessions = async () => {
-      if (!session?.idToken) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await chatSessionsProtectedChatSessionsGet({
-          headers: {
-            Authorization: session.idToken,
-          },
-        });
-
-        if (response.status === 200) {
-          setChatSessions(response.data);
-        }
-      } catch (error) {
-        console.error('Error fetching chat sessions:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (isOpen) {
-      fetchChatSessions();
-    }
-  }, [session?.idToken, isOpen]);
+  // Use initialChatSessions directly as initial state
+  const [chatSessions] = useState<ChatSession[]>(() => initialChatSessions);
+  const [loading] = useState(initialLoading);
 
   return (
     <>

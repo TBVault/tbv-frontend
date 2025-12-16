@@ -10,9 +10,7 @@ import type {
   TextDelta,
   TranscriptCitation,
   WebSearchCitation,
-  ChatTopic,
-  Transcript,
-  ChatRole
+  Transcript
 } from '@/api/generated/schemas';
 import { transcriptProtectedTranscriptGet } from '@/api/generated/endpoints/default/default';
 
@@ -20,6 +18,7 @@ interface ChatMessagesProps {
   messages: ChatSessionMessage[];
   userImage?: string | null;
   userName?: string | null;
+  preFetchedTranscripts?: Map<string, Transcript>;
 }
 
 interface TranscriptOverlayProps {
@@ -428,13 +427,16 @@ function SourcesSection({
   );
 }
 
-export default function ChatMessages({ messages, userImage, userName }: ChatMessagesProps) {
+export default function ChatMessages({
+  messages,
+  preFetchedTranscripts = new Map()
+}: ChatMessagesProps) {
   const { data: session } = useSession();
   const [selectedTranscript, setSelectedTranscript] = useState<{
     citation: TranscriptCitation;
     number: number;
   } | null>(null);
-  const [transcriptData, setTranscriptData] = useState<Map<string, Transcript>>(new Map());
+  const [transcriptData, setTranscriptData] = useState<Map<string, Transcript>>(preFetchedTranscripts);
   const fetchedIds = useRef<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -443,12 +445,19 @@ export default function ChatMessages({ messages, userImage, userName }: ChatMess
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Initialize fetchedIds with pre-fetched transcripts
+  useEffect(() => {
+    preFetchedTranscripts.forEach((_, id) => {
+      fetchedIds.current.add(id);
+    });
+  }, [preFetchedTranscripts]);
+
   // Fetch transcript data (including chunks) for all citations in messages
   useEffect(() => {
     if (!session?.idToken) return;
 
     const transcriptIds = new Set<string>();
-    
+
     messages.forEach((message) => {
       message.content.forEach((chatObject) => {
         if (chatObject.data.type === 'transcript_citation') {
@@ -463,12 +472,12 @@ export default function ChatMessages({ messages, userImage, userName }: ChatMess
       const idsToFetch = Array.from(transcriptIds).filter(
         (id) => !fetchedIds.current.has(id)
       );
-      
+
       if (idsToFetch.length === 0) return;
-      
+
       for (const transcriptId of idsToFetch) {
         fetchedIds.current.add(transcriptId);
-        
+
         try {
           const response = await transcriptProtectedTranscriptGet(
             { public_id: transcriptId },
