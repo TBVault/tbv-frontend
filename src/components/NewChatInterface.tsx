@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import ChatMessages from '@/components/ChatMessages';
@@ -25,13 +25,14 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const Container = ({ children }: { children: React.ReactNode }) => (
+  // Stable Container component - defined outside render to prevent remounts
+  const Container = useCallback(({ children }: { children: React.ReactNode }) => (
     <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
       <div className="max-w-5xl mx-auto px-6 py-10 flex flex-col" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
         {children}
       </div>
     </main>
-  );
+  ), []);
 
   const handleAuthError = (error: { status?: number; message?: string }) => {
     if (error?.status === 401 || error?.status === 403 ||
@@ -250,6 +251,7 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
 
           {/* Messages */}
           <ChatMessages
+            key={chatSessionIdRef.current || 'new-chat'}
             messages={messages}
           />
 

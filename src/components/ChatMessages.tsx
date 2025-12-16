@@ -184,7 +184,7 @@ function MarkdownText({ text }: { text: string }) {
           code: ({ children, className }) => {
             const isInline = !className;
             return isInline ? (
-              <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono">
+              <code className="bg-gray-200 px-1 py-0.5 rounded text-sm font-mono">
                 {children}
               </code>
             ) : (
@@ -192,7 +192,7 @@ function MarkdownText({ text }: { text: string }) {
             );
           },
           pre: ({ children }) => (
-            <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg overflow-x-auto mb-1 text-sm">
+            <pre className="bg-gray-100 p-2 rounded-lg overflow-x-auto mb-1 text-sm">
               {children}
             </pre>
           ),
