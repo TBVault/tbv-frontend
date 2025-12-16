@@ -217,7 +217,7 @@ function ChatMessages({
   const transcriptTitles = useMemo(() => {
     const titles = new Map<string, string>();
     transcriptData.forEach((transcript, id) => {
-      titles.set(id, transcript.title);
+      titles.set(id, transcript.semantic_title || transcript.title);
     });
     return titles;
   }, [transcriptData]);

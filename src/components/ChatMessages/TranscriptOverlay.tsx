@@ -79,7 +79,7 @@ export function TranscriptOverlay({
               {citationNumber}
             </span>
             <h3 className="text-lg font-semibold text-gray-900 break-words">
-              {loading ? 'Loading...' : transcript?.title || 'Transcript'}
+              {loading ? 'Loading...' : transcript?.semantic_title || transcript?.title || 'Transcript'}
             </h3>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
