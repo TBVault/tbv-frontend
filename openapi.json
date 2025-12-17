@@ -368,6 +368,14 @@
       "get": {
         "summary": "Search From Transcript Titles",
         "operationId": "search_from_transcript_titles_protected_search_transcript_titles_get",
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "query",
@@ -416,6 +424,14 @@
       "get": {
         "summary": "Search From Transcript Summary",
         "operationId": "search_from_transcript_summary_protected_search_transcript_summary_get",
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "query",
@@ -464,6 +480,14 @@
       "get": {
         "summary": "Search From Transcript Metadata",
         "operationId": "search_from_transcript_metadata_protected_search_transcript_metadata_get",
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "query",
@@ -512,6 +536,14 @@
       "get": {
         "summary": "Search From Transcript Chunks",
         "operationId": "search_from_transcript_chunks_protected_search_transcript_chunks_get",
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "query",
