@@ -364,6 +364,198 @@
         }
       }
     },
+    "/protected/search/transcript_titles": {
+      "get": {
+        "summary": "Search From Transcript Titles",
+        "operationId": "search_from_transcript_titles_protected_search_transcript_titles_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "page_number",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Page Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptMetadataSearchResultsPaginated"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/protected/search/transcript_summary": {
+      "get": {
+        "summary": "Search From Transcript Summary",
+        "operationId": "search_from_transcript_summary_protected_search_transcript_summary_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "page_number",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Page Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptMetadataSearchResultsPaginated"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/protected/search/transcript_metadata": {
+      "get": {
+        "summary": "Search From Transcript Metadata",
+        "operationId": "search_from_transcript_metadata_protected_search_transcript_metadata_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "page_number",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Page Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptMetadataSearchResultsPaginated"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/protected/search/transcript_chunks": {
+      "get": {
+        "summary": "Search From Transcript Chunks",
+        "operationId": "search_from_transcript_chunks_protected_search_transcript_chunks_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "page_number",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Page Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptChunkSearchResultsPaginated"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/login": {
       "post": {
         "summary": "Login",
@@ -778,6 +970,112 @@
         ],
         "title": "TranscriptChunk"
       },
+      "TranscriptChunkSearchResult": {
+        "properties": {
+          "public_id": {
+            "type": "string",
+            "title": "Public Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "semantic_title": {
+            "type": "string",
+            "title": "Semantic Title"
+          },
+          "duration": {
+            "type": "integer",
+            "title": "Duration"
+          },
+          "source": {
+            "$ref": "#/components/schemas/TranscriptSource"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "chunk_index": {
+            "type": "integer",
+            "title": "Chunk Index"
+          },
+          "chunk": {
+            "$ref": "#/components/schemas/TranscriptChunk"
+          },
+          "chunk_highlight": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chunk Highlight"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "public_id",
+          "title",
+          "semantic_title",
+          "duration",
+          "source",
+          "summary",
+          "chunk_index",
+          "chunk",
+          "chunk_highlight",
+          "score"
+        ],
+        "title": "TranscriptChunkSearchResult"
+      },
+      "TranscriptChunkSearchResultsPaginated": {
+        "properties": {
+          "page_number": {
+            "type": "integer",
+            "title": "Page Number"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "page_count": {
+            "type": "integer",
+            "title": "Page Count"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/TranscriptChunkSearchResult"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "page_number",
+          "page_size",
+          "page_count",
+          "total_count",
+          "results"
+        ],
+        "title": "TranscriptChunkSearchResultsPaginated"
+      },
       "TranscriptCitation": {
         "properties": {
           "type": {
@@ -801,6 +1099,127 @@
           "chunk_index"
         ],
         "title": "TranscriptCitation"
+      },
+      "TranscriptMetadataSearchResult": {
+        "properties": {
+          "public_id": {
+            "type": "string",
+            "title": "Public Id"
+          },
+          "duration": {
+            "type": "integer",
+            "title": "Duration"
+          },
+          "source": {
+            "$ref": "#/components/schemas/TranscriptSource"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "title_highlight": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title Highlight"
+          },
+          "semantic_title": {
+            "type": "string",
+            "title": "Semantic Title"
+          },
+          "semantic_title_highlight": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Semantic Title Highlight"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "summary_highlight": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary Highlight"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "public_id",
+          "duration",
+          "source",
+          "title",
+          "title_highlight",
+          "semantic_title",
+          "semantic_title_highlight",
+          "summary",
+          "summary_highlight",
+          "score"
+        ],
+        "title": "TranscriptMetadataSearchResult"
+      },
+      "TranscriptMetadataSearchResultsPaginated": {
+        "properties": {
+          "page_number": {
+            "type": "integer",
+            "title": "Page Number"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "page_count": {
+            "type": "integer",
+            "title": "Page Count"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/TranscriptMetadataSearchResult"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "page_number",
+          "page_size",
+          "page_count",
+          "total_count",
+          "results"
+        ],
+        "title": "TranscriptMetadataSearchResultsPaginated"
       },
       "TranscriptSource": {
         "type": "string",

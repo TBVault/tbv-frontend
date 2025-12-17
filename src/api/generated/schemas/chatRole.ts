@@ -8,6 +8,8 @@
 
 export type ChatRole = typeof ChatRole[keyof typeof ChatRole];
 
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const ChatRole = {
   user: 'user',
   assistant: 'assistant',

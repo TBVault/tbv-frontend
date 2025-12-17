@@ -13,7 +13,13 @@ import type {
   LoginResponse,
   NewMessageRequest,
   PublicHelloWorldPydanticPublicHelloWorldPydanticGetParams,
+  SearchFromTranscriptChunksProtectedSearchTranscriptChunksGetParams,
+  SearchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetParams,
+  SearchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetParams,
+  SearchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetParams,
   Transcript,
+  TranscriptChunkSearchResultsPaginated,
+  TranscriptMetadataSearchResultsPaginated,
   TranscriptProtectedTranscriptGetParams,
   TranscriptsPaginated,
   TranscriptsProtectedTranscriptsGetParams,
@@ -430,6 +436,202 @@ export const newMessageProtectedChatSessionChatSessionIdNewMessagePost = async (
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
       newMessageRequest,)
+  }
+);}
+
+
+/**
+ * @summary Search From Transcript Titles
+ */
+export type searchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetResponse200 = {
+  data: TranscriptMetadataSearchResultsPaginated
+  status: 200
+}
+
+export type searchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+    
+export type searchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetResponseSuccess = (searchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetResponse200) & {
+  headers: Headers;
+};
+export type searchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetResponseError = (searchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetResponse422) & {
+  headers: Headers;
+};
+
+export type searchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetResponse = (searchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetResponseSuccess | searchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetResponseError)
+
+export const getSearchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetUrl = (params: SearchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/protected/search/transcript_titles?${stringifiedParams}` : `/protected/search/transcript_titles`
+}
+
+export const searchFromTranscriptTitlesProtectedSearchTranscriptTitlesGet = async (params: SearchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetParams, options?: RequestInit): Promise<searchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetResponse> => {
+  
+  return customFetch<searchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetResponse>(getSearchFromTranscriptTitlesProtectedSearchTranscriptTitlesGetUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+/**
+ * @summary Search From Transcript Summary
+ */
+export type searchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetResponse200 = {
+  data: TranscriptMetadataSearchResultsPaginated
+  status: 200
+}
+
+export type searchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+    
+export type searchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetResponseSuccess = (searchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetResponse200) & {
+  headers: Headers;
+};
+export type searchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetResponseError = (searchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetResponse422) & {
+  headers: Headers;
+};
+
+export type searchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetResponse = (searchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetResponseSuccess | searchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetResponseError)
+
+export const getSearchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetUrl = (params: SearchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/protected/search/transcript_summary?${stringifiedParams}` : `/protected/search/transcript_summary`
+}
+
+export const searchFromTranscriptSummaryProtectedSearchTranscriptSummaryGet = async (params: SearchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetParams, options?: RequestInit): Promise<searchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetResponse> => {
+  
+  return customFetch<searchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetResponse>(getSearchFromTranscriptSummaryProtectedSearchTranscriptSummaryGetUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+/**
+ * @summary Search From Transcript Metadata
+ */
+export type searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetResponse200 = {
+  data: TranscriptMetadataSearchResultsPaginated
+  status: 200
+}
+
+export type searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+    
+export type searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetResponseSuccess = (searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetResponse200) & {
+  headers: Headers;
+};
+export type searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetResponseError = (searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetResponse422) & {
+  headers: Headers;
+};
+
+export type searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetResponse = (searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetResponseSuccess | searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetResponseError)
+
+export const getSearchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetUrl = (params: SearchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/protected/search/transcript_metadata?${stringifiedParams}` : `/protected/search/transcript_metadata`
+}
+
+export const searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGet = async (params: SearchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetParams, options?: RequestInit): Promise<searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetResponse> => {
+  
+  return customFetch<searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetResponse>(getSearchFromTranscriptMetadataProtectedSearchTranscriptMetadataGetUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+/**
+ * @summary Search From Transcript Chunks
+ */
+export type searchFromTranscriptChunksProtectedSearchTranscriptChunksGetResponse200 = {
+  data: TranscriptChunkSearchResultsPaginated
+  status: 200
+}
+
+export type searchFromTranscriptChunksProtectedSearchTranscriptChunksGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+    
+export type searchFromTranscriptChunksProtectedSearchTranscriptChunksGetResponseSuccess = (searchFromTranscriptChunksProtectedSearchTranscriptChunksGetResponse200) & {
+  headers: Headers;
+};
+export type searchFromTranscriptChunksProtectedSearchTranscriptChunksGetResponseError = (searchFromTranscriptChunksProtectedSearchTranscriptChunksGetResponse422) & {
+  headers: Headers;
+};
+
+export type searchFromTranscriptChunksProtectedSearchTranscriptChunksGetResponse = (searchFromTranscriptChunksProtectedSearchTranscriptChunksGetResponseSuccess | searchFromTranscriptChunksProtectedSearchTranscriptChunksGetResponseError)
+
+export const getSearchFromTranscriptChunksProtectedSearchTranscriptChunksGetUrl = (params: SearchFromTranscriptChunksProtectedSearchTranscriptChunksGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/protected/search/transcript_chunks?${stringifiedParams}` : `/protected/search/transcript_chunks`
+}
+
+export const searchFromTranscriptChunksProtectedSearchTranscriptChunksGet = async (params: SearchFromTranscriptChunksProtectedSearchTranscriptChunksGetParams, options?: RequestInit): Promise<searchFromTranscriptChunksProtectedSearchTranscriptChunksGetResponse> => {
+  
+  return customFetch<searchFromTranscriptChunksProtectedSearchTranscriptChunksGetResponse>(getSearchFromTranscriptChunksProtectedSearchTranscriptChunksGetUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
   }
 );}
 
