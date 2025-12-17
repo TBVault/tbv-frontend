@@ -136,25 +136,29 @@ function ChatMessages({
 
       if (idsToFetch.length === 0) return;
 
-      for (const transcriptId of idsToFetch) {
-        fetchedIds.current.add(transcriptId);
+      // Mark all as being fetched to prevent duplicate requests
+      idsToFetch.forEach(id => fetchedIds.current.add(id));
 
-        try {
-          const response = await transcriptProtectedTranscriptGet(
-            { public_id: transcriptId },
-            session.idToken ? {
-              headers: {
-                Authorization: session.idToken,
-              },
-            } : undefined
-          );
-          if (response.status === 200) {
-            setTranscriptData((prev) => new Map(prev).set(transcriptId, response.data));
+      // Fetch all transcripts in parallel
+      await Promise.allSettled(
+        idsToFetch.map(async (transcriptId) => {
+          try {
+            const response = await transcriptProtectedTranscriptGet(
+              { public_id: transcriptId },
+              session.idToken ? {
+                headers: {
+                  Authorization: session.idToken,
+                },
+              } : undefined
+            );
+            if (response.status === 200) {
+              setTranscriptData((prev) => new Map(prev).set(transcriptId, response.data));
+            }
+          } catch (err) {
+            console.error(`Error fetching transcript ${transcriptId}:`, err);
           }
-        } catch (err) {
-          console.error(`Error fetching transcript ${transcriptId}:`, err);
-        }
-      }
+        })
+      );
     };
 
     if (transcriptIds.size > 0) {
