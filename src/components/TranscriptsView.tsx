@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import type { Transcript } from '@/api/generated/schemas';
+import type { Transcript, TranscriptMetadataSearchResult } from '@/api/generated/schemas';
 import formatTime from '@/utils/formatTime';
 
 // Helper function to format source
@@ -14,9 +14,12 @@ function formatSource(source: string): string {
 }
 
 interface TranscriptsViewProps {
-  transcripts: Transcript[];
+  transcripts?: Transcript[];
+  searchResults?: TranscriptMetadataSearchResult[];
   currentPage: number;
   totalPages: number;
+  searchQuery?: string;
+  totalCount?: number;
 }
 
 // Pagination Component
@@ -150,7 +153,7 @@ function Pagination({ currentPage, totalPages, onPageChange }: {
   );
 }
 
-export default function TranscriptsView({ transcripts, currentPage, totalPages }: TranscriptsViewProps) {
+export default function TranscriptsView({ transcripts, searchResults, currentPage, totalPages, searchQuery, totalCount }: TranscriptsViewProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'row'>(() => {
@@ -160,6 +163,7 @@ export default function TranscriptsView({ transcripts, currentPage, totalPages }
     }
     return 'row';
   });
+  const [searchInput, setSearchInput] = useState(searchQuery || '');
 
   const updatePage = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -171,109 +175,254 @@ export default function TranscriptsView({ transcripts, currentPage, totalPages }
     router.push(`/transcripts?${params.toString()}`);
   };
 
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (searchInput.trim()) {
+      params.set('q', searchInput.trim());
+    }
+    router.push(`/transcripts?${params.toString()}`);
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    router.push('/transcripts');
+  };
+
+  const isSearchMode = !!searchQuery;
+
   return (
     <>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold text-foreground mb-2">Transcripts</h1>
-          <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa&apos;s lectures and talks</p>
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">Transcripts</h1>
+            <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa&apos;s lectures and talks</p>
+          </div>
+          <div className="hidden min-[750px]:flex items-center gap-2 bg-background border border-border rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-primary-600 text-white'
+                  : 'text-foreground-secondary hover:bg-background-secondary'
+              }`}
+              aria-label="Grid view"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode('row')}
+              className={`p-2 rounded transition-colors ${
+                viewMode === 'row'
+                  ? 'bg-primary-600 text-white'
+                  : 'text-foreground-secondary hover:bg-background-secondary'
+              }`}
+              aria-label="Row view"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
         </div>
-        <div className="hidden min-[750px]:flex items-center gap-2 bg-background border border-border rounded-lg p-1">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`p-2 rounded transition-colors ${
-              viewMode === 'grid'
-                ? 'bg-primary-600 text-white'
-                : 'text-foreground-secondary hover:bg-background-secondary'
-            }`}
-            aria-label="Grid view"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+
+        {/* Search Bar */}
+        <form onSubmit={handleSearch} className="relative">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search transcripts..."
+              className="w-full px-4 py-3 pl-12 pr-24 text-foreground bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+            />
+            <svg
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground-tertiary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-          </button>
-          <button
-            onClick={() => setViewMode('row')}
-            className={`p-2 rounded transition-colors ${
-              viewMode === 'row'
-                ? 'bg-primary-600 text-white'
-                : 'text-foreground-secondary hover:bg-background-secondary'
-            }`}
-            aria-label="Row view"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
+            {searchInput && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-foreground-tertiary hover:text-foreground hover:bg-background-secondary rounded-lg transition-colors"
+                aria-label="Clear search"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </form>
+
+        {/* Search Results Info */}
+        {isSearchMode && (
+          <div className="mt-4 flex items-center gap-3 text-sm text-foreground-secondary">
+            <span>
+              <strong className="text-foreground">{totalCount !== undefined ? totalCount.toLocaleString() : '0'}</strong> {totalCount === 1 ? 'result' : 'results'} for: <strong className="text-foreground">&quot;{searchQuery}&quot;</strong>
+            </span>
+            <button
+              onClick={handleClearSearch}
+              className="text-primary-600 hover:text-primary-700 font-medium"
+            >
+              Clear
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8' : 'space-y-4 mb-8'}>
-        {transcripts.map((transcript) => (
-          <Link
-            key={transcript.public_id}
-            href={`/transcript/${transcript.public_id}`}
-            className={`bg-background rounded-xl border border-border p-6 hover:shadow-lg hover:border-primary-500 transition-all duration-200 ${
-              viewMode === 'grid' 
-                ? 'flex flex-col' 
-                : 'flex items-start gap-6'
-            }`}
-          >
-            <div className={viewMode === 'row' ? 'flex-1' : 'w-full'}>
-              {/* Title */}
-              <h2 className={`font-bold text-foreground mb-3 break-words overflow-wrap-anywhere ${viewMode === 'grid' ? 'text-xl line-clamp-3' : 'text-2xl'}`} style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                {transcript.semantic_title || transcript.title}
-              </h2>
+      {/* Render either search results or regular transcripts */}
+      {isSearchMode && searchResults ? (
+        // Search Results with Highlights
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8' : 'space-y-4 mb-8'}>
+          {searchResults.map((result) => (
+            <Link
+              key={result.public_id}
+              href={`/transcript/${result.public_id}`}
+              className={`bg-background rounded-xl border border-border p-6 hover:shadow-lg hover:border-primary-500 transition-all duration-200 ${
+                viewMode === 'grid' 
+                  ? 'flex flex-col' 
+                  : 'flex items-start gap-6'
+              }`}
+            >
+              <div className={viewMode === 'row' ? 'flex-1' : 'w-full'}>
+                {/* Title with Highlight */}
+                <h2 
+                  className={`font-bold text-foreground mb-3 break-words overflow-wrap-anywhere ${viewMode === 'grid' ? 'text-xl line-clamp-3' : 'text-2xl'}`} 
+                  style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+                  dangerouslySetInnerHTML={{ 
+                    __html: result.semantic_title_highlight || result.title_highlight || result.semantic_title || result.title 
+                  }}
+                />
 
-              {/* Summary */}
-              {transcript.summary && (
-                <p className={`text-foreground-secondary mb-4 ${viewMode === 'grid' ? 'text-sm line-clamp-3 flex-grow' : 'text-base line-clamp-2'}`}>
-                  {transcript.summary}
-                </p>
-              )}
-            </div>
+                {/* Summary with Highlight */}
+                {(result.summary_highlight || result.summary) && (
+                  <div 
+                    className={`text-foreground-secondary mb-4 ${viewMode === 'grid' ? 'text-sm line-clamp-3 flex-grow' : 'text-base line-clamp-2'}`}
+                    dangerouslySetInnerHTML={{ 
+                      __html: result.summary_highlight || result.summary || '' 
+                    }}
+                  />
+                )}
+              </div>
 
-            {/* Metadata Section */}
-            <div className={`${viewMode === 'grid' ? 'mt-auto space-y-3 pt-4 border-t border-border' : 'flex flex-col items-end gap-2 min-w-[160px] max-w-[160px]'}`}>
-              {viewMode === 'grid' ? (
-                <>
-                  {/* Grid: Duration and Source on same row, aligned left */}
-                  <div className="flex items-center gap-2">
+              {/* Metadata Section */}
+              <div className={`${viewMode === 'grid' ? 'mt-auto space-y-3 pt-4 border-t border-border' : 'flex flex-col items-end gap-2 min-w-[160px] max-w-[160px]'}`}>
+                {viewMode === 'grid' ? (
+                  <>
+                    {/* Grid: Duration and Source on same row, aligned left */}
+                    <div className="flex items-center gap-2">
+                      <div className="px-2 py-1 bg-neutral-200 text-foreground rounded-full text-xs font-medium">
+                        {formatTime(result.duration)}
+                      </div>
+                      <div className="px-2 py-1 bg-secondary-100 text-secondary-700 rounded-full text-xs font-medium">
+                        {formatSource(result.source)}
+                      </div>
+                    </div>
+                    {/* Tags - hardcoded */}
+                    <div className="flex flex-wrap gap-2">
+                      <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
+                        Spirituality
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Row: All items aligned right, each in their own row */}
+                    <div className="px-2 py-1 bg-neutral-200 text-foreground rounded-full text-xs font-medium">
+                      {formatTime(result.duration)}
+                    </div>
+                    <div className="px-2 py-1 bg-secondary-100 text-secondary-700 rounded-full text-xs font-medium">
+                      {formatSource(result.source)}
+                    </div>
+                    {/* Tags - hardcoded */}
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
+                        Spirituality
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : transcripts ? (
+        // Regular Transcripts
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8' : 'space-y-4 mb-8'}>
+          {transcripts.map((transcript) => (
+            <Link
+              key={transcript.public_id}
+              href={`/transcript/${transcript.public_id}`}
+              className={`bg-background rounded-xl border border-border p-6 hover:shadow-lg hover:border-primary-500 transition-all duration-200 ${
+                viewMode === 'grid' 
+                  ? 'flex flex-col' 
+                  : 'flex items-start gap-6'
+              }`}
+            >
+              <div className={viewMode === 'row' ? 'flex-1' : 'w-full'}>
+                {/* Title */}
+                <h2 className={`font-bold text-foreground mb-3 break-words overflow-wrap-anywhere ${viewMode === 'grid' ? 'text-xl line-clamp-3' : 'text-2xl'}`} style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                  {transcript.semantic_title || transcript.title}
+                </h2>
+
+                {/* Summary */}
+                {transcript.summary && (
+                  <p className={`text-foreground-secondary mb-4 ${viewMode === 'grid' ? 'text-sm line-clamp-3 flex-grow' : 'text-base line-clamp-2'}`}>
+                    {transcript.summary}
+                  </p>
+                )}
+              </div>
+
+              {/* Metadata Section */}
+              <div className={`${viewMode === 'grid' ? 'mt-auto space-y-3 pt-4 border-t border-border' : 'flex flex-col items-end gap-2 min-w-[160px] max-w-[160px]'}`}>
+                {viewMode === 'grid' ? (
+                  <>
+                    {/* Grid: Duration and Source on same row, aligned left */}
+                    <div className="flex items-center gap-2">
+                      <div className="px-2 py-1 bg-neutral-200 text-foreground rounded-full text-xs font-medium">
+                        {formatTime(transcript.duration)}
+                      </div>
+                      <div className="px-2 py-1 bg-secondary-100 text-secondary-700 rounded-full text-xs font-medium">
+                        {formatSource(transcript.source)}
+                      </div>
+                    </div>
+                    {/* Tags - hardcoded */}
+                    <div className="flex flex-wrap gap-2">
+                      <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
+                        Spirituality
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Row: All items aligned right, each in their own row */}
                     <div className="px-2 py-1 bg-neutral-200 text-foreground rounded-full text-xs font-medium">
                       {formatTime(transcript.duration)}
                     </div>
                     <div className="px-2 py-1 bg-secondary-100 text-secondary-700 rounded-full text-xs font-medium">
                       {formatSource(transcript.source)}
                     </div>
-                  </div>
-                  {/* Tags - hardcoded */}
-                  <div className="flex flex-wrap gap-2">
-                    <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
-                      Spirituality
+                    {/* Tags - hardcoded */}
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
+                        Spirituality
+                      </div>
                     </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Row: All items aligned right, each in their own row */}
-                  <div className="px-2 py-1 bg-neutral-200 text-foreground rounded-full text-xs font-medium">
-                    {formatTime(transcript.duration)}
-                  </div>
-                  <div className="px-2 py-1 bg-secondary-100 text-secondary-700 rounded-full text-xs font-medium">
-                    {formatSource(transcript.source)}
-                  </div>
-                  {/* Tags - hardcoded */}
-                  <div className="flex flex-wrap gap-2 justify-end">
-                    <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
-                      Spirituality
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </Link>
-        ))}
-      </div>
+                  </>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : null}
 
       {/* Pagination - Bottom */}
       {totalPages > 1 && (

@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { transcriptsProtectedTranscriptsGet } from '@/api/generated/endpoints/default/default';
+import { transcriptsProtectedTranscriptsGet, searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGet } from '@/api/generated/endpoints/default/default';
 import TranscriptsView from '@/components/TranscriptsView';
 import GatedPage from '@/components/GatedPage';
 
@@ -11,20 +11,59 @@ export const metadata: Metadata = {
 };
 
 interface PageProps {
-  searchParams: Promise<{ p?: string }>;
+  searchParams: Promise<{ p?: string; q?: string }>;
 }
 
 async function TranscriptsContent({ searchParams }: PageProps) {
   const session = await auth();
   const params = await searchParams;
   const page = parseInt(params.p || '1', 10);
+  const query = params.q?.trim();
 
   if (!session?.idToken) {
     return <GatedPage title="Transcripts Library" description="This content is available to authorized team members only." />;
   }
 
-  // Fetch transcripts on the server
+  // Fetch transcripts or search results on the server
   try {
+    // If there's a search query, use the search endpoint
+    if (query) {
+      const response = await searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGet(
+        {
+          query,
+          page_number: page,
+        },
+        {
+          headers: {
+            Authorization: session.idToken.trim(),
+          },
+          next: {
+            revalidate: 60, // Cache for 1 minute
+            tags: ['transcripts'],
+          },
+        }
+      );
+      
+      if (response.status === 200) {
+        return (
+          <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
+            <div className="max-w-5xl mx-auto px-6 py-10">
+              <TranscriptsView 
+                searchResults={response.data.results}
+                currentPage={page}
+                totalPages={response.data.page_count}
+                searchQuery={query}
+                totalCount={response.data.total_count}
+              />
+            </div>
+          </main>
+        );
+      }
+      
+      throw new Error('Failed to fetch search results');
+    }
+    
+    // Otherwise, fetch regular transcripts
     const response = await transcriptsProtectedTranscriptsGet(
       {
         page_number: page,
@@ -71,7 +110,7 @@ async function TranscriptsContent({ searchParams }: PageProps) {
             <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa&apos;s lectures and talks</p>
           </div>
           <div className="bg-error-50 border-l-4 border-error-500 rounded-r-xl p-6 shadow-sm">
-            <h3 className="font-semibold text-error-900 mb-1">Error Loading Transcripts</h3>
+            <h3 className="font-semibold text-error-900 mb-1">Error Loading {query ? 'Search Results' : 'Transcripts'}</h3>
             <p className="text-error-800">{(error as { message?: string })?.message || 'An unexpected error occurred'}</p>
           </div>
         </div>

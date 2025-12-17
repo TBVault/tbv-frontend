@@ -95,3 +95,12 @@ body {
 .typing-dot:nth-child(3) {
   animation-delay: 0.4s;
 }
+
+/* Search highlight styling */
+mark {
+  background-color: #fde68a; /* amber-200 - warmer tone that complements the blue/purple scheme */
+  color: inherit;
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+  font-weight: 600;
+}
