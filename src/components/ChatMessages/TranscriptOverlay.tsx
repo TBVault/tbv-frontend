@@ -57,10 +57,10 @@ export function TranscriptOverlay({
     fetchTranscript();
   }, [citation.transcript_id, authToken, preFetchedTranscript]);
 
-  const chunk = transcript?.content?.[citation.chunk_index];
-  const chunkText = chunk?.text || '';
-  const truncatedText = chunkText.length > 300 
-    ? chunkText.substring(0, 300) + '...' 
+  const chunk = citation.chunk_index >= 0 ? transcript?.content?.[citation.chunk_index] : transcript?.summary;
+  const chunkText = typeof chunk === 'string' ? chunk : chunk?.text || '';
+  const truncatedText = chunkText.length > 500
+    ? chunkText.substring(0, 500) + '...' 
     : chunkText;
 
   return (
@@ -84,7 +84,7 @@ export function TranscriptOverlay({
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Link
-              href={`/transcript/${citation.transcript_id}#chunk-${citation.chunk_index}`}
+              href={`/transcript/${citation.transcript_id}${citation.chunk_index >= 0 ? `#chunk-${citation.chunk_index}` : ''}`}
               target="_blank"
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               title="Open in new tab"
@@ -121,7 +121,7 @@ export function TranscriptOverlay({
               {chunk && (
                 <div className="mb-2">
                   <span className="text-xs font-semibold text-gray-600 uppercase">
-                    {chunk.speaker}
+                    {typeof chunk === 'string' ? 'Transcript Summary' : chunk.speaker}
                   </span>
                 </div>
               )}
@@ -130,7 +130,7 @@ export function TranscriptOverlay({
               </p>
               {chunkText.length > 300 && (
                 <Link
-                  href={`/transcript/${citation.transcript_id}#chunk-${citation.chunk_index}`}
+                  href={`/transcript/${citation.transcript_id}${citation.chunk_index >= 0 ? `#chunk-${citation.chunk_index}` : ''}`}
                   target="_blank"
                   className="text-blue-600 hover:text-blue-700 text-sm font-medium mt-3 inline-flex items-center gap-1"
                 >

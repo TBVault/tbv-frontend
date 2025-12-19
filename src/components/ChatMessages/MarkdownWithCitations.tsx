@@ -61,22 +61,27 @@ export function MarkdownWithCitations({
     );
   };
 
+  // First, add spaces between adjacent citation placeholders to prevent ReactMarkdown from merging them
+  // Handle case where citation is followed immediately by another citation (no character in between)
+  combinedText = combinedText.replace(
+    new RegExp(`${citationPlaceholder}(\\d+)${citationPlaceholder}${citationPlaceholder}(\\d+)${citationPlaceholder}`, 'g'),
+    (match, index1, index2) => `${citationPlaceholder}${index1}${citationPlaceholder} ${citationPlaceholder}${index2}${citationPlaceholder}`
+  );
+
   // Process text to replace placeholders with inline code that we can intercept
   // Use inline code syntax that ReactMarkdown will process
-  // Add a space between adjacent citations to prevent ReactMarkdown from merging them into one code block
   let processedText = combinedText.replace(
     new RegExp(`${citationPlaceholder}(\\d+)${citationPlaceholder}`, 'g'),
     (match, index) => `\`CITATION_${index}\``
   );
   
-  // Add a space between adjacent inline code blocks to prevent merging
-  // This regex finds two adjacent backtick-wrapped code blocks and adds a space between them
-  processedText = processedText.replace(/`([^`]+)`([ \n]*?)`([^`]+)`/g, (match, code1, space, code2) => {
-    // If both are citation placeholders, add a space
-    if (code1.match(/^CITATION_\d+$/) && code2.match(/^CITATION_\d+$/)) {
-      return `\`${code1}\` \`${code2}\``;
-    }
-    return match; // Keep original if not both citations
+  // Final safety check: ensure adjacent inline code citations have spaces between them
+  // This handles any edge cases where citations might still be adjacent
+  // Match sequences of adjacent citation code blocks (e.g., `CITATION_0``CITATION_1``CITATION_2`)
+  // and add spaces between them
+  processedText = processedText.replace(/(`CITATION_-?\d+`)(`CITATION_-?\d+`)+/g, (match) => {
+    // Replace all double backticks (``) with space + backtick (` `)
+    return match.replace(/``/g, '` `');
   });
 
   return (
@@ -110,12 +115,40 @@ export function MarkdownWithCitations({
           }
           
           // Check if this matches our citation pattern
+          // Handle both positive and negative numbers (e.g., CITATION_0, CITATION_-1)
           const trimmed = codeText.trim();
-          const citationMatch = trimmed.match(/^CITATION_(\d+)$/);
+          const citationMatch = trimmed.match(/^CITATION_(-?\d+)$/);
           
           if (citationMatch) {
             const citationIndex = parseInt(citationMatch[1], 10);
-            return <CitationPill index={citationIndex} />;
+            // Only render if index is valid (non-negative and within bounds)
+            if (citationIndex >= 0 && citationIndex < citations.length) {
+              return <CitationPill index={citationIndex} />;
+            }
+          }
+          
+          // Also check if multiple citations got merged (e.g., CITATION_0CITATION_1)
+          // This can happen if ReactMarkdown merges adjacent inline code blocks
+          const mergedMatch = trimmed.match(/^CITATION_(-?\d+)(?:CITATION_(-?\d+))+$/);
+          if (mergedMatch) {
+            // Extract all citation indices from merged string
+            const allMatches = trimmed.match(/CITATION_(-?\d+)/g);
+            if (allMatches) {
+              return (
+                <>
+                  {allMatches.map((match, idx) => {
+                    const indexMatch = match.match(/CITATION_(-?\d+)/);
+                    if (indexMatch) {
+                      const citationIndex = parseInt(indexMatch[1], 10);
+                      if (citationIndex >= 0 && citationIndex < citations.length) {
+                        return <CitationPill key={idx} index={citationIndex} />;
+                      }
+                    }
+                    return null;
+                  })}
+                </>
+              );
+            }
           }
           
           // Regular inline code
