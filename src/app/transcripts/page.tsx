@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 interface PageProps {
-  searchParams: Promise<{ p?: string; q?: string }>;
+  searchParams: Promise<{ p?: string; q?: string; mode?: string }>;
 }
 
 async function TranscriptsContent({ searchParams }: PageProps) {
@@ -20,6 +20,7 @@ async function TranscriptsContent({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = parseInt(params.p || '1', 10);
   const query = params.q?.trim();
+  const searchMode = (params.mode === 'content' ? 'content' : 'metadata') as 'metadata' | 'content';
 
   if (!session?.idToken) {
     return <GatedPage title="Transcripts Library" description="This content is available to authorized team members only." />;
@@ -29,11 +30,16 @@ async function TranscriptsContent({ searchParams }: PageProps) {
   try {
     // If there's a search query, use the search endpoint
     if (query) {
+      // Set include_fields_str based on search mode
+      const includeFields = searchMode === 'content' 
+        ? [SearchFieldType.text]
+        : [SearchFieldType.title, SearchFieldType.semantic_title, SearchFieldType.summary];
+      
       const response = await searchFromTranscriptsProtectedSearchTranscriptsGet(
         {
           query: query,
           page_number: page,
-          include_fields_str: JSON.stringify([SearchFieldType.title, SearchFieldType.semantic_title, SearchFieldType.summary]),
+          include_fields_str: JSON.stringify(includeFields),
         },
         {
           headers: {
@@ -51,11 +57,15 @@ async function TranscriptsContent({ searchParams }: PageProps) {
           <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
             <div className="max-w-5xl mx-auto px-6 py-10">
               <TranscriptsView 
-                searchResults={response.data.metadata_results}
+                searchResults={searchMode === 'metadata' ? response.data.metadata_results : undefined}
+                chunkResults={searchMode === 'content' ? response.data.chunk_results : undefined}
                 currentPage={page}
                 totalPages={response.data.metadata_page_count}
+                chunkTotalPages={response.data.chunk_page_count}
                 searchQuery={query}
                 totalCount={response.data.total_metadata_count}
+                chunkTotalCount={response.data.total_chunk_count}
+                searchMode={searchMode}
               />
             </div>
           </main>

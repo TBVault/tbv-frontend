@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import type { Transcript, TranscriptMetadataSearchResult } from '@/api/generated/schemas';
+import type { Transcript, TranscriptMetadataSearchResult, TranscriptChunkSearchResult } from '@/api/generated/schemas';
 import formatTime from '@/utils/formatTime';
 
 // Helper function to format source
@@ -13,13 +13,19 @@ function formatSource(source: string): string {
   return source.charAt(0).toUpperCase() + source.slice(1);
 }
 
+type SearchMode = 'metadata' | 'content';
+
 interface TranscriptsViewProps {
   transcripts?: Transcript[];
   searchResults?: TranscriptMetadataSearchResult[];
+  chunkResults?: TranscriptChunkSearchResult[];
   currentPage: number;
   totalPages: number;
+  chunkTotalPages?: number;
   searchQuery?: string;
   totalCount?: number;
+  chunkTotalCount?: number;
+  searchMode?: SearchMode;
 }
 
 // Pagination Component
@@ -153,7 +159,7 @@ function Pagination({ currentPage, totalPages, onPageChange }: {
   );
 }
 
-export default function TranscriptsView({ transcripts, searchResults, currentPage, totalPages, searchQuery, totalCount }: TranscriptsViewProps) {
+export default function TranscriptsView({ transcripts, searchResults, chunkResults, currentPage, totalPages, chunkTotalPages, searchQuery, totalCount, chunkTotalCount }: TranscriptsViewProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'row'>(() => {
@@ -165,8 +171,32 @@ export default function TranscriptsView({ transcripts, searchResults, currentPag
   });
   const [searchInput, setSearchInput] = useState(searchQuery || '');
 
+  // Derive search mode from URL params (no state needed)
+  const searchMode = (() => {
+    const modeParam = searchParams.get('mode');
+    return (modeParam === 'content' ? 'content' : 'metadata') as SearchMode;
+  })();
+
+  // Auto-switch view mode based on window width
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 750) {
+        setViewMode('grid');
+      } else {
+        setViewMode('row');
+      }
+    };
+
+    // Set initial state
+    handleResize();
+
+    // Listen for resize events
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Handle click - only navigate if user isn't selecting text
-  const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>, publicId: string) => {
+  const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) {
       e.preventDefault();
@@ -188,8 +218,18 @@ export default function TranscriptsView({ transcripts, searchResults, currentPag
     const params = new URLSearchParams();
     if (searchInput.trim()) {
       params.set('q', searchInput.trim());
+      params.set('mode', searchMode);
     }
     router.push(`/transcripts?${params.toString()}`);
+  };
+
+  const handleSearchModeChange = (mode: SearchMode) => {
+    if (searchInput.trim()) {
+      const params = new URLSearchParams();
+      params.set('q', searchInput.trim());
+      params.set('mode', mode);
+      router.push(`/transcripts?${params.toString()}`);
+    }
   };
 
   const handleClearSearch = () => {
@@ -198,6 +238,18 @@ export default function TranscriptsView({ transcripts, searchResults, currentPag
   };
 
   const isSearchMode = !!searchQuery;
+
+  // Derive loading state: show loading when we're searching but don't have results for current mode
+  const isLoading = (() => {
+    if (!isSearchMode) return false;
+    // Check if we have results array (even if empty, it means we got a response)
+    const hasResults = searchMode === 'metadata' 
+      ? (searchResults !== undefined)
+      : (chunkResults !== undefined);
+    
+    // If we have a query but no results array for the current mode, we're loading
+    return !hasResults && !!searchQuery;
+  })();
 
   return (
     <>
@@ -209,7 +261,11 @@ export default function TranscriptsView({ transcripts, searchResults, currentPag
           </div>
           <div className="hidden min-[750px]:flex items-center gap-2 bg-background border border-border rounded-lg p-1">
             <button
-              onClick={() => setViewMode('grid')}
+              onClick={() => {
+                if (window.innerWidth >= 750) {
+                  setViewMode('grid');
+                }
+              }}
               className={`p-2 rounded transition-colors ${
                 viewMode === 'grid'
                   ? 'bg-primary-600 text-white'
@@ -222,7 +278,11 @@ export default function TranscriptsView({ transcripts, searchResults, currentPag
               </svg>
             </button>
             <button
-              onClick={() => setViewMode('row')}
+              onClick={() => {
+                if (window.innerWidth >= 750) {
+                  setViewMode('row');
+                }
+              }}
               className={`p-2 rounded transition-colors ${
                 viewMode === 'row'
                   ? 'bg-primary-600 text-white'
@@ -270,11 +330,46 @@ export default function TranscriptsView({ transcripts, searchResults, currentPag
           </div>
         </form>
 
+        {/* Search Mode Toggle - Only show when searching */}
+        {isSearchMode && (
+          <div className="mt-4 flex items-center gap-2">
+            <span className="text-sm font-medium text-foreground-secondary">Search in:</span>
+            <div className="flex items-center bg-background border border-border rounded-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={() => handleSearchModeChange('metadata')}
+                className={`flex-1 px-2.5 py-1 text-sm font-medium transition-colors ${
+                  searchMode === 'metadata'
+                    ? 'bg-primary-600 text-white'
+                    : 'text-foreground-secondary hover:bg-background-secondary hover:text-foreground'
+                }`}
+              >
+                Metadata
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSearchModeChange('content')}
+                className={`flex-1 px-2.5 py-1 text-sm font-medium transition-colors ${
+                  searchMode === 'content'
+                    ? 'bg-primary-600 text-white'
+                    : 'text-foreground-secondary hover:bg-background-secondary hover:text-foreground'
+                }`}
+              >
+                Content
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Search Results Info */}
         {isSearchMode && (
           <div className="mt-4 flex items-center gap-3 text-sm text-foreground-secondary">
             <span>
-              <strong className="text-foreground">{totalCount !== undefined ? totalCount.toLocaleString() : '0'}</strong> {totalCount === 1 ? 'result' : 'results'} for: <strong className="text-foreground">&quot;{searchQuery}&quot;</strong>
+              <strong className="text-foreground">
+                {(searchMode === 'metadata' ? totalCount : chunkTotalCount) !== undefined 
+                  ? (searchMode === 'metadata' ? totalCount : chunkTotalCount)!.toLocaleString() 
+                  : '0'}
+              </strong> {(searchMode === 'metadata' ? totalCount : chunkTotalCount) === 1 ? 'result' : 'results'} for: <strong className="text-foreground">&quot;{searchQuery}&quot;</strong>
             </span>
             <button
               onClick={handleClearSearch}
@@ -286,15 +381,22 @@ export default function TranscriptsView({ transcripts, searchResults, currentPag
         )}
       </div>
 
+      {/* Loading State */}
+      {isSearchMode && isLoading && (
+        <div className="flex items-center justify-center py-20 mb-8">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-neutral-200 border-t-primary-600"></div>
+        </div>
+      )}
+
       {/* Render either search results or regular transcripts */}
-      {isSearchMode && searchResults ? (
-        // Search Results with Highlights
+      {isSearchMode && !isLoading && searchMode === 'metadata' && searchResults ? (
+        // Metadata Search Results with Highlights
         <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8' : 'space-y-4 mb-8'}>
           {searchResults.map((result) => (
             <Link
               key={result.public_id}
               href={`/transcript/${result.public_id}`}
-              onClick={(e) => handleCardClick(e, result.public_id)}
+              onClick={handleCardClick}
               draggable={false}
               className={`bg-background rounded-xl border border-border p-6 hover:shadow-lg hover:border-primary-500 transition-all duration-200 select-text ${
                 viewMode === 'grid' 
@@ -364,6 +466,81 @@ export default function TranscriptsView({ transcripts, searchResults, currentPag
             </Link>
           ))}
         </div>
+      ) : isSearchMode && !isLoading && searchMode === 'content' && chunkResults ? (
+        // Content/Chunk Search Results with Highlights - Simplified to match metadata layout
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8' : 'space-y-4 mb-8'}>
+          {chunkResults.map((result) => (
+            <Link
+              key={`${result.public_id}-${result.chunk_index}`}
+              href={`/transcript/${result.public_id}#chunk-${result.chunk_index}`}
+              onClick={handleCardClick}
+              draggable={false}
+              className={`bg-background rounded-xl border border-border p-6 hover:shadow-lg hover:border-primary-500 transition-all duration-200 select-text ${
+                viewMode === 'grid' 
+                  ? 'flex flex-col' 
+                  : 'flex items-start gap-6'
+              }`}
+            >
+              <div className={viewMode === 'row' ? 'flex-1' : 'w-full'}>
+                {/* Title */}
+                <h2 className={`font-bold text-foreground mb-3 break-words overflow-wrap-anywhere ${viewMode === 'grid' ? 'text-xl line-clamp-3' : 'text-2xl'}`} style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                  {result.semantic_title || result.title}
+                </h2>
+
+                {/* Chunk Highlight where summary would go */}
+                {result.chunk_highlight && (
+                  <div 
+                    className={`text-foreground-secondary mb-4 ${viewMode === 'grid' ? 'text-sm line-clamp-3 flex-grow' : 'text-base line-clamp-2'}`}
+                  >
+                    {result.chunk.speaker && (
+                      <span className="font-medium">{result.chunk.speaker}: </span>
+                    )}
+                    <span dangerouslySetInnerHTML={{ __html: result.chunk_highlight || '' }} />
+                  </div>
+                )}
+              </div>
+
+              {/* Metadata Section */}
+              <div className={`${viewMode === 'grid' ? 'mt-auto space-y-3 pt-4 border-t border-border' : 'flex flex-col items-end gap-2 min-w-[160px] max-w-[160px]'}`}>
+                {viewMode === 'grid' ? (
+                  <>
+                    {/* Grid: Duration and Source on same row, aligned left */}
+                    <div className="flex items-center gap-2">
+                      <div className="px-2 py-1 bg-neutral-200 text-foreground rounded-full text-xs font-medium">
+                        {formatTime(result.duration)}
+                      </div>
+                      <div className="px-2 py-1 bg-secondary-100 text-secondary-700 rounded-full text-xs font-medium">
+                        {formatSource(result.source)}
+                      </div>
+                    </div>
+                    {/* Tags - hardcoded */}
+                    <div className="flex flex-wrap gap-2">
+                      <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
+                        Spirituality
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Row: All items aligned right, each in their own row */}
+                    <div className="px-2 py-1 bg-neutral-200 text-foreground rounded-full text-xs font-medium">
+                      {formatTime(result.duration)}
+                    </div>
+                    <div className="px-2 py-1 bg-secondary-100 text-secondary-700 rounded-full text-xs font-medium">
+                      {formatSource(result.source)}
+                    </div>
+                    {/* Tags - hardcoded */}
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      <div className="px-2 py-1 bg-neutral-100 text-foreground-secondary rounded-full text-xs font-medium">
+                        Spirituality
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
       ) : transcripts ? (
         // Regular Transcripts
         <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8' : 'space-y-4 mb-8'}>
@@ -371,7 +548,7 @@ export default function TranscriptsView({ transcripts, searchResults, currentPag
             <Link
               key={transcript.public_id}
               href={`/transcript/${transcript.public_id}`}
-              onClick={(e) => handleCardClick(e, transcript.public_id)}
+              onClick={handleCardClick}
               draggable={false}
               className={`bg-background rounded-xl border border-border p-6 hover:shadow-lg hover:border-primary-500 transition-all duration-200 select-text ${
                 viewMode === 'grid' 
@@ -437,12 +614,22 @@ export default function TranscriptsView({ transcripts, searchResults, currentPag
       ) : null}
 
       {/* Pagination - Bottom */}
-      {totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={updatePage}
-        />
+      {!isLoading && (
+        <>
+          {isSearchMode && searchMode === 'content' && chunkTotalPages && chunkTotalPages > 1 ? (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={chunkTotalPages}
+              onPageChange={updatePage}
+            />
+          ) : totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={updatePage}
+            />
+          )}
+        </>
       )}
     </>
   );
