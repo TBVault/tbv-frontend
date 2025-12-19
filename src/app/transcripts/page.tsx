@@ -2,9 +2,10 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { transcriptsProtectedTranscriptsGet, searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGet } from '@/api/generated/endpoints/default/default';
+import { transcriptsProtectedTranscriptsGet, searchFromTranscriptsProtectedSearchTranscriptsGet } from '@/api/generated/endpoints/default/default';
 import TranscriptsView from '@/components/TranscriptsView';
 import GatedPage from '@/components/GatedPage';
+import { SearchFieldType } from '../../api';
 
 export const metadata: Metadata = {
   title: "Transcripts | The Bhakti Vault",
@@ -28,10 +29,11 @@ async function TranscriptsContent({ searchParams }: PageProps) {
   try {
     // If there's a search query, use the search endpoint
     if (query) {
-      const response = await searchFromTranscriptMetadataProtectedSearchTranscriptMetadataGet(
+      const response = await searchFromTranscriptsProtectedSearchTranscriptsGet(
         {
-          query,
+          query: query,
           page_number: page,
+          include_fields_str: JSON.stringify([SearchFieldType.title, SearchFieldType.semantic_title, SearchFieldType.summary]),
         },
         {
           headers: {
@@ -49,11 +51,11 @@ async function TranscriptsContent({ searchParams }: PageProps) {
           <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
             <div className="max-w-5xl mx-auto px-6 py-10">
               <TranscriptsView 
-                searchResults={response.data.results}
+                searchResults={response.data.metadata_results}
                 currentPage={page}
-                totalPages={response.data.page_count}
+                totalPages={response.data.metadata_page_count}
                 searchQuery={query}
-                totalCount={response.data.total_count}
+                totalCount={response.data.total_metadata_count}
               />
             </div>
           </main>

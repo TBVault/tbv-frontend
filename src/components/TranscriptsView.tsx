@@ -165,6 +165,14 @@ export default function TranscriptsView({ transcripts, searchResults, currentPag
   });
   const [searchInput, setSearchInput] = useState(searchQuery || '');
 
+  // Handle click - only navigate if user isn't selecting text
+  const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>, publicId: string) => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) {
+      e.preventDefault();
+    }
+  };
+
   const updatePage = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
     if (newPage === 1) {
@@ -286,7 +294,9 @@ export default function TranscriptsView({ transcripts, searchResults, currentPag
             <Link
               key={result.public_id}
               href={`/transcript/${result.public_id}`}
-              className={`bg-background rounded-xl border border-border p-6 hover:shadow-lg hover:border-primary-500 transition-all duration-200 ${
+              onClick={(e) => handleCardClick(e, result.public_id)}
+              draggable={false}
+              className={`bg-background rounded-xl border border-border p-6 hover:shadow-lg hover:border-primary-500 transition-all duration-200 select-text ${
                 viewMode === 'grid' 
                   ? 'flex flex-col' 
                   : 'flex items-start gap-6'
@@ -361,7 +371,9 @@ export default function TranscriptsView({ transcripts, searchResults, currentPag
             <Link
               key={transcript.public_id}
               href={`/transcript/${transcript.public_id}`}
-              className={`bg-background rounded-xl border border-border p-6 hover:shadow-lg hover:border-primary-500 transition-all duration-200 ${
+              onClick={(e) => handleCardClick(e, transcript.public_id)}
+              draggable={false}
+              className={`bg-background rounded-xl border border-border p-6 hover:shadow-lg hover:border-primary-500 transition-all duration-200 select-text ${
                 viewMode === 'grid' 
                   ? 'flex flex-col' 
                   : 'flex items-start gap-6'

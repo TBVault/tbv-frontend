@@ -364,10 +364,10 @@
         }
       }
     },
-    "/protected/search/transcript_titles": {
+    "/protected/search/transcripts": {
       "get": {
-        "summary": "Search From Transcript Titles",
-        "operationId": "search_from_transcript_titles_protected_search_transcript_titles_get",
+        "summary": "Search From Transcripts",
+        "operationId": "search_from_transcripts_protected_search_transcripts_get",
         "security": [
           {
             "OpenIdConnect": []
@@ -394,61 +394,14 @@
               "type": "integer",
               "title": "Page Number"
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TranscriptMetadataSearchResultsPaginated"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/protected/search/transcript_summary": {
-      "get": {
-        "summary": "Search From Transcript Summary",
-        "operationId": "search_from_transcript_summary_protected_search_transcript_summary_get",
-        "security": [
-          {
-            "OpenIdConnect": []
           },
           {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "query",
+            "name": "include_fields_str",
             "in": "query",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Query"
-            }
-          },
-          {
-            "name": "page_number",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Page Number"
+              "title": "Include Fields Str"
             }
           }
         ],
@@ -458,119 +411,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TranscriptMetadataSearchResultsPaginated"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/protected/search/transcript_metadata": {
-      "get": {
-        "summary": "Search From Transcript Metadata",
-        "operationId": "search_from_transcript_metadata_protected_search_transcript_metadata_get",
-        "security": [
-          {
-            "OpenIdConnect": []
-          },
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "query",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Query"
-            }
-          },
-          {
-            "name": "page_number",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Page Number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TranscriptMetadataSearchResultsPaginated"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/protected/search/transcript_chunks": {
-      "get": {
-        "summary": "Search From Transcript Chunks",
-        "operationId": "search_from_transcript_chunks_protected_search_transcript_chunks_get",
-        "security": [
-          {
-            "OpenIdConnect": []
-          },
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "query",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Query"
-            }
-          },
-          {
-            "name": "page_number",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Page Number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TranscriptChunkSearchResultsPaginated"
+                  "$ref": "#/components/schemas/TranscriptSearchResultsPaginated"
                 }
               }
             }
@@ -1072,42 +913,6 @@
         ],
         "title": "TranscriptChunkSearchResult"
       },
-      "TranscriptChunkSearchResultsPaginated": {
-        "properties": {
-          "page_number": {
-            "type": "integer",
-            "title": "Page Number"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "page_count": {
-            "type": "integer",
-            "title": "Page Count"
-          },
-          "total_count": {
-            "type": "integer",
-            "title": "Total Count"
-          },
-          "results": {
-            "items": {
-              "$ref": "#/components/schemas/TranscriptChunkSearchResult"
-            },
-            "type": "array",
-            "title": "Results"
-          }
-        },
-        "type": "object",
-        "required": [
-          "page_number",
-          "page_size",
-          "page_count",
-          "total_count",
-          "results"
-        ],
-        "title": "TranscriptChunkSearchResultsPaginated"
-      },
       "TranscriptCitation": {
         "properties": {
           "type": {
@@ -1217,7 +1022,7 @@
         ],
         "title": "TranscriptMetadataSearchResult"
       },
-      "TranscriptMetadataSearchResultsPaginated": {
+      "TranscriptSearchResultsPaginated": {
         "properties": {
           "page_number": {
             "type": "integer",
@@ -1227,31 +1032,49 @@
             "type": "integer",
             "title": "Page Size"
           },
-          "page_count": {
+          "metadata_page_count": {
             "type": "integer",
-            "title": "Page Count"
+            "title": "Metadata Page Count"
           },
-          "total_count": {
+          "chunk_page_count": {
             "type": "integer",
-            "title": "Total Count"
+            "title": "Chunk Page Count"
           },
-          "results": {
+          "total_metadata_count": {
+            "type": "integer",
+            "title": "Total Metadata Count"
+          },
+          "total_chunk_count": {
+            "type": "integer",
+            "title": "Total Chunk Count"
+          },
+          "metadata_results": {
             "items": {
               "$ref": "#/components/schemas/TranscriptMetadataSearchResult"
             },
             "type": "array",
-            "title": "Results"
+            "title": "Metadata Results"
+          },
+          "chunk_results": {
+            "items": {
+              "$ref": "#/components/schemas/TranscriptChunkSearchResult"
+            },
+            "type": "array",
+            "title": "Chunk Results"
           }
         },
         "type": "object",
         "required": [
           "page_number",
           "page_size",
-          "page_count",
-          "total_count",
-          "results"
+          "metadata_page_count",
+          "chunk_page_count",
+          "total_metadata_count",
+          "total_chunk_count",
+          "metadata_results",
+          "chunk_results"
         ],
-        "title": "TranscriptMetadataSearchResultsPaginated"
+        "title": "TranscriptSearchResultsPaginated"
       },
       "TranscriptSource": {
         "type": "string",
