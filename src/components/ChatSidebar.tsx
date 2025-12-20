@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ChatSession } from '@/api/generated/schemas';
@@ -26,9 +26,18 @@ export default function ChatSidebar({
 }: ChatSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  // Use initialChatSessions directly as initial state
-  const [chatSessions] = useState<ChatSession[]>(() => initialChatSessions);
-  const [loading] = useState(initialLoading);
+  // Use state that updates when props change
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>(initialChatSessions);
+  const [loading, setLoading] = useState(initialLoading);
+
+  // Update state when props change (e.g., after revalidation)
+  useEffect(() => {
+    setChatSessions(initialChatSessions);
+  }, [initialChatSessions]);
+
+  useEffect(() => {
+    setLoading(initialLoading);
+  }, [initialLoading]);
 
   // Handle clicking "New Chat" button
   const handleNewChat = (e: React.MouseEvent<HTMLAnchorElement>) => {

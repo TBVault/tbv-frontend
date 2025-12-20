@@ -41,6 +41,21 @@ export default function HistoricalChatInterface({
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
+  // Handle chat topic updates - revalidate sidebar when a new topic is received
+  const handleChatTopic = useCallback(async (topic: string) => {
+    setChatTopic(topic);
+    
+    // Revalidate chat sessions cache and refresh the page to update sidebar
+    try {
+      await fetch('/api/revalidate/chat-sessions', { method: 'POST' });
+      router.refresh(); // Refresh server components to update sidebar with new chat sessions
+    } catch (error) {
+      console.error('Error revalidating chat sessions:', error);
+      // Still refresh even if revalidation fails
+      router.refresh();
+    }
+  }, [router]);
+
   // Stable Container component - defined outside render to prevent remounts
   const Container = useCallback(({ children }: { children: React.ReactNode }) => (
     <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
@@ -293,7 +308,7 @@ export default function HistoricalChatInterface({
             key={`chat-messages-${chatSessionId}`}
             messages={messages}
             preFetchedTranscripts={preFetchedTranscripts}
-            onChatTopic={setChatTopic}
+            onChatTopic={handleChatTopic}
           />
 
           {/* Input */}

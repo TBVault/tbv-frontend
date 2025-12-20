@@ -27,6 +27,21 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
+  // Handle chat topic updates - revalidate sidebar when a new topic is received
+  const handleChatTopic = useCallback(async (topic: string) => {
+    setChatTopic(topic);
+    
+    // Revalidate chat sessions cache and refresh the page to update sidebar
+    try {
+      await fetch('/api/revalidate/chat-sessions', { method: 'POST' });
+      router.refresh(); // Refresh server components to update sidebar with new chat sessions
+    } catch (error) {
+      console.error('Error revalidating chat sessions:', error);
+      // Still refresh even if revalidation fails
+      router.refresh();
+    }
+  }, [router]);
+
   // Handle page reload: redirect to chat history if there's an active session
   useEffect(() => {
     const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
@@ -281,7 +296,7 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
           <ChatMessages
             key={chatSessionIdRef.current || 'new-chat'}
             messages={messages}
-            onChatTopic={setChatTopic}
+            onChatTopic={handleChatTopic}
           />
 
           {/* Input */}
