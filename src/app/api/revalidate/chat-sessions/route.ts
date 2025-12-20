@@ -5,7 +5,7 @@ export async function POST() {
   try {
     await revalidateChatSessions();
     return NextResponse.json({ revalidated: true, now: Date.now() });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { message: 'Error revalidating chat sessions' },
       { status: 500 }
