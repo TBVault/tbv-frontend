@@ -12,18 +12,39 @@ export function TranscriptOverlay({
   citationNumber, 
   authToken, 
   preFetchedTranscript, 
+  fetchingPromise,
+  getTranscript,
   onClose 
 }: TranscriptOverlayProps) {
   const [transcript, setTranscript] = useState<Transcript | null>(preFetchedTranscript || null);
   const [loading, setLoading] = useState(!preFetchedTranscript);
   const [error, setError] = useState<string | null>(null);
 
+  // Update transcript when preFetchedTranscript changes (from parent's transcriptData updates)
   useEffect(() => {
-    // If we already have pre-fetched data, use it
     if (preFetchedTranscript) {
       setTranscript(preFetchedTranscript);
       setLoading(false);
+      setError(null);
+    }
+  }, [preFetchedTranscript]);
+
+  // Initial fetch logic - only runs when citation or auth changes, or when we don't have data
+  useEffect(() => {
+    // If we already have transcript data, don't fetch
+    if (preFetchedTranscript || transcript) {
       return;
+    }
+
+    // Check if getTranscript can provide the transcript (fallback check)
+    if (getTranscript) {
+      const cachedTranscript = getTranscript(citation.transcript_id);
+      if (cachedTranscript) {
+        setTranscript(cachedTranscript);
+        setLoading(false);
+        setError(null);
+        return;
+      }
     }
 
     const fetchTranscript = async () => {
@@ -33,6 +54,52 @@ export function TranscriptOverlay({
         return;
       }
 
+      // If there's already a fetch in progress, wait for it instead of starting a new one
+      if (fetchingPromise) {
+        try {
+          setLoading(true);
+          await fetchingPromise;
+          // After waiting, check if transcript is now available via getTranscript or preFetchedTranscript
+          if (getTranscript) {
+            const updatedTranscript = getTranscript(citation.transcript_id);
+            if (updatedTranscript) {
+              setTranscript(updatedTranscript);
+              setLoading(false);
+              setError(null);
+              return;
+            }
+          }
+          // Also check preFetchedTranscript in case parent updated it
+          if (preFetchedTranscript) {
+            setTranscript(preFetchedTranscript);
+            setLoading(false);
+            setError(null);
+            return;
+          }
+        } catch (err) {
+          console.error('Error waiting for transcript fetch:', err);
+        }
+      }
+
+      // Only fetch if we still don't have the transcript after waiting for in-progress fetch
+      // Double-check getTranscript and preFetchedTranscript one more time before fetching
+      if (getTranscript) {
+        const cachedTranscript = getTranscript(citation.transcript_id);
+        if (cachedTranscript) {
+          setTranscript(cachedTranscript);
+          setLoading(false);
+          setError(null);
+          return;
+        }
+      }
+      if (preFetchedTranscript) {
+        setTranscript(preFetchedTranscript);
+        setLoading(false);
+        setError(null);
+        return;
+      }
+
+      // Last resort: fetch the transcript ourselves (should rarely happen)
       try {
         setLoading(true);
         const response = await transcriptProtectedTranscriptGet(
@@ -55,7 +122,7 @@ export function TranscriptOverlay({
     };
 
     fetchTranscript();
-  }, [citation.transcript_id, authToken, preFetchedTranscript]);
+  }, [citation.transcript_id, authToken, fetchingPromise, getTranscript, preFetchedTranscript, transcript]);
 
   const chunk = citation.chunk_index >= 0 ? transcript?.content?.[citation.chunk_index] : transcript?.summary;
   const chunkText = typeof chunk === 'string' ? chunk : chunk?.text || '';

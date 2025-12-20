@@ -35,6 +35,7 @@ function ChatMessages({
   const fetchedIds = useRef<Set<string>>(new Set());
   const fetchedWebUrls = useRef<Set<string>>(new Set());
   const notifiedTopicsRef = useRef<Set<string>>(new Set());
+  const fetchingTranscripts = useRef<Map<string, Promise<void>>>(new Map());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const userHasScrolledUpRef = useRef(false);
@@ -131,17 +132,17 @@ function ChatMessages({
     // Fetch full transcript data (including chunks) for transcripts we haven't fetched yet
     const fetchTranscripts = async () => {
       const idsToFetch = Array.from(transcriptIds).filter(
-        (id) => !fetchedIds.current.has(id)
+        (id) => !fetchedIds.current.has(id) && !fetchingTranscripts.current.has(id)
       );
 
       if (idsToFetch.length === 0) return;
 
-      // Mark all as being fetched to prevent duplicate requests
-      idsToFetch.forEach(id => fetchedIds.current.add(id));
-
-      // Fetch all transcripts in parallel
-      await Promise.allSettled(
-        idsToFetch.map(async (transcriptId) => {
+      // Create fetch promises for all transcripts we need to fetch
+      const fetchPromises = idsToFetch.map((transcriptId) => {
+        // Mark as being fetched to prevent duplicate requests
+        fetchedIds.current.add(transcriptId);
+        
+        const fetchPromise = (async () => {
           try {
             const response = await transcriptProtectedTranscriptGet(
               { public_id: transcriptId },
@@ -156,9 +157,19 @@ function ChatMessages({
             }
           } catch (err) {
             console.error(`Error fetching transcript ${transcriptId}:`, err);
+          } finally {
+            // Remove from fetching map when done
+            fetchingTranscripts.current.delete(transcriptId);
           }
-        })
-      );
+        })();
+        
+        // Store the promise so other components can wait for it
+        fetchingTranscripts.current.set(transcriptId, fetchPromise);
+        return fetchPromise;
+      });
+
+      // Wait for all fetches to complete
+      await Promise.allSettled(fetchPromises);
     };
 
     if (transcriptIds.size > 0) {
@@ -471,6 +482,8 @@ function ChatMessages({
           citationNumber={selectedTranscript.number}
           authToken={session?.idToken}
           preFetchedTranscript={transcriptData.get(selectedTranscript.citation.transcript_id)}
+          fetchingPromise={fetchingTranscripts.current.get(selectedTranscript.citation.transcript_id)}
+          getTranscript={(id) => transcriptData.get(id)}
           onClose={handleCloseOverlay}
         />
       )}

@@ -16,6 +16,8 @@ export interface TranscriptOverlayProps {
   citationNumber: number;
   authToken: string | undefined;
   preFetchedTranscript?: Transcript | null;
+  fetchingPromise?: Promise<void>;
+  getTranscript?: (id: string) => Transcript | undefined;
   onClose: () => void;
 }
 
