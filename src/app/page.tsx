@@ -1,49 +1,61 @@
 import { auth, signIn } from "@/auth";
 import Link from "next/link";
-import { transcriptsProtectedTranscriptsGet } from "@/api/generated/endpoints/default/default";
-import type { Transcript } from "@/api/generated/schemas";
+import Image from "next/image";
+import { transcriptsProtectedTranscriptsGet, chatSessionsProtectedChatSessionsGet } from "@/api/generated/endpoints/default/default";
 import Logo from "@/components/Logo";
-import formatTime from "@/utils/formatTime";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default async function Home() {
   const session = await auth();
-  let recentTranscripts: Transcript[] = [];
-  let totalCount = 0;
+  let totalTranscripts = 0;
+  let totalChats = 0;
 
-  // Fetch recent transcripts if logged in
+  // Fetch stats if logged in
   if (session?.idToken) {
     try {
-      const response = await transcriptsProtectedTranscriptsGet(
-        { page_number: 1 },
-        {
+      const [transcriptResponse, chatResponse] = await Promise.all([
+        transcriptsProtectedTranscriptsGet(
+          { page_number: 1 },
+          {
+            headers: {
+              Authorization: session.idToken.trim(),
+            },
+            next: {
+              revalidate: 60,
+              tags: ['transcripts', 'home'],
+            },
+          }
+        ),
+        chatSessionsProtectedChatSessionsGet({
           headers: {
             Authorization: session.idToken.trim(),
           },
           next: {
-            revalidate: 60, // Cache for 1 minute
-            tags: ['transcripts', 'home'],
+            revalidate: 10,
+            tags: ['chat-sessions'],
           },
-        }
-      );
+        }),
+      ]);
       
-      if (response.status === 200) {
-        recentTranscripts = response.data.transcripts.slice(0, 3);
-        totalCount = response.data.total_count;
+      if (transcriptResponse.status === 200) {
+        totalTranscripts = transcriptResponse.data.total_count;
+      }
+      if (chatResponse.status === 200) {
+        totalChats = chatResponse.data.length;
       }
     } catch {
-      // Silently handle token expiration - user will be prompted to re-auth when they navigate
-      console.log('Unable to fetch transcripts - session may have expired');
+      console.log('Unable to fetch stats - session may have expired');
     }
   }
 
   if (!session) {
-    // Not logged in - show welcoming but gated page
+    // Not logged in - show welcoming landing page
     return (
-      <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary flex items-center justify-center px-6 py-20" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
+      <div className="min-h-screen flex items-center justify-center px-6 py-12">
         <div className="max-w-md w-full">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-neutral-800 to-neutral-900 mb-6 shadow-lg p-3">
-              <Logo size={56} />
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-800 mb-6 shadow-lg shadow-primary-500/20">
+              <Logo size={48} />
             </div>
             <h1 className="text-4xl font-bold text-foreground mb-3">
               The Bhakti Vault
@@ -56,7 +68,7 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="bg-background rounded-2xl border border-border p-8 shadow-xl">
+          <div className="bg-background-elevated rounded-2xl border border-border p-8">
             <p className="text-foreground-secondary text-center mb-6">
               This platform contains transcripts of lectures, talks, and seminars, accessible to authorized team members only.
             </p>
@@ -67,7 +79,7 @@ export default async function Home() {
             }}>
               <button
                 type="submit"
-                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-md hover:shadow-lg"
+                className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40"
               >
                 Sign In with Google
               </button>
@@ -83,148 +95,145 @@ export default async function Home() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
-  // Logged in - show dashboard
+  // Logged in - show profile/dashboard
+  const userName = session.user?.name || 'Friend';
+  const userEmail = session.user?.email;
+  const userRole = session.user?.role || 'Member';
+  const userImage = session.user?.image;
+
   return (
-    <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        {/* Welcome Section */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            Welcome back {session.user?.name || 'Friend'}
-          </h1>
-          <p className="text-foreground-secondary">
-            Access H.G. Vaiśeṣika Dāsa&apos;s collection of lectures and talks
-          </p>
+    <div className="min-h-screen py-8 px-6 lg:px-12">
+      <div className="max-w-4xl mx-auto">
+        {/* Profile Header */}
+        <div className="bg-background-elevated rounded-2xl border border-border p-8 mb-8">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            {/* Avatar */}
+            <div className="relative">
+              {userImage ? (
+                <Image
+                  src={userImage}
+                  alt={userName}
+                  width={96}
+                  height={96}
+                  className="w-24 h-24 rounded-2xl border-2 border-primary-500/30"
+                  crossOrigin="anonymous"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-3xl font-bold text-white">
+                  {userName[0]?.toUpperCase()}
+                </div>
+              )}
+              <div className="absolute -bottom-2 -right-2 px-2.5 py-1 bg-background-elevated border border-border rounded-full">
+                <span className="text-xs font-medium text-primary-400 capitalize">{userRole}</span>
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 text-center sm:text-left">
+              <h1 className="text-2xl font-bold text-foreground mb-1">
+                {userName}
+              </h1>
+              {userEmail && (
+                <p className="text-foreground-secondary mb-4">{userEmail}</p>
+              )}
+              <p className="text-foreground-tertiary text-sm">
+                Welcome to The Bhakti Vault — your portal to H.G. Vaiśeṣika Dāsa&apos;s wisdom.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <div className="bg-background rounded-xl border border-border p-6 shadow-sm">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+          <div className="bg-background-elevated rounded-xl border border-border p-6 hover:border-primary-500/30 transition-colors">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
-                <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 rounded-xl bg-primary-500/10 flex items-center justify-center">
+                <svg className="w-6 h-6 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
               <div>
                 <p className="text-sm text-foreground-tertiary">Total Transcripts</p>
-                <p className="text-3xl font-bold text-foreground">{totalCount}</p>
+                <p className="text-3xl font-bold text-foreground">{totalTranscripts.toLocaleString()}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-background rounded-xl border border-border p-6 shadow-sm">
+          <div className="bg-background-elevated rounded-xl border border-border p-6 hover:border-secondary-500/30 transition-colors">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-secondary-100 flex items-center justify-center">
-                <svg className="w-6 h-6 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              <div className="w-12 h-12 rounded-xl bg-secondary-500/10 flex items-center justify-center">
+                <svg className="w-6 h-6 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
               </div>
               <div>
-                <p className="text-sm text-foreground-tertiary">Your Access Level</p>
-                <p className="text-xl font-semibold text-foreground capitalize">{session.user?.role || 'Member'}</p>
+                <p className="text-sm text-foreground-tertiary">Your Conversations</p>
+                <p className="text-3xl font-bold text-foreground">{totalChats.toLocaleString()}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Recent Transcripts or Session Expiry Notice */}
-        {recentTranscripts.length > 0 ? (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-foreground">Recently Added</h2>
-              <Link 
-                href="/transcripts"
-                className="text-primary-600 hover:text-primary-700 font-medium transition-colors flex items-center gap-1"
-              >
-                View All
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {recentTranscripts.map((transcript) => (
-                <Link
-                  key={transcript.public_id}
-                  href={`/transcript/${transcript.public_id}`}
-                  className="bg-background rounded-xl border border-border p-6 hover:shadow-lg hover:border-primary-500 transition-all duration-200 flex flex-col"
-                >
-                  <h3 className="font-bold text-foreground mb-3 line-clamp-2">
-                    {transcript.semantic_title || transcript.title}
-                  </h3>
-                  
-                  {transcript.summary && (
-                    <p className="text-sm text-foreground-secondary mb-4 line-clamp-3 flex-grow">
-                      {transcript.summary}
-                    </p>
-                  )}
-                  
-                  <div className="flex items-center gap-2 mt-auto pt-4 border-t border-border">
-                    <div className="px-2 py-1 bg-neutral-200 text-foreground rounded-full text-xs font-medium">
-                      {formatTime(transcript.duration)}
-                    </div>
-                    <div className="px-2 py-1 bg-secondary-100 text-secondary-700 rounded-full text-xs font-medium">
-                      {transcript.source === 'otterai' ? 'OtterAI' : transcript.source.charAt(0).toUpperCase() + transcript.source.slice(1)}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        ) : session?.idToken && (
-          <div className="mb-8 bg-amber-50 border border-amber-200 rounded-xl p-6">
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground mb-1">Session Expired</h3>
-                <p className="text-sm text-foreground-secondary mb-3">
-                  Your session has expired. Please sign in again to view transcripts.
-                </p>
-                <form action={async () => {
-                  "use server";
-                  await signIn("oidc");
-                }}>
-                  <button
-                    type="submit"
-                    className="text-sm bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                  >
-                    Sign In Again
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Browse All CTA */}
-        <div className="bg-gradient-to-br from-primary-50 to-secondary-50 rounded-xl border border-primary-200 p-8 text-center">
-          <h3 className="text-xl font-bold text-foreground mb-2">
-            Explore the Complete Archive
-          </h3>
-          <p className="text-foreground-secondary mb-6">
-            Browse all transcripts with advanced search and filtering
+        {/* Settings */}
+        <div className="bg-background-elevated rounded-2xl border border-border p-6 mb-8">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-foreground-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Appearance
+          </h2>
+          <p className="text-foreground-secondary text-sm mb-4">
+            Choose your preferred theme for the application.
           </p>
+          <ThemeToggle />
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Link
+            href="/chat"
+            className="group bg-gradient-to-br from-primary-600/20 to-primary-700/10 hover:from-primary-600/30 hover:to-primary-700/20 border border-primary-500/20 hover:border-primary-500/40 rounded-xl p-6 transition-all"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-foreground group-hover:text-primary-400 transition-colors">
+                Start New Chat
+              </h3>
+            </div>
+            <p className="text-foreground-secondary text-sm">
+              Ask questions about the lectures and get AI-powered insights with direct citations.
+            </p>
+          </Link>
+
           <Link
             href="/transcripts"
-            className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-md hover:shadow-lg"
+            className="group bg-gradient-to-br from-secondary-600/20 to-secondary-700/10 hover:from-secondary-600/30 hover:to-secondary-700/20 border border-secondary-500/20 hover:border-secondary-500/40 rounded-xl p-6 transition-all"
           >
-            Browse All Transcripts
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-secondary-500 flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-foreground group-hover:text-secondary-400 transition-colors">
+                Browse Transcripts
+              </h3>
+            </div>
+            <p className="text-foreground-secondary text-sm">
+              Explore the complete archive with search and filtering capabilities.
+            </p>
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

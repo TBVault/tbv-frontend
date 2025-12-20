@@ -2,70 +2,183 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Background Colors */
-  --background: #ffffff;
-  --background-secondary: #f9fafb; /* gray-50 */
-  --background-tertiary: #f3f4f6; /* gray-100 */
+/* Light Mode (Default) */
+:root, .light {
+  /* Background Colors - Clean, warm whites */
+  --background: #fafaf9;
+  --background-secondary: #f5f5f4;
+  --background-tertiary: #e7e5e4;
+  --background-elevated: #ffffff;
   
   /* Foreground/Text Colors */
-  --foreground: #171717; /* gray-900 */
-  --foreground-secondary: #374151; /* gray-700 */
-  --foreground-tertiary: #6b7280; /* gray-500 */
-  --foreground-muted: #9ca3af; /* gray-400 */
+  --foreground: #1c1917;
+  --foreground-secondary: #57534e;
+  --foreground-tertiary: #78716c;
+  --foreground-muted: #a8a29e;
   
-  /* Primary Colors (Blue) */
-  --primary-50: #eff6ff;
-  --primary-100: #dbeafe;
-  --primary-500: #3b82f6;
-  --primary-600: #2563eb;
-  --primary-700: #1d4ed8;
+  /* Sidebar Colors - Warm off-white */
+  --sidebar-bg: #f5f5f4;
+  --sidebar-hover: #e7e5e4;
+  --sidebar-active: #d6d3d1;
+  --sidebar-border: #e7e5e4;
   
-  /* Secondary Colors (Purple) */
-  --secondary-100: #f3e8ff;
-  --secondary-600: #9333ea;
-  --secondary-700: #7e22ce;
+  /* Primary Colors - Saffron/Gold tones (spiritual significance) */
+  --primary-50: #fef7ed;
+  --primary-100: #fdecd3;
+  --primary-200: #f9d5a5;
+  --primary-300: #f5b86d;
+  --primary-400: #f09432;
+  --primary-500: #ec7912;
+  --primary-600: #dd5d08;
+  --primary-700: #b7430a;
+  --primary-800: #923510;
+  --primary-900: #762d10;
   
-  /* Accent Colors (Indigo) */
-  --accent-50: #eef2ff;
+  /* Secondary Colors - Deep Teal (wisdom/depth) */
+  --secondary-50: #edfcf9;
+  --secondary-100: #d2f7f0;
+  --secondary-200: #a9eee3;
+  --secondary-300: #72dfd1;
+  --secondary-400: #3ac8ba;
+  --secondary-500: #21ada0;
+  --secondary-600: #188b82;
+  --secondary-700: #176f69;
+  --secondary-800: #175955;
+  --secondary-900: #174a47;
+  
+  /* Accent Colors - Warm Rose (devotion) */
+  --accent-50: #fef2f3;
+  --accent-100: #fde6e8;
+  --accent-200: #fbd0d6;
+  --accent-300: #f7aab4;
+  --accent-400: #f1788d;
+  --accent-500: #e54d68;
+  --accent-600: #d12b52;
+  --accent-700: #af1f44;
+  --accent-800: #921d3f;
+  --accent-900: #7d1c3b;
   
   /* Neutral Colors */
-  --neutral-50: #f9fafb;
-  --neutral-100: #f3f4f6;
-  --neutral-200: #e5e7eb;
-  --neutral-300: #d1d5db;
-  --neutral-500: #6b7280;
-  --neutral-600: #4b5563;
-  --neutral-700: #374151;
-  --neutral-800: #1f2937;
-  --neutral-900: #111827;
+  --neutral-50: #fafafa;
+  --neutral-100: #f4f4f5;
+  --neutral-200: #e4e4e7;
+  --neutral-300: #d4d4d8;
+  --neutral-400: #a1a1aa;
+  --neutral-500: #71717a;
+  --neutral-600: #52525b;
+  --neutral-700: #3f3f46;
+  --neutral-800: #27272a;
+  --neutral-900: #18181b;
   
   /* Semantic Colors */
   --error-50: #fef2f2;
+  --error-100: #fee2e2;
   --error-500: #ef4444;
   --error-800: #991b1b;
   --error-900: #7f1d1d;
   
+  --success-50: #ecfdf5;
+  --success-500: #22c55e;
+  --success-600: #16a34a;
+  
   /* Border Colors */
-  --border: #e5e7eb; /* gray-200 */
-  --border-light: #f3f4f6; /* gray-100 */
+  --border: #e7e5e4;
+  --border-light: #d6d3d1;
+  
+  /* Input Colors */
+  --input-bg: #ffffff;
+  --input-border: #d6d3d1;
+  --input-focus: #f09432;
   
   /* Shadow */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.05);
   
   /* Layout */
-  --header-height: 73px;
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 64px;
+  --header-height: 0px;
+  
+  /* Scrollbar Colors */
+  --scrollbar-thumb: #d6d3d1;
+  --scrollbar-thumb-hover: #a8a29e;
+}
+
+/* Dark Mode */
+.dark {
+  /* Background Colors - Main content area with a gray tone */
+  --background: #1c1c20;
+  --background-secondary: #222226;
+  --background-tertiary: #28282d;
+  --background-elevated: #2e2e34;
+  
+  /* Foreground/Text Colors */
+  --foreground: #f5f5f7;
+  --foreground-secondary: #a1a1a6;
+  --foreground-tertiary: #6e6e73;
+  --foreground-muted: #48484a;
+  
+  /* Sidebar Colors - Deep black */
+  --sidebar-bg: #0a0a0c;
+  --sidebar-hover: #141416;
+  --sidebar-active: #1a1a1e;
+  --sidebar-border: #1f1f23;
+  
+  /* Border Colors */
+  --border: #38383e;
+  --border-light: #48484e;
+  
+  /* Input Colors */
+  --input-bg: #28282d;
+  --input-border: #3a3a40;
+  --input-focus: #f09432;
+  
+  /* Shadow */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  
+  /* Scrollbar Colors */
+  --scrollbar-thumb: #3f3f46;
+  --scrollbar-thumb-hover: #52525b;
 }
 
 html {
-  scroll-behavior: smooth;
-  scroll-padding-top: calc(var(--header-height) + 1rem);
+  scroll-padding-top: 1rem;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 /* Modern typing indicator animation */
@@ -98,9 +211,46 @@ body {
 
 /* Search highlight styling */
 mark {
-  background-color: #fde68a; /* amber-200 - warmer tone that complements the blue/purple scheme */
-  color: inherit;
+  background-color: var(--primary-400);
+  color: var(--background);
   padding: 0.1em 0.2em;
   border-radius: 0.2em;
   font-weight: 600;
+}
+
+/* Smooth transitions for sidebar */
+.sidebar-transition {
+  transition: width 200ms ease-in-out, transform 200ms ease-in-out;
+}
+
+.main-content-transition {
+  transition: margin-left 200ms ease-in-out, padding-left 200ms ease-in-out;
+}
+
+/* Hide scrollbar but keep functionality for chat history */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+  background-color: var(--primary-500);
+  color: var(--foreground);
+}
+
+/* Theme transition for smooth mode switching */
+html.light,
+html.dark {
+  transition: background-color 0.2s ease, color 0.2s ease;
 }

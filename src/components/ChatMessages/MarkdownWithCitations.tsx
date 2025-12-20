@@ -3,7 +3,6 @@ import type { ChatObject, TranscriptCitation } from '@/api/generated/schemas';
 import type { CitationMetadata } from './types';
 import { ChatObjectRenderer } from './ChatObjectRenderer';
 
-// Component to render markdown with inline citations embedded at exact positions
 export function MarkdownWithCitations({ 
   segments,
   citationMap,
@@ -17,7 +16,6 @@ export function MarkdownWithCitations({
   webTitles: Map<string, string>;
   onTranscriptClick: (citation: TranscriptCitation, number: number) => void;
 }) {
-  // Build text with citation placeholders and store citations
   let combinedText = '';
   const citations: ChatObject[] = [];
   const citationPlaceholder = '__CITATION__';
@@ -26,14 +24,12 @@ export function MarkdownWithCitations({
     if (segment.type === 'text') {
       combinedText += segment.content as string;
     } else {
-      // Insert placeholder and store citation
       const citationIndex = citations.length;
       combinedText += `${citationPlaceholder}${citationIndex}${citationPlaceholder}`;
       citations.push(segment.content as ChatObject);
     }
   });
 
-  // Create custom component for citations
   const CitationPill = ({ index }: { index: number }) => {
     if (index >= citations.length) {
       return null;
@@ -61,26 +57,17 @@ export function MarkdownWithCitations({
     );
   };
 
-  // First, add spaces between adjacent citation placeholders to prevent ReactMarkdown from merging them
-  // Handle case where citation is followed immediately by another citation (no character in between)
   combinedText = combinedText.replace(
     new RegExp(`${citationPlaceholder}(\\d+)${citationPlaceholder}${citationPlaceholder}(\\d+)${citationPlaceholder}`, 'g'),
     (match, index1, index2) => `${citationPlaceholder}${index1}${citationPlaceholder} ${citationPlaceholder}${index2}${citationPlaceholder}`
   );
 
-  // Process text to replace placeholders with inline code that we can intercept
-  // Use inline code syntax that ReactMarkdown will process
   let processedText = combinedText.replace(
     new RegExp(`${citationPlaceholder}(\\d+)${citationPlaceholder}`, 'g'),
     (match, index) => `\`CITATION_${index}\``
   );
   
-  // Final safety check: ensure adjacent inline code citations have spaces between them
-  // This handles any edge cases where citations might still be adjacent
-  // Match sequences of adjacent citation code blocks (e.g., `CITATION_0``CITATION_1``CITATION_2`)
-  // and add spaces between them
   processedText = processedText.replace(/(`CITATION_-?\d+`)(`CITATION_-?\d+`)+/g, (match) => {
-    // Replace all double backticks (``) with space + backtick (` `)
     return match.replace(/``/g, '` `');
   });
 
@@ -92,8 +79,6 @@ export function MarkdownWithCitations({
         ol: ({ children }) => <ol className="list-decimal pl-5 mb-1 space-y-0">{children}</ol>,
         li: ({ children }) => <li className="leading-normal mb-0">{children}</li>,
         code: ({ children, className, node }) => {
-          // Check if this is a citation placeholder by examining the node
-          // ReactMarkdown passes the raw value in node.children[0].value for code nodes
           let codeText = '';
           
           if (node && 'children' in node && Array.isArray(node.children) && node.children.length > 0) {
@@ -103,7 +88,6 @@ export function MarkdownWithCitations({
             }
           }
           
-          // Fallback to children if node doesn't have the value
           if (!codeText) {
             if (typeof children === 'string') {
               codeText = children;
@@ -114,24 +98,18 @@ export function MarkdownWithCitations({
             }
           }
           
-          // Check if this matches our citation pattern
-          // Handle both positive and negative numbers (e.g., CITATION_0, CITATION_-1)
           const trimmed = codeText.trim();
           const citationMatch = trimmed.match(/^CITATION_(-?\d+)$/);
           
           if (citationMatch) {
             const citationIndex = parseInt(citationMatch[1], 10);
-            // Only render if index is valid (non-negative and within bounds)
             if (citationIndex >= 0 && citationIndex < citations.length) {
               return <CitationPill index={citationIndex} />;
             }
           }
           
-          // Also check if multiple citations got merged (e.g., CITATION_0CITATION_1)
-          // This can happen if ReactMarkdown merges adjacent inline code blocks
           const mergedMatch = trimmed.match(/^CITATION_(-?\d+)(?:CITATION_(-?\d+))+$/);
           if (mergedMatch) {
-            // Extract all citation indices from merged string
             const allMatches = trimmed.match(/CITATION_(-?\d+)/g);
             if (allMatches) {
               return (
@@ -151,10 +129,9 @@ export function MarkdownWithCitations({
             }
           }
           
-          // Regular inline code
           const isInline = !className;
           return isInline ? (
-            <code className="bg-gray-200 px-1 py-0.5 rounded text-sm font-mono">
+            <code className="bg-foreground-muted/20 px-1.5 py-0.5 rounded text-sm font-mono text-foreground">
               {children}
             </code>
           ) : (
@@ -162,24 +139,24 @@ export function MarkdownWithCitations({
           );
         },
         pre: ({ children }) => (
-          <pre className="bg-gray-100 p-2 rounded-lg overflow-x-auto mb-1 text-sm">
+          <pre className="bg-background-tertiary p-3 rounded-lg overflow-x-auto mb-1 text-sm border border-border">
             {children}
           </pre>
         ),
         blockquote: ({ children }) => (
-          <blockquote className="border-l-2 border-gray-300 pl-3 italic my-1 text-gray-700">
+          <blockquote className="border-l-2 border-primary-500 pl-3 italic my-1 text-foreground-secondary">
             {children}
           </blockquote>
         ),
         a: ({ href, children }) => (
-          <a href={href} className="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">
+          <a href={href} className="text-primary-400 hover:text-primary-300 underline" target="_blank" rel="noopener noreferrer">
             {children}
           </a>
         ),
-        h1: ({ children }) => <h1 className="text-xl font-bold mt-10 mb-2 first:mt-0">{children}</h1>,
-        h2: ({ children }) => <h2 className="text-lg font-bold mt-8 mb-1.5 first:mt-0">{children}</h2>,
-        h3: ({ children }) => <h3 className="text-base font-semibold mt-6 mb-1 first:mt-0">{children}</h3>,
-        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+        h1: ({ children }) => <h1 className="text-xl font-bold mt-10 mb-2 first:mt-0 text-foreground">{children}</h1>,
+        h2: ({ children }) => <h2 className="text-lg font-bold mt-8 mb-1.5 first:mt-0 text-foreground">{children}</h2>,
+        h3: ({ children }) => <h3 className="text-base font-semibold mt-6 mb-1 first:mt-0 text-foreground">{children}</h3>,
+        strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
         em: ({ children }) => <em className="italic">{children}</em>,
       }}
     >
@@ -187,4 +164,3 @@ export function MarkdownWithCitations({
     </ReactMarkdown>
   );
 }
-

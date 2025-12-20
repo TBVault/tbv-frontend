@@ -5,7 +5,6 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput, { type ChatInputRef } from '@/components/ChatInput';
-import ChatSidebar from '@/components/ChatSidebar';
 import type { ChatSessionMessage, ChatSession, Transcript } from '@/api/generated/schemas';
 import { chatSessionHistoryProtectedChatSessionChatSessionIdGet } from '@/api/generated/endpoints/default/default';
 import { processStreamBuffer } from '@/utils/streamingHelpers';
@@ -16,7 +15,6 @@ interface HistoricalChatInterfaceProps {
   initialMessages?: ChatSessionMessage[];
   initialLoading?: boolean;
   preFetchedTranscripts?: Map<string, Transcript>;
-  initialChatSessions?: ChatSession[];
 }
 
 export default function HistoricalChatInterface({
@@ -25,7 +23,6 @@ export default function HistoricalChatInterface({
   initialMessages = [],
   initialLoading = true,
   preFetchedTranscripts = new Map(),
-  initialChatSessions = []
 }: HistoricalChatInterfaceProps) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -33,37 +30,22 @@ export default function HistoricalChatInterface({
   const [messages, setMessages] = useState<ChatSessionMessage[]>(initialMessages);
   const [loading, setLoading] = useState(initialLoading);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chatNotFound, setChatNotFound] = useState(false);
   const [chatTopic, setChatTopic] = useState<string | null>(initialChatSession?.chat_topic || null);
   const chatInputRef = useRef<ChatInputRef>(null);
 
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-
-  // Handle chat topic updates - revalidate sidebar when a new topic is received
   const handleChatTopic = useCallback(async (topic: string) => {
     setChatTopic(topic);
     
-    // Revalidate chat sessions cache and refresh the page to update sidebar
     try {
       await fetch('/api/revalidate/chat-sessions', { method: 'POST' });
-      router.refresh(); // Refresh server components to update sidebar with new chat sessions
+      router.refresh();
     } catch (error) {
       console.error('Error revalidating chat sessions:', error);
-      // Still refresh even if revalidation fails
       router.refresh();
     }
   }, [router]);
-
-  // Stable Container component - defined outside render to prevent remounts
-  const Container = useCallback(({ children }: { children: React.ReactNode }) => (
-    <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        {children}
-      </div>
-    </main>
-  ), []);
 
   const handleError = useCallback((error: { status?: number; message?: string }) => {
     const status = error?.status;
@@ -92,7 +74,6 @@ export default function HistoricalChatInterface({
   });
 
   useEffect(() => {
-    // If we have pre-fetched data, mark as not loading
     if (initialChatSession && initialMessages.length > 0) {
       setLoading(false);
       return;
@@ -145,7 +126,6 @@ export default function HistoricalChatInterface({
 
       setMessages((prev) => [...prev, userMessage, assistantMessage]);
 
-      // Send message and handle streaming response via Next.js API route (avoids CORS)
       const response = await fetch(`/api/chat/${chatSessionId}/new_message`, {
         method: 'POST',
         headers: {
@@ -217,7 +197,6 @@ export default function HistoricalChatInterface({
       console.error('Error sending message:', error);
     } finally {
       setIsLoading(false);
-      // Focus the input after response is complete
       setTimeout(() => {
         chatInputRef.current?.focus();
       }, 100);
@@ -226,95 +205,67 @@ export default function HistoricalChatInterface({
 
   if (loading) {
     return (
-      <Container>
-        <div className="bg-white rounded-xl shadow-lg border border-border p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading chat...</p>
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
+          <p className="mt-4 text-foreground-secondary">Loading chat...</p>
         </div>
-      </Container>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Container>
-        <div className="bg-error-50 border-l-4 border-error-500 rounded-r-xl p-6 shadow-sm">
+      <div className="h-screen flex items-center justify-center p-6">
+        <div className="bg-error-50 border-l-4 border-error-500 rounded-r-xl p-6 max-w-md">
           <h3 className="font-semibold text-error-900 mb-1">Error Loading Chat</h3>
           <p className="text-error-800">{error}</p>
         </div>
-      </Container>
+      </div>
     );
   }
 
   if (chatNotFound) {
     return (
-      <Container>
-        <div className="bg-white rounded-xl shadow-lg border border-border p-8 text-center">
-          <p className="text-gray-600">Chat not found</p>
+      <div className="h-screen flex items-center justify-center p-6">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-foreground-muted/20 flex items-center justify-center">
+            <svg className="w-8 h-8 text-foreground-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Chat Not Found</h3>
+          <p className="text-foreground-secondary">This conversation doesn&apos;t exist or has been deleted.</p>
         </div>
-      </Container>
+      </div>
     );
   }
 
-
   return (
-    <>
-      <ChatSidebar 
-        isOpen={isSidebarOpen} 
-        onToggle={toggleSidebar}
-        chatSessions={initialChatSessions}
-        initialLoading={false}
-      />
-      <Container>
-        <div className="bg-white rounded-xl shadow-lg border border-border flex flex-col" style={{ height: 'calc(100vh - var(--header-height) - 5rem)' }}>
-          {/* Header */}
-          <div className="bg-white border-b border-gray-200 p-4 rounded-t-xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={toggleSidebar}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                aria-label="Toggle sidebar"
-              >
-                <svg
-                  className="w-6 h-6 text-gray-700"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 4v16"
-                  />
-                </svg>
-              </button>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  {chatTopic || chatSession?.chat_topic || 'Conversation'}
-                </h1>
-              </div>
-            </div>
+    <div className="h-screen flex flex-col">
+      {/* Header */}
+      <div className="flex-shrink-0 border-b border-border px-4 py-3 lg:px-6 flex items-center min-h-[56px]">
+        <h1 className="text-lg font-semibold text-foreground truncate">
+          {chatTopic || chatSession?.chat_topic || 'Conversation'}
+        </h1>
+      </div>
+
+      {/* Chat Container */}
+      <div className="flex-1 flex flex-col min-h-0 bg-background">
+        <ChatMessages
+          key={`chat-messages-${chatSessionId}`}
+          messages={messages}
+          preFetchedTranscripts={preFetchedTranscripts}
+          onChatTopic={handleChatTopic}
+        />
+
+        {/* Input */}
+        <div className="flex-shrink-0 border-t border-border bg-background-secondary p-4">
+          <div className="max-w-3xl mx-auto">
+            <ChatInput ref={chatInputRef} onSend={handleSendMessage} disabled={isLoading} />
           </div>
-
-          {/* Messages */}
-          <ChatMessages
-            key={`chat-messages-${chatSessionId}`}
-            messages={messages}
-            preFetchedTranscripts={preFetchedTranscripts}
-            onChatTopic={handleChatTopic}
-          />
-
-          {/* Input */}
-          <ChatInput ref={chatInputRef} onSend={handleSendMessage} disabled={isLoading} />
         </div>
-      </Container>
-    </>
+      </div>
+    </div>
   );
 }

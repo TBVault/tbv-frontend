@@ -26,11 +26,8 @@ async function TranscriptsContent({ searchParams }: PageProps) {
     return <GatedPage title="Transcripts Library" description="This content is available to authorized team members only." />;
   }
 
-  // Fetch transcripts or search results on the server
   try {
-    // If there's a search query, use the search endpoint
     if (query) {
-      // Set include_fields_str based on search mode
       const includeFields = searchMode === 'content' 
         ? [SearchFieldType.text]
         : [SearchFieldType.title, SearchFieldType.semantic_title, SearchFieldType.summary];
@@ -46,7 +43,7 @@ async function TranscriptsContent({ searchParams }: PageProps) {
             Authorization: session.idToken.trim(),
           },
           next: {
-            revalidate: 60, // Cache for 1 minute
+            revalidate: 60,
             tags: ['transcripts'],
           },
         }
@@ -54,8 +51,8 @@ async function TranscriptsContent({ searchParams }: PageProps) {
       
       if (response.status === 200) {
         return (
-          <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
-            <div className="max-w-5xl mx-auto px-6 py-10">
+          <div className="min-h-screen py-8 px-6 lg:px-12">
+            <div className="max-w-5xl mx-auto">
               <TranscriptsView 
                 searchResults={searchMode === 'metadata' ? response.data.metadata_results : undefined}
                 chunkResults={searchMode === 'content' ? response.data.chunk_results : undefined}
@@ -68,14 +65,13 @@ async function TranscriptsContent({ searchParams }: PageProps) {
                 searchMode={searchMode}
               />
             </div>
-          </main>
+          </div>
         );
       }
       
       throw new Error('Failed to fetch search results');
     }
     
-    // Otherwise, fetch regular transcripts
     const response = await transcriptsProtectedTranscriptsGet(
       {
         page_number: page,
@@ -85,7 +81,7 @@ async function TranscriptsContent({ searchParams }: PageProps) {
           Authorization: session.idToken.trim(),
         },
         next: {
-          revalidate: 60, // Cache for 1 minute
+          revalidate: 60,
           tags: ['transcripts'],
         },
       }
@@ -93,40 +89,38 @@ async function TranscriptsContent({ searchParams }: PageProps) {
     
     if (response.status === 200) {
       return (
-        <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
-          <div className="max-w-5xl mx-auto px-6 py-10">
+        <div className="min-h-screen py-8 px-6 lg:px-12">
+          <div className="max-w-5xl mx-auto">
             <TranscriptsView 
               transcripts={response.data.transcripts}
               currentPage={page}
               totalPages={response.data.page_count}
             />
           </div>
-        </main>
+        </div>
       );
     }
     
     throw new Error('Failed to fetch transcripts');
   } catch (error: unknown) {
-    // Check if it's an authentication error
     const err = error as { status?: number; message?: string };
     if (err?.status === 401 || err?.status === 403 || err?.message?.includes('401') || err?.message?.includes('403')) {
       redirect('/auth/error');
     }
     
-    // Show error UI
     return (
-      <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
-        <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="min-h-screen py-8 px-6 lg:px-12">
+        <div className="max-w-5xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-foreground mb-2">Transcripts</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Transcripts</h1>
             <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa&apos;s lectures and talks</p>
           </div>
-          <div className="bg-error-50 border-l-4 border-error-500 rounded-r-xl p-6 shadow-sm">
-            <h3 className="font-semibold text-error-900 mb-1">Error Loading {query ? 'Search Results' : 'Transcripts'}</h3>
-            <p className="text-error-800">{(error as { message?: string })?.message || 'An unexpected error occurred'}</p>
+          <div className="bg-error-500/10 border border-error-500/30 rounded-xl p-6">
+            <h3 className="font-semibold text-error-500 mb-1">Error Loading {query ? 'Search Results' : 'Transcripts'}</h3>
+            <p className="text-error-500/80">{(error as { message?: string })?.message || 'An unexpected error occurred'}</p>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 }
@@ -134,22 +128,19 @@ async function TranscriptsContent({ searchParams }: PageProps) {
 export default function TranscriptsPage(props: PageProps) {
   return (
     <Suspense fallback={
-      <main className="min-h-screen bg-gradient-to-br from-background-secondary via-background to-background-secondary">
-        <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="min-h-screen py-8 px-6 lg:px-12">
+        <div className="max-w-5xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-foreground mb-2">Transcripts</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Transcripts</h1>
             <p className="text-foreground-secondary">Browse and explore all available transcripts</p>
           </div>
           <div className="flex items-center justify-center py-20">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-neutral-200 border-t-primary-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
           </div>
         </div>
-      </main>
+      </div>
     }>
       <TranscriptsContent searchParams={props.searchParams} />
     </Suspense>
   );
 }
-
-
-

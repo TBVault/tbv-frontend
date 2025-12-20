@@ -5,7 +5,6 @@ import Link from 'next/link';
 import type { TranscriptCitation, WebSearchCitation } from '@/api/generated/schemas';
 import type { CitationMetadata } from './types';
 
-// Sources section component
 export function SourcesSection({ 
   citations,
   transcriptTitles,
@@ -20,16 +19,16 @@ export function SourcesSection({
   if (citations.length === 0) return null;
 
   return (
-    <div className="mt-4 pt-4 border-t border-gray-200">
+    <div className="mt-4 pt-4 border-t border-border">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="flex items-center gap-2 w-full text-left mb-2 hover:opacity-70 transition-opacity"
       >
-        <h4 className="text-xs font-semibold text-gray-500 uppercase">
+        <h4 className="text-xs font-semibold text-foreground-tertiary uppercase tracking-wide">
           Sources ({citations.length})
         </h4>
         <svg
-          className={`w-4 h-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-foreground-tertiary transition-transform ${isExpanded ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -49,16 +48,16 @@ export function SourcesSection({
                   key={`source-transcript-${citation.transcript_id}-${citation.chunk_index}`}
                   href={`/transcript/${citation.transcript_id}${citation.chunk_index >= 0 ? `#chunk-${citation.chunk_index}` : ''}`}
                   target="_blank"
-                  className="inline-flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg text-sm font-medium transition-colors border border-blue-200 w-full"
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-primary-500/10 hover:bg-primary-500/20 text-foreground rounded-lg text-sm font-medium transition-colors border border-primary-500/20 w-full"
                 >
-                  <span className="inline-flex items-center justify-center w-5 h-5 bg-blue-600 text-white text-xs font-bold rounded-full flex-shrink-0">
+                  <span className="inline-flex items-center justify-center w-5 h-5 bg-primary-500 text-white text-xs font-bold rounded-full flex-shrink-0">
                     {metadata.number}
                   </span>
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 flex-shrink-0 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span className="flex-1">{title} | {citation.chunk_index >= 0 ? `Paragraph ${citation.chunk_index + 1}` : 'Transcript Summary'}</span>
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <span className="flex-1 truncate">{title} | {citation.chunk_index >= 0 ? `Paragraph ${citation.chunk_index + 1}` : 'Transcript Summary'}</span>
+                  <svg className="w-4 h-4 flex-shrink-0 text-foreground-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
                 </Link>
@@ -75,17 +74,17 @@ export function SourcesSection({
                   href={citation.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-3 py-2 bg-green-50 hover:bg-green-100 text-green-800 rounded-lg text-sm font-medium transition-colors border border-green-200 w-full"
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-secondary-500/10 hover:bg-secondary-500/20 text-foreground rounded-lg text-sm font-medium transition-colors border border-secondary-500/20 w-full"
                   title={citation.url}
                 >
-                  <span className="inline-flex items-center justify-center w-5 h-5 bg-green-600 text-white text-xs font-bold rounded-full flex-shrink-0">
+                  <span className="inline-flex items-center justify-center w-5 h-5 bg-secondary-500 text-white text-xs font-bold rounded-full flex-shrink-0">
                     {metadata.number}
                   </span>
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 flex-shrink-0 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                   </svg>
                   <span className="flex-1 truncate">{displayText}</span>
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 flex-shrink-0 text-foreground-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
                 </a>
@@ -97,4 +96,3 @@ export function SourcesSection({
     </div>
   );
 }
-

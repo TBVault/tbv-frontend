@@ -11,10 +11,8 @@ function AuthErrorContent() {
   const { data: session, status } = useSession();
   const error = searchParams.get("error");
 
-  // Redirect to home if user has a valid session
   useEffect(() => {
     if (status === "authenticated" && session?.user?.id) {
-      // User is now authenticated, redirect to home
       router.push("/");
     }
   }, [status, session, router]);
@@ -51,11 +49,11 @@ function AuthErrorContent() {
   const errorInfo = getErrorMessage(error);
 
   return (
-    <div className="bg-gradient-to-br from-background-secondary via-background to-background-secondary flex items-center justify-center p-8" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
+    <div className="min-h-screen flex items-center justify-center p-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-error-50 mb-6">
-            <svg className="w-10 h-10 text-error-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-error-500/20 mb-6">
+            <svg className="w-10 h-10 text-error-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
@@ -65,7 +63,7 @@ function AuthErrorContent() {
           </h1>
         </div>
 
-        <div className="bg-background rounded-xl border border-border p-8 shadow-lg">
+        <div className="bg-background-elevated rounded-xl border border-border p-8">
           <p className="text-foreground-secondary mb-4">
             {errorInfo.message}
           </p>
@@ -75,7 +73,7 @@ function AuthErrorContent() {
           </p>
 
           {session?.user?.email && (
-            <div className="bg-neutral-100 rounded-lg p-4 mb-6">
+            <div className="bg-foreground-muted/10 rounded-lg p-4 mb-6">
               <p className="text-xs text-foreground-tertiary mb-1">
                 Attempted with:
               </p>
@@ -97,13 +95,13 @@ function AuthErrorContent() {
           <div className="flex gap-3">
             <button
               onClick={() => signIn("oidc", { callbackUrl: "/" })}
-              className="flex-1 border border-border bg-background hover:bg-background-secondary text-foreground font-medium py-2 px-4 rounded-lg transition-colors"
+              className="flex-1 border border-border bg-background-elevated hover:bg-sidebar-hover text-foreground font-medium py-2.5 px-4 rounded-xl transition-colors"
             >
               Try Different Account
             </button>
             <Link
               href="/"
-              className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-center"
+              className="flex-1 bg-primary-500 hover:bg-primary-600 text-white font-medium py-2.5 px-4 rounded-xl transition-colors text-center"
             >
               Return Home
             </Link>
@@ -117,15 +115,12 @@ function AuthErrorContent() {
 export default function AuthError() {
   return (
     <Suspense fallback={
-      <div 
-        className="flex items-center justify-center p-8"
-        style={{ height: 'calc(100vh - var(--header-height))' }}
-      >
-        <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-8 shadow-lg">
+      <div className="min-h-screen flex items-center justify-center p-8">
+        <div className="w-full max-w-md bg-background-elevated rounded-xl border border-border p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded mb-6"></div>
-            <div className="h-10 bg-gray-200 rounded w-24"></div>
+            <div className="h-8 bg-foreground-muted/20 rounded mb-4"></div>
+            <div className="h-4 bg-foreground-muted/20 rounded mb-6"></div>
+            <div className="h-10 bg-foreground-muted/20 rounded w-24"></div>
           </div>
         </div>
       </div>
@@ -134,4 +129,3 @@ export default function AuthError() {
     </Suspense>
   );
 }
-
