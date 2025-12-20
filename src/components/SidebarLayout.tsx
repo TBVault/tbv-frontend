@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import AppSidebar from '@/components/AppSidebar';
 import type { ChatSession } from '@/api/generated/schemas';
@@ -18,6 +19,7 @@ export default function SidebarLayout({
   chatCount = 0,
 }: SidebarLayoutProps) {
   const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
   
   // Show chat history expanded only on chat pages
   const isChatPage = pathname?.startsWith('/chat');
@@ -29,8 +31,10 @@ export default function SidebarLayout({
         showChatHistory={isChatPage}
         transcriptCount={transcriptCount}
         chatCount={chatCount}
+        isCollapsed={isCollapsed}
+        onCollapsedChange={setIsCollapsed}
       />
-      <main className="flex-1 lg:ml-sidebar main-content-transition">
+      <main className={`flex-1 main-content-transition ${isCollapsed ? 'lg:ml-sidebar-collapsed' : 'lg:ml-sidebar'}`}>
         {children}
       </main>
     </div>

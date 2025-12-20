@@ -15,6 +15,8 @@ interface AppSidebarProps {
   showChatHistory?: boolean;
   transcriptCount?: number;
   chatCount?: number;
+  isCollapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 // Group chat sessions by date
@@ -56,13 +58,25 @@ export default function AppSidebar({
   showChatHistory = true,
   transcriptCount = 0,
   chatCount = 0,
+  isCollapsed: controlledIsCollapsed,
+  onCollapsedChange,
 }: AppSidebarProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [internalIsCollapsed, setInternalIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  
+  // Use controlled state if provided, otherwise use internal state
+  const isCollapsed = controlledIsCollapsed !== undefined ? controlledIsCollapsed : internalIsCollapsed;
+  const setIsCollapsed = (collapsed: boolean) => {
+    if (onCollapsedChange) {
+      onCollapsedChange(collapsed);
+    } else {
+      setInternalIsCollapsed(collapsed);
+    }
+  };
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null!);
@@ -137,7 +151,7 @@ export default function AppSidebar({
         `}
       >
         {/* Header with Logo */}
-        <div className={`flex items-center gap-3 px-4 py-3 border-b border-sidebar-border ${isCollapsed ? 'justify-center' : ''}`}>
+        <div className={`flex items-center gap-3 px-4 py-3 border-b border-sidebar-border min-h-[56px] ${isCollapsed ? 'justify-center' : ''}`}>
           {isCollapsed ? (
             // Hamburger menu when collapsed
             <button
