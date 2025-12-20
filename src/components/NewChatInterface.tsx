@@ -5,27 +5,19 @@ import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput, { type ChatInputRef } from '@/components/ChatInput';
-import ChatSidebar from '@/components/ChatSidebar';
-import type { ChatSessionMessage, ChatSession } from '@/api/generated/schemas';
+import type { ChatSessionMessage } from '@/api/generated/schemas';
 import { chatSessionProtectedCreateChatSessionPost } from '@/api/generated/endpoints/default/default';
 import { processStreamBuffer } from '@/utils/streamingHelpers';
 
-interface NewChatInterfaceProps {
-  initialChatSessions?: ChatSession[];
-}
-
-export default function NewChatInterface({ initialChatSessions = [] }: NewChatInterfaceProps) {
+export default function NewChatInterface() {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [messages, setMessages] = useState<ChatSessionMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [chatTopic, setChatTopic] = useState<string | null>(null);
   const chatSessionIdRef = useRef<string | null>(null);
   const chatInputRef = useRef<ChatInputRef>(null);
-
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   // Handle chat topic updates - revalidate sidebar when a new topic is received
   const handleChatTopic = useCallback(async (topic: string) => {
@@ -34,10 +26,9 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
     // Revalidate chat sessions cache and refresh the page to update sidebar
     try {
       await fetch('/api/revalidate/chat-sessions', { method: 'POST' });
-      router.refresh(); // Refresh server components to update sidebar with new chat sessions
+      router.refresh();
     } catch (error) {
       console.error('Error revalidating chat sessions:', error);
-      // Still refresh even if revalidation fails
       router.refresh();
     }
   }, [router]);
@@ -50,21 +41,19 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
     if (isReload) {
       const storedSessionId = localStorage.getItem('currentChatSessionId');
       if (storedSessionId) {
-        // Clear localStorage and redirect to the chat history page
         localStorage.removeItem('currentChatSessionId');
         router.replace(`/chat/${storedSessionId}`);
         return;
       }
     }
     
-    // For regular navigation, reset chat state to ensure fresh chat
     setMessages([]);
     setChatTopic(null);
     chatSessionIdRef.current = null;
     localStorage.removeItem('currentChatSessionId');
   }, [router]);
 
-  // Reset state when the reset query parameter changes (for same-route navigation)
+  // Reset state when the reset query parameter changes
   useEffect(() => {
     const resetParam = searchParams.get('reset');
     if (resetParam) {
@@ -72,29 +61,17 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
       setChatTopic(null);
       chatSessionIdRef.current = null;
       localStorage.removeItem('currentChatSessionId');
-      
-      // Clean up the URL by removing the query parameter
       router.replace('/chat');
     }
   }, [searchParams, router]);
 
-  // Auto-focus input when new chat loads
+  // Auto-focus input
   useEffect(() => {
     const timer = setTimeout(() => {
       chatInputRef.current?.focus();
     }, 100);
-    
     return () => clearTimeout(timer);
   }, []);
-
-  // Stable Container component - defined outside render to prevent remounts
-  const Container = useCallback(({ children }: { children: React.ReactNode }) => (
-    <main className="bg-gradient-to-br from-background-secondary via-background to-background-secondary" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
-      <div className="max-w-5xl mx-auto px-6 py-10 flex flex-col" style={{ minHeight: 'calc(100vh - var(--header-height))' }}>
-        {children}
-      </div>
-    </main>
-  ), []);
 
   const handleAuthError = (error: { status?: number; message?: string }) => {
     if (error?.status === 401 || error?.status === 403 ||
@@ -122,7 +99,6 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
     setIsLoading(true);
 
     try {
-      // Create chat session if this is the first message
       if (!chatSessionIdRef.current) {
         try {
           const sessionResponse = await chatSessionProtectedCreateChatSessionPost({
@@ -133,7 +109,6 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
 
           if (sessionResponse.status === 200) {
             chatSessionIdRef.current = sessionResponse.data.public_id;
-            // Store the session ID so it persists across page reloads
             localStorage.setItem('currentChatSessionId', sessionResponse.data.public_id);
           } else {
             console.error('Failed to create chat session');
@@ -157,7 +132,6 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
 
       setMessages((prev) => [...prev, userMessage, assistantMessage]);
 
-      // Send message and handle streaming response via Next.js API route (avoids CORS)
       const response = await fetch(`/api/chat/${chatSessionId}/new_message`, {
         method: 'POST',
         headers: {
@@ -230,16 +204,11 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
           });
         });
       }
-
-      // Note: We store the session ID locally so it persists across page reloads.
-      // The chat session is created and messages are saved on the backend.
-      // Users can access this conversation later from the chat history sidebar, or it will be restored on reload.
     } catch (error: unknown) {
       console.error('Error sending message:', error);
       handleAuthError(error as { status?: number; message?: string });
     } finally {
       setIsLoading(false);
-      // Focus the input after response is complete
       setTimeout(() => {
         chatInputRef.current?.focus();
       }, 100);
@@ -247,64 +216,48 @@ export default function NewChatInterface({ initialChatSessions = [] }: NewChatIn
   };
 
   return (
-    <>
-      <ChatSidebar 
-        isOpen={isSidebarOpen} 
-        onToggle={toggleSidebar}
-        chatSessions={initialChatSessions}
-        initialLoading={false}
-      />
-      <Container>
-        <div className="bg-white rounded-xl shadow-lg border border-border flex flex-col flex-1" style={{ maxHeight: 'calc(100vh - var(--header-height) - 5rem)' }}>
-          {/* Header */}
-          <div className="bg-white border-b border-gray-200 p-4 rounded-t-xl flex items-center justify-between flex-shrink-0">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={toggleSidebar}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                aria-label="Toggle sidebar"
-              >
-                <svg
-                  className="w-6 h-6 text-gray-700"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 4v16"
-                  />
+    <div className="h-screen flex flex-col">
+      {/* Header */}
+      <div className="flex-shrink-0 border-b border-border px-4 py-3 lg:px-6 flex items-center min-h-[56px]">
+        <h1 className="text-lg font-semibold text-foreground truncate">
+          {chatTopic || 'New Chat'}
+        </h1>
+      </div>
+
+      {/* Chat Container */}
+      <div className="flex-1 flex flex-col min-h-0 bg-background">
+        {messages.length === 0 ? (
+          // Empty state
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="text-center max-w-md">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary-500/20 to-primary-600/10 flex items-center justify-center">
+                <svg className="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
-              </button>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  {chatTopic || 'New Chat'}
-                </h1>
               </div>
+              <h2 className="text-xl font-semibold text-foreground mb-2">
+                How can I help you today?
+              </h2>
+              <p className="text-foreground-secondary text-sm">
+                Ask questions about H.G. Vaiśeṣika Dāsa&apos;s lectures. I&apos;ll provide answers with direct citations from the transcripts.
+              </p>
             </div>
           </div>
-
-          {/* Messages */}
+        ) : (
           <ChatMessages
             key={chatSessionIdRef.current || 'new-chat'}
             messages={messages}
             onChatTopic={handleChatTopic}
           />
+        )}
 
-          {/* Input */}
-          <div className="flex-shrink-0">
+        {/* Input */}
+        <div className="flex-shrink-0 border-t border-border bg-background-secondary p-4">
+          <div className="max-w-3xl mx-auto">
             <ChatInput ref={chatInputRef} onSend={handleSendMessage} disabled={isLoading} />
           </div>
         </div>
-      </Container>
-    </>
+      </div>
+    </div>
   );
 }

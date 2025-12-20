@@ -5,7 +5,6 @@ import type {
 } from '@/api/generated/schemas';
 import type { CitationMetadata } from './types';
 
-// Component to render individual ChatObject based on type (non-text objects)
 export function ChatObjectRenderer({ 
   chatObject, 
   citationMap,
@@ -21,17 +20,14 @@ export function ChatObjectRenderer({
 }) {
   const data = chatObject.data;
 
-  // TextDelta is handled separately by accumulating all text deltas
   if (data.type === 'text_delta') {
     return null;
   }
 
-  // ChatProgress is handled separately at the top of messages
   if (data.type === 'chat_progress') {
     return null;
   }
 
-  // Type assertion and rendering for TranscriptCitation
   if (data.type === 'transcript_citation') {
     const citation = data as TranscriptCitation;
     const key = `transcript-${citation.transcript_id}-${citation.chunk_index}`;
@@ -42,9 +38,9 @@ export function ChatObjectRenderer({
     return (
       <button
         onClick={() => onTranscriptClick(citation, metadata?.number || 0)}
-        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-full text-sm font-medium transition-colors cursor-pointer"
+        className="inline-flex items-center gap-1 px-2 py-1 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded-full text-sm font-medium transition-colors cursor-pointer"
       >
-        <span className="inline-flex items-center justify-center w-4 h-4 bg-blue-600 text-white text-xs font-bold rounded-full">
+        <span className="inline-flex items-center justify-center w-4 h-4 bg-primary-500 text-white text-xs font-bold rounded-full">
           {metadata?.number || '?'}
         </span>
         <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +51,6 @@ export function ChatObjectRenderer({
     );
   }
 
-  // Type assertion and rendering for WebSearchCitation
   if (data.type === 'web_search_citation') {
     const citation = data as WebSearchCitation;
     const key = `web-${citation.url}`;
@@ -69,10 +64,10 @@ export function ChatObjectRenderer({
         href={citation.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 hover:bg-green-200 text-green-800 rounded-full text-sm font-medium transition-colors"
+        className="inline-flex items-center gap-1 px-2 py-1 bg-secondary-500/20 hover:bg-secondary-500/30 text-secondary-400 rounded-full text-sm font-medium transition-colors"
         title={title || citation.url}
       >
-        <span className="inline-flex items-center justify-center w-4 h-4 bg-green-600 text-white text-xs font-bold rounded-full">
+        <span className="inline-flex items-center justify-center w-4 h-4 bg-secondary-500 text-white text-xs font-bold rounded-full">
           {metadata?.number || '?'}
         </span>
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,12 +78,9 @@ export function ChatObjectRenderer({
     );
   }
 
-  // ChatTopic should not be rendered in messages (it's metadata)
   if (data.type === 'chat_topic') {
     return null;
   }
 
-  // Fallback for unknown types
   return null;
 }
-

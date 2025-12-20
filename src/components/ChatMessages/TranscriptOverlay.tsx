@@ -6,7 +6,6 @@ import type { Transcript } from '@/api/generated/schemas';
 import { transcriptProtectedTranscriptGet } from '@/api/generated/endpoints/default/default';
 import type { TranscriptOverlayProps } from './types';
 
-// Overlay component for transcript citations
 export function TranscriptOverlay({ 
   citation, 
   citationNumber, 
@@ -20,7 +19,6 @@ export function TranscriptOverlay({
   const [loading, setLoading] = useState(!preFetchedTranscript);
   const [error, setError] = useState<string | null>(null);
 
-  // Update transcript when preFetchedTranscript changes (from parent's transcriptData updates)
   useEffect(() => {
     if (preFetchedTranscript) {
       setTranscript(preFetchedTranscript);
@@ -29,14 +27,11 @@ export function TranscriptOverlay({
     }
   }, [preFetchedTranscript]);
 
-  // Initial fetch logic - only runs when citation or auth changes, or when we don't have data
   useEffect(() => {
-    // If we already have transcript data, don't fetch
     if (preFetchedTranscript || transcript) {
       return;
     }
 
-    // Check if getTranscript can provide the transcript (fallback check)
     if (getTranscript) {
       const cachedTranscript = getTranscript(citation.transcript_id);
       if (cachedTranscript) {
@@ -54,12 +49,10 @@ export function TranscriptOverlay({
         return;
       }
 
-      // If there's already a fetch in progress, wait for it instead of starting a new one
       if (fetchingPromise) {
         try {
           setLoading(true);
           await fetchingPromise;
-          // After waiting, check if transcript is now available via getTranscript or preFetchedTranscript
           if (getTranscript) {
             const updatedTranscript = getTranscript(citation.transcript_id);
             if (updatedTranscript) {
@@ -69,7 +62,6 @@ export function TranscriptOverlay({
               return;
             }
           }
-          // Also check preFetchedTranscript in case parent updated it
           if (preFetchedTranscript) {
             setTranscript(preFetchedTranscript);
             setLoading(false);
@@ -81,8 +73,6 @@ export function TranscriptOverlay({
         }
       }
 
-      // Only fetch if we still don't have the transcript after waiting for in-progress fetch
-      // Double-check getTranscript and preFetchedTranscript one more time before fetching
       if (getTranscript) {
         const cachedTranscript = getTranscript(citation.transcript_id);
         if (cachedTranscript) {
@@ -99,7 +89,6 @@ export function TranscriptOverlay({
         return;
       }
 
-      // Last resort: fetch the transcript ourselves (should rarely happen)
       try {
         setLoading(true);
         const response = await transcriptProtectedTranscriptGet(
@@ -132,20 +121,20 @@ export function TranscriptOverlay({
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+        className="bg-background-elevated rounded-xl border border-border shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between gap-3">
+        <div className="sticky top-0 bg-background-elevated border-b border-border p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-600 text-white text-xs font-bold rounded-full flex-shrink-0">
+            <span className="inline-flex items-center justify-center w-6 h-6 bg-primary-500 text-white text-xs font-bold rounded-full flex-shrink-0">
               {citationNumber}
             </span>
-            <h3 className="text-lg font-semibold text-gray-900 break-words">
+            <h3 className="text-lg font-semibold text-foreground break-words">
               {loading ? 'Loading...' : transcript?.semantic_title || transcript?.title || 'Transcript'}
             </h3>
           </div>
@@ -153,18 +142,18 @@ export function TranscriptOverlay({
             <Link
               href={`/transcript/${citation.transcript_id}${citation.chunk_index >= 0 ? `#chunk-${citation.chunk_index}` : ''}`}
               target="_blank"
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-sidebar-hover rounded-lg transition-colors"
               title="Open in new tab"
             >
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-foreground-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
             </Link>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-sidebar-hover rounded-lg transition-colors"
             >
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-foreground-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -175,31 +164,31 @@ export function TranscriptOverlay({
         <div className="p-6">
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
             </div>
           )}
 
           {error && (
-            <div className="text-red-600 text-center py-4">{error}</div>
+            <div className="text-error-500 text-center py-4">{error}</div>
           )}
 
           {!loading && !error && transcript && (
             <div>
               {chunk && (
                 <div className="mb-2">
-                  <span className="text-xs font-semibold text-gray-600 uppercase">
+                  <span className="text-xs font-semibold text-foreground-tertiary uppercase tracking-wide">
                     {typeof chunk === 'string' ? 'Transcript Summary' : chunk.speaker}
                   </span>
                 </div>
               )}
-              <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+              <p className="text-foreground-secondary leading-relaxed whitespace-pre-wrap">
                 {truncatedText || 'No text available for this chunk.'}
               </p>
               {chunkText.length > 300 && (
                 <Link
                   href={`/transcript/${citation.transcript_id}${citation.chunk_index >= 0 ? `#chunk-${citation.chunk_index}` : ''}`}
                   target="_blank"
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium mt-3 inline-flex items-center gap-1"
+                  className="text-primary-400 hover:text-primary-300 text-sm font-medium mt-3 inline-flex items-center gap-1"
                 >
                   Read more
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,4 +203,3 @@ export function TranscriptOverlay({
     </div>
   );
 }
-

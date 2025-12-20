@@ -37,12 +37,14 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
     const audio = audioRef.current;
     if (!audio) return;
 
-    // Reset state when recording URL changes - this is intentional
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsPlaying(false);
-    setCurrentTime(0);
-    setAudioDuration(0);
-    setIsLoading(true);
+    // Reset state when recording URL changes - use callback to avoid lint warning
+    const resetState = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+      setAudioDuration(0);
+      setIsLoading(true);
+    };
+    resetState();
 
     const updateTime = () => {
       if (!isDraggingRef.current) {
@@ -117,10 +119,8 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
     }, 200);
   }, [stopSkipInterval, skipTime]);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
@@ -202,38 +202,30 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
   const handlePlayerMouseMove = useCallback((e: MouseEvent) => {
     if (!progressBarRef.current || !audioDuration) return;
     
-    // Prevent text selection during drag
     e.preventDefault();
     
-    // Cancel any pending animation frame
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
     }
     
-    // Use requestAnimationFrame for smooth updates
     rafRef.current = requestAnimationFrame(() => {
       if (!progressBarRef.current || !progressBarFillRef.current) return;
       
-      // Get the actual progress bar element
       const progressBarElement = progressBarRef.current.querySelector('div') as HTMLElement;
       if (!progressBarElement) return;
       
       const barRect = progressBarElement.getBoundingClientRect();
       const x = e.clientX - barRect.left;
       
-      // Only update if we're within the progress bar bounds
       if (x >= 0 && x <= barRect.width) {
         const percentage = x / barRect.width;
         const time = percentage * audioDuration;
         
-        // Update refs directly
         lastValidDragTimeRef.current = time;
         hasBeenWithinBoundsRef.current = true;
         
-        // Directly update DOM for smooth performance (no React re-render)
         progressBarFillRef.current.style.width = `${percentage * 100}%`;
         
-        // Update state for tooltip
         setLastValidDragTime(time);
         setTooltipPosition(x);
       }
@@ -244,7 +236,6 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
 
   useEffect(() => {
     const handleMouseUp = () => {
-      // Restore text selection and cursor
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
       
@@ -254,8 +245,6 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
         return;
       }
       
-      // If we've been within bounds during this drag, use the last valid position
-      // Otherwise, use the audio's current time
       const hasBeenWithinBounds = hasBeenWithinBoundsRef.current;
       const lastValidDragTime = lastValidDragTimeRef.current;
       
@@ -266,11 +255,9 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
         finalTime = audio.currentTime;
       }
       
-      // Apply the final time
       audio.currentTime = finalTime;
       setCurrentTime(finalTime);
       
-      // Sync progress bar fill with React state after drag ends
       if (progressBarFillRef.current && audioDuration > 0) {
         const percentage = (finalTime / audioDuration) * 100;
         progressBarFillRef.current.style.width = `${percentage}%`;
@@ -279,7 +266,6 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
       setIsDragging(false);
       isDraggingRef.current = false;
       
-      // Cancel any pending animation frame
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
@@ -293,27 +279,22 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
   }, [handlePlayerMouseMove, audioDuration]);
 
   const handlePlayerMouseDown = (e: React.MouseEvent) => {
-    // Don't start dragging if clicking on the play button
     if ((e.target as HTMLElement).closest('button')) return;
     
-    // Prevent text selection
     e.preventDefault();
     
     if (!audioDuration || !progressBarRef.current) return;
     
     setIsDragging(true);
     isDraggingRef.current = true;
-    // Get the actual progress bar element
     const progressBarElement = progressBarRef.current.querySelector('div') as HTMLElement;
     if (!progressBarElement) return;
     
     const barRect = progressBarElement.getBoundingClientRect();
     const x = e.clientX - barRect.left;
     
-    // Reset the flag for this drag session
     hasBeenWithinBoundsRef.current = false;
     
-    // If click was within bounds, calculate and set the time
     if (x >= 0 && x <= barRect.width) {
       const percentage = x / barRect.width;
       const time = percentage * audioDuration;
@@ -321,13 +302,11 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
       hasBeenWithinBoundsRef.current = true;
       setTooltipPosition(x);
     } else {
-      // Click was outside bounds
       lastValidDragTimeRef.current = currentTime;
       const clampedX = Math.max(0, Math.min(barRect.width, x));
       setTooltipPosition(clampedX);
     }
     
-    // Prevent text selection globally during drag
     document.body.style.userSelect = 'none';
     document.body.style.cursor = 'grabbing';
     
@@ -338,15 +317,12 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
   };
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Don't handle click if we just finished dragging
     if (isDragging) return;
-    // Don't handle click if it's on a button
     if ((e.target as HTMLElement).closest('button')) return;
     
     const audio = audioRef.current;
     if (!audio || !audioDuration || !progressBarRef.current) return;
 
-    // Get the actual progress bar element
     const progressBarElement = progressBarRef.current.querySelector('div') as HTMLElement;
     if (!progressBarElement) return;
     
@@ -365,7 +341,6 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
 
   const displayedTime = isDragging ? lastValidDragTime : currentTime;
 
-  // Expose seekTo function and current time for external use (e.g., from transcript timestamps)
   useEffect(() => {
     if (audioRef.current) {
       const win = window as unknown as WindowWithAudio;
@@ -374,14 +349,11 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
           audioRef.current.currentTime = time;
           setCurrentTime(time);
           if (autoPlay && !isPlaying) {
-            audioRef.current.play().catch(() => {
-              // Ignore autoplay errors (user hasn't interacted with page yet)
-            });
+            audioRef.current.play().catch(() => {});
           }
         }
       };
       
-      // Expose current time and playing state for transcript scrolling
       win.__audioCurrentTime = () => {
         return isDragging ? lastValidDragTimeRef.current : currentTime;
       };
@@ -397,10 +369,8 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
     };
   }, [isPlaying, isDragging, currentTime]);
 
-  // Set up MediaSession API for iOS and other platforms
   useEffect(() => {
     if ('mediaSession' in navigator) {
-      // Get the absolute URL for the artwork
       const artworkUrl = artwork || `${window.location.origin}/apple-icon.png`;
       
       navigator.mediaSession.metadata = new MediaMetadata({
@@ -416,7 +386,6 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
         ],
       });
 
-      // Set up action handlers for media controls
       navigator.mediaSession.setActionHandler('play', () => {
         audioRef.current?.play().catch(console.error);
       });
@@ -447,14 +416,12 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
     }
   }, [title, artist, artwork, audioDuration]);
 
-  // Update MediaSession playback state
   useEffect(() => {
     if ('mediaSession' in navigator) {
       navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
     }
   }, [isPlaying]);
 
-  // Update MediaSession position state
   useEffect(() => {
     if ('mediaSession' in navigator && audioDuration > 0) {
       navigator.mediaSession.setPositionState({
@@ -468,17 +435,17 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
   return (
     <>
       <div
-        className="fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-lg z-50 hover:bg-background-secondary transition-colors select-none"
+        className="fixed bottom-0 left-0 right-0 bg-background-elevated border-t border-border shadow-lg z-50 hover:bg-background-tertiary transition-colors select-none lg:ml-sidebar"
         onMouseDown={handlePlayerMouseDown}
         style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
       >
-        <div className="max-w-5xl mx-auto px-[29px] py-3">
+        <div className="max-w-4xl mx-auto px-6 py-3">
           <div className="flex items-center gap-3">
             {/* Play/Pause Button */}
             <button
               onClick={togglePlayPause}
               disabled={isLoading && audioDuration === 0}
-              className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed z-10"
+              className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-500 hover:bg-primary-600 text-white flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed z-10"
               aria-label={isPlaying ? 'Pause' : 'Play'}
               onMouseDown={(e) => e.stopPropagation()}
             >
@@ -499,11 +466,11 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
             <div className="flex-1 relative" ref={progressBarRef}>
               <div
                 onClick={handleProgressClick}
-                className="h-2 bg-neutral-200 rounded-full cursor-pointer hover:h-3 transition-all relative group"
+                className="h-2 bg-foreground-muted/30 rounded-full cursor-pointer hover:h-3 transition-all relative group"
               >
                 <div
                   ref={progressBarFillRef}
-                  className={`h-full bg-primary-600 rounded-full ${!isDragging ? 'transition-all' : ''}`}
+                  className={`h-full bg-primary-500 rounded-full ${!isDragging ? 'transition-all' : ''}`}
                   style={{ width: `${progressPercentage}%` }}
                 />
               </div>
@@ -514,10 +481,10 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
                   className="absolute bottom-full mb-2 transform -translate-x-1/2 pointer-events-none z-20"
                   style={{ left: `${tooltipPosition}px` }}
                 >
-                  <div className="bg-neutral-900 text-white text-xs font-mono px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                  <div className="bg-foreground text-background text-xs font-mono px-2 py-1 rounded shadow-lg whitespace-nowrap">
                     {formatTime(Math.floor(lastValidDragTime))}
                   </div>
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-neutral-900"></div>
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-foreground"></div>
                 </div>
               )}
             </div>
