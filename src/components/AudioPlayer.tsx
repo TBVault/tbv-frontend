@@ -84,7 +84,7 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
               { src: blobUrl, sizes: '512x512', type: 'image/png' },
             ],
           });
-        } catch (error) {
+        } catch {
           // Fallback to URL if blob URL is invalid
           navigator.mediaSession.metadata = new MediaMetadata({
             title: title,
