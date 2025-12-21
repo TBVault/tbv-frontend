@@ -75,7 +75,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled =
         <button
           type="submit"
           disabled={!message.trim() || disabled}
-          className="flex-shrink-0 w-12 h-12 bg-primary-500 text-white rounded-xl hover:bg-primary-600 disabled:bg-foreground-muted disabled:cursor-not-allowed transition-all flex items-center justify-center group"
+          className="flex-shrink-0 w-12 h-12 bg-primary-500 text-white rounded-xl hover:bg-primary-600 disabled:bg-foreground-muted disabled:cursor-not-allowed transition-all flex items-center justify-center group mb-1"
         >
           <svg
             className="w-5 h-5 transform group-hover:scale-110 transition-transform"
@@ -87,7 +87,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled =
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2.5}
-              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+              d="M12 19V5M5 12l7-7 7 7"
             />
           </svg>
         </button>

@@ -156,6 +156,7 @@ export function MarkdownWithCitations({
         h1: ({ children }) => <h1 className="text-xl font-bold mt-10 mb-2 first:mt-0 text-foreground">{children}</h1>,
         h2: ({ children }) => <h2 className="text-lg font-bold mt-8 mb-1.5 first:mt-0 text-foreground">{children}</h2>,
         h3: ({ children }) => <h3 className="text-base font-semibold mt-6 mb-1 first:mt-0 text-foreground">{children}</h3>,
+        hr: () => <hr className="mt-8 mb-4 border-border" />,
         strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
         em: ({ children }) => <em className="italic">{children}</em>,
       }}
