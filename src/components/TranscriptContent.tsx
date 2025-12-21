@@ -54,6 +54,45 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
           };
           
           trySeek();
+
+          // Scroll to the element
+          setTimeout(() => {
+            const chunkElement = chunkRefs.current.get(chunkStartTime);
+
+            if (chunkElement) {
+              const scrollContainer = document.querySelector('main');
+              
+              if (scrollContainer) {
+                const headerHeight = 78;
+                const playerHeight = 160; // Approximate height of fixed audio player + buffer
+                
+                const chunkHeight = chunkElement.offsetHeight;
+                const viewportHeight = scrollContainer.clientHeight - headerHeight - playerHeight;
+                
+                const elementRect = chunkElement.getBoundingClientRect();
+                const containerRect = scrollContainer.getBoundingClientRect();
+                const relativeTop = elementRect.top - containerRect.top;
+                
+                const offset = headerHeight + (chunkHeight > viewportHeight ? 0 : (viewportHeight - chunkHeight) / 2);
+                const scrollTo = scrollContainer.scrollTop + relativeTop - offset;
+                
+                scrollContainer.scrollTo({
+                  top: scrollTo,
+                  behavior: 'smooth',
+                });
+              } else {
+                // Fallback to window scroll if no main container found
+                const headerHeight = 78;
+                const offset = headerHeight;
+                const elementTop = chunkElement.getBoundingClientRect().top + window.pageYOffset;
+                
+                window.scrollTo({
+                  top: elementTop - offset,
+                  behavior: 'smooth',
+                });
+              }
+            }
+          }, 500); // Small delay to ensure layout is unified
         }
       }
     };
