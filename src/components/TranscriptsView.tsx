@@ -237,7 +237,7 @@ export default function TranscriptsView({ transcripts, searchResults, chunkResul
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Transcripts</h1>
+            <h1 className="hidden lg:block text-3xl font-bold text-foreground mb-2">Transcripts</h1>
             <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa&apos;s lectures and talks</p>
           </div>
           <div className="hidden min-[750px]:flex items-center gap-1 bg-background-elevated border border-border rounded-lg p-1">

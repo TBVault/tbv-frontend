@@ -9,6 +9,7 @@ import Logo from '@/components/Logo';
 import type { ChatSession } from '@/api/generated/schemas';
 import { useClickOutside } from '@/utils/useClickOutside';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 import { SkeletonChatHistoryGroup } from '@/components/Skeleton';
 
 interface AppSidebarProps {
@@ -66,8 +67,8 @@ export default function AppSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const { isMobileOpen, setIsMobileOpen } = useMobileSidebar();
   const [internalIsCollapsed, setInternalIsCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   
   // Detect mobile view (below lg breakpoint, which is 1024px in Tailwind)
@@ -140,21 +141,6 @@ export default function AppSidebar({
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-background-elevated border border-border hover:bg-sidebar-hover transition-colors lg:hidden"
-        aria-label="Toggle menu"
-      >
-        <svg className="w-5 h-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {isMobileOpen ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          )}
-        </svg>
-      </button>
-
       {/* Mobile overlay */}
       {isMobileOpen && (
         <div 

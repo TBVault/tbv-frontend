@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import TranscriptContent from "@/components/TranscriptContent";
 import AudioPlayer from "@/components/AudioPlayer";
+import MobilePageHeader from "@/components/MobilePageHeader";
 import { transcriptProtectedTranscriptGet } from "@/api/generated/endpoints/default/default";
 import type { Metadata } from "next";
 import { cache } from "react";
@@ -81,21 +82,19 @@ export default async function TranscriptPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen py-8 px-6 lg:px-12">
-      <div className="max-w-4xl mx-auto">
-        {error ? (
-          <div className="bg-error-500/10 border border-error-500/30 rounded-xl p-6">
-            <h3 className="font-semibold text-error-500 mb-1">Error Loading Transcript</h3>
-            <p className="text-error-500/80">{error}</p>
-          </div>
-        ) : transcriptData?.status === 200 && (
+    <>
+      <MobilePageHeader title="Transcript" />
+      <div className="min-h-screen py-8 px-6 lg:px-12">
+        <div className="max-w-4xl mx-auto">
+          {error ? (
+            <div className="bg-error-500/10 border border-error-500/30 rounded-xl p-6">
+              <h3 className="font-semibold text-error-500 mb-1">Error Loading Transcript</h3>
+              <p className="text-error-500/80">{error}</p>
+            </div>
+          ) : transcriptData?.status === 200 && (
           <>
             {/* Hero Section */}
             <div className="mb-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary-500/20 text-primary-400 rounded-full text-sm font-medium mb-4">
-                Transcript
-              </div>
-              
               <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-6 leading-tight">
                 {transcriptData.data.semantic_title || transcriptData.data.title}
               </h1>
@@ -133,16 +132,17 @@ export default async function TranscriptPage({ params }: PageProps) {
             <TranscriptContent content={transcriptData!.data.content!} duration={transcriptData!.data.duration} />
           </>
         )}
+        </div>
+        
+        {/* Audio Player */}
+        {transcriptData?.status === 200 && transcriptData.data.recording_url && (
+          <AudioPlayer 
+            recordingUrl={transcriptData.data.recording_url}
+            title={transcriptData.data.semantic_title || transcriptData.data.title}
+            artist="H.G. Vaiśeṣika Dāsa"
+          />
+        )}
       </div>
-      
-      {/* Audio Player */}
-      {transcriptData?.status === 200 && transcriptData.data.recording_url && (
-        <AudioPlayer 
-          recordingUrl={transcriptData.data.recording_url}
-          title={transcriptData.data.semantic_title || transcriptData.data.title}
-          artist="H.G. Vaiśeṣika Dāsa"
-        />
-      )}
-    </div>
+    </>
   );
 }

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { transcriptsProtectedTranscriptsGet, chatSessionsProtectedChatSessionsGet } from "@/api/generated/endpoints/default/default";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
+import MobilePageHeader from "@/components/MobilePageHeader";
 
 export default async function Home() {
   const session = await auth();
@@ -106,7 +107,9 @@ export default async function Home() {
   const userImage = session.user?.image;
 
   return (
-    <div className="min-h-screen py-8 px-6 lg:px-12">
+    <>
+      <MobilePageHeader title="Profile" />
+      <div className="min-h-screen py-8 px-6 lg:px-12">
       <div className="max-w-4xl mx-auto">
         {/* Profile Header */}
         <div className="bg-background-elevated rounded-2xl border border-border p-8 mb-8">
@@ -236,5 +239,6 @@ export default async function Home() {
         </div>
       </div>
     </div>
+    </>
   );
 }

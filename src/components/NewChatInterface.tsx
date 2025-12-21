@@ -8,11 +8,13 @@ import ChatInput, { type ChatInputRef } from '@/components/ChatInput';
 import type { ChatSessionMessage } from '@/api/generated/schemas';
 import { chatSessionProtectedCreateChatSessionPost } from '@/api/generated/endpoints/default/default';
 import { processStreamBuffer } from '@/utils/streamingHelpers';
+import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
 
 export default function NewChatInterface() {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toggleMobileSidebar } = useMobileSidebar();
   const [messages, setMessages] = useState<ChatSessionMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [chatTopic, setChatTopic] = useState<string | null>(null);
@@ -218,8 +220,17 @@ export default function NewChatInterface() {
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-border px-4 py-3 lg:px-6 flex items-center min-h-[56px]">
-        <h1 className="text-lg font-semibold text-foreground truncate">
+      <div className="flex-shrink-0 border-b border-border px-4 py-3 lg:px-6 flex items-center gap-3 min-h-[56px]">
+        <button
+          onClick={toggleMobileSidebar}
+          className="p-1 -ml-1 text-foreground-secondary hover:text-foreground transition-colors lg:hidden"
+          aria-label="Open menu"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <h1 className="text-lg font-semibold text-foreground truncate min-w-0">
           {chatTopic || 'New Chat'}
         </h1>
       </div>

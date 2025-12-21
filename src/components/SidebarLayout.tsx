@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import AppSidebar from '@/components/AppSidebar';
+import { MobileSidebarProvider } from '@/contexts/MobileSidebarContext';
 import type { ChatSession } from '@/api/generated/schemas';
 
 interface SidebarLayoutProps {
@@ -25,19 +26,21 @@ export default function SidebarLayout({
   const isChatPage = pathname?.startsWith('/chat');
   
   return (
-    <div className="flex min-h-screen">
-      <AppSidebar 
-        chatSessions={chatSessions}
-        showChatHistory={isChatPage}
-        transcriptCount={transcriptCount}
-        chatCount={chatCount}
-        isCollapsed={isCollapsed}
-        onCollapsedChange={setIsCollapsed}
-      />
-      <main className={`flex-1 main-content-transition ${isCollapsed ? 'lg:ml-sidebar-collapsed' : 'lg:ml-sidebar'}`}>
-        {children}
-      </main>
-    </div>
+    <MobileSidebarProvider>
+      <div className="flex min-h-screen">
+        <AppSidebar 
+          chatSessions={chatSessions}
+          showChatHistory={isChatPage}
+          transcriptCount={transcriptCount}
+          chatCount={chatCount}
+          isCollapsed={isCollapsed}
+          onCollapsedChange={setIsCollapsed}
+        />
+        <main className={`flex-1 main-content-transition ${isCollapsed ? 'lg:ml-sidebar-collapsed' : 'lg:ml-sidebar'}`}>
+          {children}
+        </main>
+      </div>
+    </MobileSidebarProvider>
   );
 }
 

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { transcriptsProtectedTranscriptsGet, searchFromTranscriptsProtectedSearchTranscriptsGet } from '@/api/generated/endpoints/default/default';
 import TranscriptsView from '@/components/TranscriptsView';
 import GatedPage from '@/components/GatedPage';
+import MobilePageHeader from '@/components/MobilePageHeader';
 import { SearchFieldType } from '../../api';
 import { Skeleton, SkeletonTranscriptCard } from '@/components/Skeleton';
 
@@ -113,7 +114,7 @@ async function TranscriptsContent({ searchParams }: PageProps) {
       <div className="min-h-screen py-8 px-6 lg:px-12">
         <div className="max-w-5xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Transcripts</h1>
+            <h1 className="hidden lg:block text-3xl font-bold text-foreground mb-2">Transcripts</h1>
             <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa&apos;s lectures and talks</p>
           </div>
           <div className="bg-error-500/10 border border-error-500/30 rounded-xl p-6">
@@ -134,7 +135,7 @@ function TranscriptsLoadingSkeleton() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">Transcripts</h1>
+              <h1 className="hidden lg:block text-3xl font-bold text-foreground mb-2">Transcripts</h1>
               <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa&apos;s lectures and talks</p>
             </div>
             <div className="hidden min-[750px]:flex items-center gap-1 bg-background-elevated border border-border rounded-lg p-1">
@@ -160,8 +161,11 @@ function TranscriptsLoadingSkeleton() {
 
 export default function TranscriptsPage(props: PageProps) {
   return (
-    <Suspense fallback={<TranscriptsLoadingSkeleton />}>
-      <TranscriptsContent searchParams={props.searchParams} />
-    </Suspense>
+    <>
+      <MobilePageHeader title="Transcripts" />
+      <Suspense fallback={<TranscriptsLoadingSkeleton />}>
+        <TranscriptsContent searchParams={props.searchParams} />
+      </Suspense>
+    </>
   );
 }
