@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
+import { useSidebar } from '@/contexts/SidebarContext';
 import formatTime from '@/utils/formatTime';
 
 interface AudioPlayerProps {
@@ -19,6 +20,7 @@ interface WindowWithAudio extends Window {
 export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', artist = 'H.G. Vaiśeṣika Dāsa', artwork }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
+  const { isCollapsed } = useSidebar();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
@@ -681,12 +683,12 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
   return (
     <>
       <div
-        className="fixed bottom-0 left-0 right-0 bg-background-elevated border-t border-border shadow-lg z-30 hover:bg-background-tertiary transition-colors select-none lg:ml-sidebar"
+        className={`fixed bottom-0 left-0 right-0 bg-background-elevated border-t border-border shadow-lg z-30 hover:bg-background-tertiary transition-colors select-none ${isCollapsed ? 'lg:ml-sidebar-collapsed' : 'lg:ml-sidebar'}`}
         onMouseDown={handlePlayerMouseDown}
         onTouchStart={handlePlayerTouchStart}
         style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
       >
-        <div className="max-w-4xl mx-auto px-6 py-3">
+        <div className="max-w-4xl mx-auto px-6 py-3.5">
           <div className="flex items-center gap-3">
             {/* Play/Pause Button */}
             <button

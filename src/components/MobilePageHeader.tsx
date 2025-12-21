@@ -10,7 +10,7 @@ export default function MobilePageHeader({ title }: MobilePageHeaderProps) {
   const { toggleMobileSidebar } = useMobileSidebar();
 
   return (
-    <header className="flex items-center gap-3 px-4 py-3 border-b border-border min-h-[56px] lg:hidden">
+    <header className="sticky top-0 z-35 bg-background flex items-center gap-3 px-4 py-3 border-b border-border min-h-[56px] lg:hidden">
       <button
         onClick={toggleMobileSidebar}
         className="p-1 -ml-1 text-foreground-secondary hover:text-foreground transition-colors"

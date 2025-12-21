@@ -191,7 +191,7 @@ export default function AppSidebar({
         `}
       >
         {/* Header with Logo */}
-        <div className={`flex items-center gap-3 px-4 py-3 border-b border-sidebar-border min-h-[56px] ${isCollapsed ? 'justify-center' : ''}`}>
+        <div className={`flex items-center gap-3 px-4 py-2.5 border-b border-sidebar-border min-h-[56px] ${isCollapsed ? 'justify-center' : ''}`}>
           {isCollapsed ? (
             // Hamburger menu when collapsed
             <button
@@ -457,7 +457,7 @@ export default function AppSidebar({
             <div className="relative">
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className={`w-full flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-hover transition-colors
+                className={`w-full flex items-center gap-3 p-2 min-h-[52px] rounded-lg hover:bg-sidebar-hover transition-colors
                   ${isCollapsed ? 'justify-center' : ''}
                 `}
                 aria-label="User menu"
