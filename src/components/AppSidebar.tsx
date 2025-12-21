@@ -9,6 +9,7 @@ import Logo from '@/components/Logo';
 import type { ChatSession } from '@/api/generated/schemas';
 import { useClickOutside } from '@/utils/useClickOutside';
 import { useTheme } from '@/contexts/ThemeContext';
+import { SkeletonChatHistoryGroup } from '@/components/Skeleton';
 
 interface AppSidebarProps {
   chatSessions?: ChatSession[];
@@ -229,7 +230,13 @@ export default function AppSidebar({
               </h3>
             </div>
             <div className="flex-1 overflow-y-auto px-2 pb-2 hide-scrollbar">
-              {chatSessions.length === 0 ? (
+              {status === 'loading' ? (
+                /* Loading skeleton for chat history */
+                <div className="space-y-3">
+                  <SkeletonChatHistoryGroup count={2} />
+                  <SkeletonChatHistoryGroup count={3} />
+                </div>
+              ) : chatSessions.length === 0 ? (
                 <div className="px-3 py-4 text-center">
                   <p className="text-xs text-foreground-muted">No conversations yet</p>
                 </div>

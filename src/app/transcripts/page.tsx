@@ -6,6 +6,7 @@ import { transcriptsProtectedTranscriptsGet, searchFromTranscriptsProtectedSearc
 import TranscriptsView from '@/components/TranscriptsView';
 import GatedPage from '@/components/GatedPage';
 import { SearchFieldType } from '../../api';
+import { Skeleton, SkeletonTranscriptCard } from '@/components/Skeleton';
 
 export const metadata: Metadata = {
   title: "Transcripts | The Bhakti Vault",
@@ -125,21 +126,41 @@ async function TranscriptsContent({ searchParams }: PageProps) {
   }
 }
 
-export default function TranscriptsPage(props: PageProps) {
+function TranscriptsLoadingSkeleton() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen py-8 px-6 lg:px-12">
-        <div className="max-w-5xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Transcripts</h1>
-            <p className="text-foreground-secondary">Browse and explore all available transcripts</p>
+    <div className="min-h-screen py-8 px-6 lg:px-12">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground mb-2">Transcripts</h1>
+              <p className="text-foreground-secondary">Browse H.G. Vaiśeṣika Dāsa&apos;s lectures and talks</p>
+            </div>
+            <div className="hidden min-[750px]:flex items-center gap-1 bg-background-elevated border border-border rounded-lg p-1">
+              <Skeleton className="h-9 w-9 rounded" />
+              <Skeleton className="h-9 w-9 rounded" />
+            </div>
           </div>
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
-          </div>
+          
+          {/* Search bar skeleton */}
+          <Skeleton className="w-full h-12 rounded-xl" />
+        </div>
+
+        {/* Transcript cards skeleton */}
+        <div className="space-y-3 mb-8">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <SkeletonTranscriptCard key={i} variant="row" />
+          ))}
         </div>
       </div>
-    }>
+    </div>
+  );
+}
+
+export default function TranscriptsPage(props: PageProps) {
+  return (
+    <Suspense fallback={<TranscriptsLoadingSkeleton />}>
       <TranscriptsContent searchParams={props.searchParams} />
     </Suspense>
   );

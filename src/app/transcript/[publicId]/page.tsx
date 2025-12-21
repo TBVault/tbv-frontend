@@ -88,7 +88,7 @@ export default async function TranscriptPage({ params }: PageProps) {
             <h3 className="font-semibold text-error-500 mb-1">Error Loading Transcript</h3>
             <p className="text-error-500/80">{error}</p>
           </div>
-        ) : transcriptData?.status === 200 ? (
+        ) : transcriptData?.status === 200 && (
           <>
             {/* Hero Section */}
             <div className="mb-10">
@@ -132,11 +132,6 @@ export default async function TranscriptPage({ params }: PageProps) {
             {/* Transcript Content */}
             <TranscriptContent content={transcriptData!.data.content!} duration={transcriptData!.data.duration} />
           </>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mb-4"></div>
-            <p className="text-foreground-tertiary font-medium">Loading transcript...</p>
-          </div>
         )}
       </div>
       

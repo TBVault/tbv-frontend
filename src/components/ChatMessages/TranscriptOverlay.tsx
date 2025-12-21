@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { Transcript } from '@/api/generated/schemas';
 import { transcriptProtectedTranscriptGet } from '@/api/generated/endpoints/default/default';
 import type { TranscriptOverlayProps } from './types';
+import { Skeleton, SkeletonText } from '@/components/Skeleton';
 
 export function TranscriptOverlay({ 
   citation, 
@@ -134,9 +135,13 @@ export function TranscriptOverlay({
             <span className="inline-flex items-center justify-center w-6 h-6 bg-primary-500 text-white text-xs font-bold rounded-full flex-shrink-0">
               {citationNumber}
             </span>
-            <h3 className="text-lg font-semibold text-foreground break-words">
-              {loading ? 'Loading...' : transcript?.semantic_title || transcript?.title || 'Transcript'}
-            </h3>
+            {loading ? (
+              <Skeleton className="h-6 w-48 flex-1 max-w-xs" />
+            ) : (
+              <h3 className="text-lg font-semibold text-foreground break-words">
+                {transcript?.semantic_title || transcript?.title || 'Transcript'}
+              </h3>
+            )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Link
@@ -163,13 +168,25 @@ export function TranscriptOverlay({
         {/* Content */}
         <div className="p-6">
           {loading && (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+            <div className="space-y-4">
+              {/* Speaker label skeleton */}
+              <Skeleton className="h-3 w-24" />
+              {/* Content skeleton */}
+              <SkeletonText lines={5} lastLineWidth="70%" />
+              {/* Read more skeleton */}
+              <Skeleton className="h-4 w-24 mt-2" />
             </div>
           )}
 
           {error && (
-            <div className="text-error-500 text-center py-4">{error}</div>
+            <div className="text-center py-4">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-error-500/10 flex items-center justify-center">
+                <svg className="w-6 h-6 text-error-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <p className="text-error-500 font-medium">{error}</p>
+            </div>
           )}
 
           {!loading && !error && transcript && (

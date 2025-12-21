@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, useTransition } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Transcript, TranscriptMetadataSearchResult, TranscriptChunkSearchResult } from '@/api/generated/schemas';
 import formatTime from '@/utils/formatTime';
+import { SkeletonTranscriptCard } from '@/components/Skeleton';
 
 function formatSource(source: string): string {
   if (source === 'otterai') return 'OtterAI';
@@ -149,6 +150,7 @@ function Pagination({ currentPage, totalPages, onPageChange }: {
 export default function TranscriptsView({ transcripts, searchResults, chunkResults, currentPage, totalPages, chunkTotalPages, searchQuery, totalCount, chunkTotalCount }: TranscriptsViewProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [viewMode, setViewMode] = useState<'grid' | 'row'>(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth < 750 ? 'grid' : 'row';
@@ -190,7 +192,9 @@ export default function TranscriptsView({ transcripts, searchResults, chunkResul
     } else {
       params.set('p', newPage.toString());
     }
-    router.push(`/transcripts?${params.toString()}`);
+    startTransition(() => {
+      router.push(`/transcripts?${params.toString()}`);
+    });
   };
 
   const handleSearch = (e: FormEvent) => {
@@ -200,7 +204,9 @@ export default function TranscriptsView({ transcripts, searchResults, chunkResul
       params.set('q', searchInput.trim());
       params.set('mode', searchMode);
     }
-    router.push(`/transcripts?${params.toString()}`);
+    startTransition(() => {
+      router.push(`/transcripts?${params.toString()}`);
+    });
   };
 
   const handleSearchModeChange = (mode: SearchMode) => {
@@ -208,24 +214,23 @@ export default function TranscriptsView({ transcripts, searchResults, chunkResul
       const params = new URLSearchParams();
       params.set('q', searchInput.trim());
       params.set('mode', mode);
-      router.push(`/transcripts?${params.toString()}`);
+      startTransition(() => {
+        router.push(`/transcripts?${params.toString()}`);
+      });
     }
   };
 
   const handleClearSearch = () => {
     setSearchInput('');
-    router.push('/transcripts');
+    startTransition(() => {
+      router.push('/transcripts');
+    });
   };
 
   const isSearchMode = !!searchQuery;
 
-  const isLoading = (() => {
-    if (!isSearchMode) return false;
-    const hasResults = searchMode === 'metadata' 
-      ? (searchResults !== undefined)
-      : (chunkResults !== undefined);
-    return !hasResults && !!searchQuery;
-  })();
+  // Loading state is true when a transition is pending
+  const isLoading = isPending;
 
   return (
     <>
@@ -357,15 +362,17 @@ export default function TranscriptsView({ transcripts, searchResults, chunkResul
         )}
       </div>
 
-      {/* Loading State */}
-      {isSearchMode && isLoading && (
-        <div className="flex items-center justify-center py-20 mb-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+      {/* Loading State - show skeleton cards during transitions */}
+      {isLoading && (
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8' : 'space-y-3 mb-8'}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonTranscriptCard key={i} variant={viewMode} />
+          ))}
         </div>
       )}
 
-      {/* Render results */}
-      {isSearchMode && !isLoading && searchMode === 'metadata' && searchResults ? (
+      {/* Render results - hidden during loading */}
+      {!isLoading && isSearchMode && searchMode === 'metadata' && searchResults ? (
         <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8' : 'space-y-3 mb-8'}>
           {searchResults.map((result) => (
             <Link
@@ -406,7 +413,7 @@ export default function TranscriptsView({ transcripts, searchResults, chunkResul
             </Link>
           ))}
         </div>
-      ) : isSearchMode && !isLoading && searchMode === 'content' && chunkResults ? (
+      ) : !isLoading && isSearchMode && searchMode === 'content' && chunkResults ? (
         <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8' : 'space-y-3 mb-8'}>
           {chunkResults.map((result) => (
             <Link
@@ -444,7 +451,7 @@ export default function TranscriptsView({ transcripts, searchResults, chunkResul
             </Link>
           ))}
         </div>
-      ) : transcripts ? (
+      ) : !isLoading && transcripts ? (
         <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8' : 'space-y-3 mb-8'}>
           {transcripts.map((transcript) => (
             <Link
