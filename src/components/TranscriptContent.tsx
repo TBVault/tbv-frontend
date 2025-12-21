@@ -158,15 +158,15 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
   }, [content, showTimestamps]);
 
   return (
-    <div className="bg-background-elevated rounded-2xl border border-border overflow-hidden">
-      <div className="bg-background-tertiary px-6 py-4 border-b border-border flex justify-between items-center">
+    <div className="bg-background-elevated rounded-none lg:rounded-2xl border border-border overflow-hidden">
+      <div className="bg-background-tertiary px-0 lg:px-6 py-4 border-b border-border flex justify-between items-center">
         {duration && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 pl-4 lg:pl-0">
             <div className="text-sm font-medium text-foreground-tertiary uppercase tracking-wide">Duration</div>
             <div className="text-sm font-semibold text-foreground">{formatTime(duration)}</div>
           </div>
         )}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 pr-4 lg:pr-0">
           <div className="text-sm text-foreground-secondary font-medium">Show Timestamps</div>
           <button
             onClick={() => setShowTimestamps(!showTimestamps)}
@@ -236,14 +236,14 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
               }}
               onDoubleClick={handleSeekToTimestamp}
               onTouchStart={handleTouchStart}
-              className={`group px-6 py-4 transition-all duration-200 cursor-pointer border-l-4 ${
+              className={`group px-0 lg:px-6 py-4 transition-all duration-200 cursor-pointer border-l-4 ${
                 isActive 
                   ? '' 
                   : 'border-transparent hover:bg-background-tertiary'
               }`}
               style={isActive ? { borderLeftColor: '#f97316' } : undefined}
             >
-              <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="mb-3 flex items-center justify-between gap-3 px-4 lg:px-0">
                 <div className="flex items-center gap-3">
                   {showTimestamps && hasSpeaker && (
                     <div className="font-semibold text-foreground">{firstChunk.speaker}</div>
@@ -267,7 +267,7 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
                 )}
               </div>
               
-              <div className="text-foreground-secondary leading-relaxed space-y-2">
+              <div className="text-foreground-secondary leading-relaxed space-y-2 px-4 lg:px-0">
                 {group.map((chunk, chunkIndex) => (
                   <div 
                     key={chunkIndex}

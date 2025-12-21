@@ -84,7 +84,7 @@ export default async function TranscriptPage({ params }: PageProps) {
   return (
     <>
       <MobilePageHeader title="Transcript" />
-      <div className="min-h-screen py-8 px-6 lg:px-12">
+      <div className="min-h-screen py-8 px-0 lg:px-6 xl:px-12">
         <div className="max-w-4xl mx-auto">
           {error ? (
             <div className="bg-error-500/10 border border-error-500/30 rounded-xl p-6">
@@ -94,7 +94,7 @@ export default async function TranscriptPage({ params }: PageProps) {
           ) : transcriptData?.status === 200 && (
           <>
             {/* Hero Section */}
-            <div className="mb-10">
+            <div className="mb-10 px-4 lg:px-0">
               <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-6 leading-tight">
                 {transcriptData.data.semantic_title || transcriptData.data.title}
               </h1>
@@ -121,9 +121,9 @@ export default async function TranscriptPage({ params }: PageProps) {
 
               {/* Summary */}
               {transcriptData.data.summary && (
-                <div className="bg-gradient-to-br from-primary-500/10 to-secondary-500/10 border border-primary-500/20 rounded-xl p-5">
-                  <div className="text-sm font-semibold text-foreground-tertiary mb-2">AI-generated Summary:</div>
-                  <p className="text-foreground-secondary leading-relaxed">{transcriptData.data.summary}</p>
+                <div className="bg-gradient-to-br from-primary-500/10 to-secondary-500/10 border-0 lg:border lg:border-primary-500/20 rounded-none lg:rounded-xl p-0 lg:p-5">
+                  <div className="text-sm font-semibold text-foreground-tertiary mb-2 px-0 lg:px-4 pt-4 lg:pt-0">AI-generated Summary:</div>
+                  <p className="text-foreground-secondary leading-relaxed px-0 lg:px-4 pb-4 lg:pb-0">{transcriptData.data.summary}</p>
                 </div>
               )}
             </div>
