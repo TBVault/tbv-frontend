@@ -117,8 +117,9 @@ export default async function Home() {
                 <Image
                   src={userImage}
                   alt={userName}
-                  width={96}
-                  height={96}
+                  width={192}
+                  height={192}
+                  quality={95}
                   className="w-24 h-24 rounded-2xl border-2 border-primary-500/30"
                   crossOrigin="anonymous"
                 />
