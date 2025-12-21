@@ -2,7 +2,7 @@ import { Skeleton, SkeletonChatMessage, SkeletonText } from '@/components/Skelet
 
 export default function HistoricalChatLoading() {
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen-mobile flex flex-col">
       {/* Header */}
       <div className="flex-shrink-0 border-b border-border px-4 py-3 lg:px-6 flex items-center min-h-[56px]">
         <Skeleton className="h-6 w-48" />

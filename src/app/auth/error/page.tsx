@@ -49,7 +49,7 @@ function AuthErrorContent() {
   const errorInfo = getErrorMessage(error);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8">
+    <div className="min-h-screen-mobile flex items-center justify-center p-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-error-500/20 mb-6">
@@ -115,7 +115,7 @@ function AuthErrorContent() {
 export default function AuthError() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center p-8">
+      <div className="min-h-screen-mobile flex items-center justify-center p-8">
         <div className="w-full max-w-md bg-background-elevated rounded-xl border border-border p-8">
           <div className="animate-pulse">
             <div className="h-8 bg-foreground-muted/20 rounded mb-4"></div>

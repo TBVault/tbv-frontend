@@ -325,7 +325,7 @@ export default function TranscriptsView({ transcripts, searchResults, chunkResul
                     : 'text-foreground-secondary hover:bg-sidebar-hover hover:text-foreground'
                 }`}
               >
-                Metadata
+                Title & Summary
               </button>
               <button
                 type="button"

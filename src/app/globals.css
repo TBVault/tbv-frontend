@@ -154,6 +154,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
 }
 
 /* Custom scrollbar */
@@ -253,6 +255,24 @@ mark {
 html.light,
 html.dark {
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Mobile-safe viewport height - accounts for browser UI bars */
+/* Set default --vh value */
+:root {
+  --vh: 1vh; /* Default, will be overridden by JavaScript */
+}
+
+.h-screen-mobile {
+  height: 100vh; /* Fallback for older browsers */
+  height: 100dvh; /* Dynamic viewport height - adjusts for mobile browser UI (modern browsers) */
+  height: calc(var(--vh) * 100); /* JavaScript-calculated height - highest priority when set */
+}
+
+.min-h-screen-mobile {
+  min-height: 100vh; /* Fallback for older browsers */
+  min-height: 100dvh; /* Dynamic viewport height - adjusts for mobile browser UI (modern browsers) */
+  min-height: calc(var(--vh) * 100); /* JavaScript-calculated height - highest priority when set */
 }
 
 /* Skeleton shimmer animation */

@@ -2,6 +2,7 @@ import "./globals.css";
 
 import SessionProvider from "@/components/SessionProvider";
 import SidebarLayout from "@/components/SidebarLayout";
+import ViewportHeightFix from "@/components/ViewportHeightFix";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { auth } from "@/auth";
 import { chatSessionsProtectedChatSessionsGet, transcriptsProtectedTranscriptsGet } from "@/api/generated/endpoints/default/default";
@@ -84,6 +85,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className="light" suppressHydrationWarning>
       <body>
+        <ViewportHeightFix />
         <SessionProvider>
           <ThemeProvider>
             <SidebarLayout 

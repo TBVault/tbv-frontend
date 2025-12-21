@@ -208,7 +208,7 @@ export default function HistoricalChatInterface({
 
   if (loading) {
     return (
-      <div className="h-screen flex flex-col">
+      <div className="h-screen-mobile flex flex-col">
         {/* Header skeleton */}
         <div className="flex-shrink-0 border-b border-border px-4 py-3 lg:px-6 flex items-center gap-3 min-h-[56px]">
           <button
@@ -264,7 +264,7 @@ export default function HistoricalChatInterface({
 
   if (error) {
     return (
-      <div className="h-screen flex items-center justify-center p-6">
+      <div className="h-screen-mobile flex items-center justify-center p-6">
         <div className="bg-error-50 border-l-4 border-error-500 rounded-r-xl p-6 max-w-md">
           <h3 className="font-semibold text-error-900 mb-1">Error Loading Chat</h3>
           <p className="text-error-800">{error}</p>
@@ -275,7 +275,7 @@ export default function HistoricalChatInterface({
 
   if (chatNotFound) {
     return (
-      <div className="h-screen flex items-center justify-center p-6">
+      <div className="h-screen-mobile flex items-center justify-center p-6">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-foreground-muted/20 flex items-center justify-center">
             <svg className="w-8 h-8 text-foreground-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -290,7 +290,7 @@ export default function HistoricalChatInterface({
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen-mobile flex flex-col">
       {/* Header */}
       <div className="flex-shrink-0 border-b border-border px-4 py-3 lg:px-6 flex items-center gap-3 min-h-[56px]">
         <button

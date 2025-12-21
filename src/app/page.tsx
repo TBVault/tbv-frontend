@@ -52,7 +52,7 @@ export default async function Home() {
   if (!session) {
     // Not logged in - show welcoming landing page
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 py-12">
+      <div className="min-h-screen-mobile flex items-center justify-center px-6 py-12">
         <div className="max-w-md w-full">
           <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-800 mb-6 shadow-lg shadow-primary-500/20">
@@ -109,7 +109,7 @@ export default async function Home() {
   return (
     <>
       <MobilePageHeader title="Profile" />
-      <div className="min-h-screen py-8 px-6 lg:px-12">
+      <div className="min-h-screen-mobile py-8 px-6 lg:px-12">
       <div className="max-w-4xl mx-auto">
         {/* Profile Header */}
         <div className="bg-background-elevated rounded-2xl border border-border p-8 mb-8">

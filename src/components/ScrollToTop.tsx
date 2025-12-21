@@ -32,6 +32,11 @@ export default function ScrollToTop() {
     
     // If there's a hash anchor, wait for it to be hydrated before scrolling
     const targetId = hash.slice(1); // Remove the '#' prefix
+    
+    // Prevent browser's default scroll-to-anchor behavior initially
+    // by scrolling to top first, then we'll scroll to the anchor once hydrated
+    window.scrollTo(0, 0);
+    
     const scrollToAnchor = () => {
       const element = document.getElementById(targetId);
       if (element) {

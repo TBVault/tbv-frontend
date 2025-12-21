@@ -27,7 +27,7 @@ export default function SidebarLayout({
   
   return (
     <MobileSidebarProvider>
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen-mobile h-screen-mobile">
         <AppSidebar 
           chatSessions={chatSessions}
           showChatHistory={isChatPage}
@@ -36,7 +36,7 @@ export default function SidebarLayout({
           isCollapsed={isCollapsed}
           onCollapsedChange={setIsCollapsed}
         />
-        <main className={`flex-1 main-content-transition ${isCollapsed ? 'lg:ml-sidebar-collapsed' : 'lg:ml-sidebar'}`}>
+        <main className={`flex-1 main-content-transition ${isCollapsed ? 'lg:ml-sidebar-collapsed' : 'lg:ml-sidebar'} overflow-hidden`}>
           {children}
         </main>
       </div>
