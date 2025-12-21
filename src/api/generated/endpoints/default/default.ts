@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type {
+  BrowsingHistory,
   ChatSession,
   ChatSessionHistoryResponse,
   HTTPValidationError,
@@ -476,6 +477,83 @@ export const getSearchFromTranscriptsProtectedSearchTranscriptsGetUrl = (params:
 export const searchFromTranscriptsProtectedSearchTranscriptsGet = async (params: SearchFromTranscriptsProtectedSearchTranscriptsGetParams, options?: RequestInit): Promise<searchFromTranscriptsProtectedSearchTranscriptsGetResponse> => {
   
   return customFetch<searchFromTranscriptsProtectedSearchTranscriptsGetResponse>(getSearchFromTranscriptsProtectedSearchTranscriptsGetUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+/**
+ * @summary Add Browsing History
+ */
+export type addBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPostResponse200 = {
+  data: unknown
+  status: 200
+}
+
+export type addBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPostResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+    
+export type addBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPostResponseSuccess = (addBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPostResponse200) & {
+  headers: Headers;
+};
+export type addBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPostResponseError = (addBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPostResponse422) & {
+  headers: Headers;
+};
+
+export type addBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPostResponse = (addBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPostResponseSuccess | addBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPostResponseError)
+
+export const getAddBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPostUrl = (transcriptId: string,) => {
+
+
+  
+
+  return `/protected/browsing_history/${transcriptId}`
+}
+
+export const addBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPost = async (transcriptId: string, options?: RequestInit): Promise<addBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPostResponse> => {
+  
+  return customFetch<addBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPostResponse>(getAddBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPostUrl(transcriptId),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+/**
+ * @summary Browsing History
+ */
+export type browsingHistoryProtectedBrowsingHistoryGetResponse200 = {
+  data: BrowsingHistory[]
+  status: 200
+}
+    
+export type browsingHistoryProtectedBrowsingHistoryGetResponseSuccess = (browsingHistoryProtectedBrowsingHistoryGetResponse200) & {
+  headers: Headers;
+};
+;
+
+export type browsingHistoryProtectedBrowsingHistoryGetResponse = (browsingHistoryProtectedBrowsingHistoryGetResponseSuccess)
+
+export const getBrowsingHistoryProtectedBrowsingHistoryGetUrl = () => {
+
+
+  
+
+  return `/protected/browsing_history`
+}
+
+export const browsingHistoryProtectedBrowsingHistoryGet = async ( options?: RequestInit): Promise<browsingHistoryProtectedBrowsingHistoryGetResponse> => {
+  
+  return customFetch<browsingHistoryProtectedBrowsingHistoryGetResponse>(getBrowsingHistoryProtectedBrowsingHistoryGetUrl(),
   {      
     ...options,
     method: 'GET'

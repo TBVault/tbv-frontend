@@ -4,6 +4,7 @@ import TranscriptContent from "@/components/TranscriptContent";
 import AudioPlayer from "@/components/AudioPlayer";
 import MobilePageHeader from "@/components/MobilePageHeader";
 import ScrollToTop from "@/components/ScrollToTop";
+import TrackBrowsingHistory from "@/components/TrackBrowsingHistory";
 import { transcriptProtectedTranscriptGet } from "@/api/generated/endpoints/default/default";
 import type { Metadata } from "next";
 import { cache } from "react";
@@ -85,6 +86,8 @@ export default async function TranscriptPage({ params }: PageProps) {
   return (
     <>
       <ScrollToTop />
+      {/* Track browsing history via client component + server action */}
+      {transcriptData?.status === 200 && <TrackBrowsingHistory transcriptId={publicId} />}
       <MobilePageHeader title="Transcript" />
       <div className="min-h-screen py-8 px-0 lg:px-6 xl:px-12">
         <div className="max-w-4xl mx-auto">

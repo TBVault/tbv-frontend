@@ -47,3 +47,10 @@ export async function revalidateChatSessions() {
   revalidateTag('chat-sessions', 'max');
   revalidatePath('/chat', 'page');
 }
+
+/**
+ * Revalidate browsing history cache (for sidebar "Recently Viewed" section)
+ */
+export async function revalidateBrowsingHistory() {
+  revalidateTag('browsing-history', 'max');
+}

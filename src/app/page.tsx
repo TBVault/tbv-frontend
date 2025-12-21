@@ -107,9 +107,9 @@ export default async function Home() {
   const userImage = session.user?.image;
 
   return (
-    <>
+    <div className="flex flex-col h-full">
       <MobilePageHeader title="Profile" />
-      <div className="min-h-screen-mobile py-8 px-6 lg:px-12">
+      <div className="flex-1 overflow-y-auto py-8 px-6 lg:px-12">
       <div className="max-w-4xl mx-auto">
         {/* Profile Header */}
         <div className="bg-background-elevated rounded-2xl border border-border p-8 mb-8">
@@ -239,6 +239,6 @@ export default async function Home() {
         </div>
       </div>
     </div>
-    </>
+    </div>
   );
 }

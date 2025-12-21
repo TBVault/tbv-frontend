@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import Logo from '@/components/Logo';
-import type { ChatSession } from '@/api/generated/schemas';
+import type { ChatSession, BrowsingHistory } from '@/api/generated/schemas';
 import { useClickOutside } from '@/utils/useClickOutside';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
@@ -19,6 +19,7 @@ interface AppSidebarProps {
   chatCount?: number;
   isCollapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
+  browsingHistory?: BrowsingHistory[];
 }
 
 // Group chat sessions by date
@@ -62,6 +63,7 @@ export default function AppSidebar({
   chatCount = 0,
   isCollapsed: controlledIsCollapsed,
   onCollapsedChange,
+  browsingHistory = [],
 }: AppSidebarProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
@@ -103,6 +105,37 @@ export default function AppSidebar({
   const [imageError, setImageError] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null!);
   const sidebarRef = useRef<HTMLDivElement>(null!);
+  
+  // Collapsible sections state with localStorage persistence
+  // Start with default collapsed state to match SSR, then hydrate from localStorage
+  const [isRecentChatsCollapsed, setIsRecentChatsCollapsed] = useState(true);
+  const [isRecentlyViewedCollapsed, setIsRecentlyViewedCollapsed] = useState(true);
+  
+  // Hydrate collapse states from localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
+    const savedChats = localStorage.getItem('recentChatsCollapsed');
+    if (savedChats !== null) {
+      setIsRecentChatsCollapsed(JSON.parse(savedChats));
+    }
+    
+    const savedViewed = localStorage.getItem('recentlyViewedCollapsed');
+    if (savedViewed !== null) {
+      setIsRecentlyViewedCollapsed(JSON.parse(savedViewed));
+    }
+  }, []);
+  
+  // Persist collapse state to localStorage
+  const toggleRecentChats = () => {
+    const newValue = !isRecentChatsCollapsed;
+    setIsRecentChatsCollapsed(newValue);
+    localStorage.setItem('recentChatsCollapsed', JSON.stringify(newValue));
+  };
+  
+  const toggleRecentlyViewed = () => {
+    const newValue = !isRecentlyViewedCollapsed;
+    setIsRecentlyViewedCollapsed(newValue);
+    localStorage.setItem('recentlyViewedCollapsed', JSON.stringify(newValue));
+  };
 
   useClickOutside(profileRef, () => setIsProfileOpen(false), isProfileOpen);
   
@@ -227,41 +260,137 @@ export default function AppSidebar({
           </Link>
         </nav>
 
-        {/* Chat History Section - Only show if not collapsed and showChatHistory is true */}
+        {/* Chat History and Recently Viewed Section - Flex layout with 50/50 max split */}
         {showChatHistory && !isCollapsed && (
-          <div className="flex-1 overflow-hidden flex flex-col mt-2">
-            <div className="px-4 py-2">
-              <h3 className="text-xs font-semibold text-foreground-tertiary uppercase tracking-wider">
-                Recent Chats
-              </h3>
+          <div className="flex-1 flex flex-col overflow-hidden mt-2">
+            {/* Recent Chats - Max 50% when both expanded */}
+            <div className={`flex flex-col overflow-hidden px-2 ${
+              !isRecentChatsCollapsed && !isRecentlyViewedCollapsed && browsingHistory.length > 0
+                ? 'flex-1 max-h-[50%]'
+                : !isRecentChatsCollapsed
+                ? 'flex-1'
+                : 'flex-shrink-0'
+            }`}>
+              <button
+                onClick={toggleRecentChats}
+                className="flex items-center justify-between px-2 py-2 hover:bg-sidebar-hover transition-colors rounded-lg w-full flex-shrink-0"
+              >
+                <h3 className="text-xs font-semibold text-foreground-tertiary uppercase tracking-wider">
+                  Recent Chats
+                </h3>
+                <svg
+                  className={`w-4 h-4 text-foreground-tertiary transition-transform ${
+                    isRecentChatsCollapsed ? '-rotate-90' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {!isRecentChatsCollapsed && (
+                <div className="overflow-y-auto hide-scrollbar flex-1 min-h-0 mt-1">
+                  {status === 'loading' ? (
+                    /* Loading skeleton for chat history */
+                    <div className="space-y-3">
+                      <SkeletonChatHistoryGroup count={2} />
+                      <SkeletonChatHistoryGroup count={3} />
+                    </div>
+                  ) : chatSessions.length === 0 ? (
+                    <div className="px-3 py-4 text-center">
+                      <p className="text-xs text-foreground-muted">No conversations yet</p>
+                    </div>
+                  ) : (
+                    <div className="">
+                      {groupedChats.map((group) => (
+                        <div key={group.label}>
+                          <div className="px-3 py-1">
+                            <span className="text-[10px] font-medium text-foreground-muted uppercase tracking-wider">
+                              {group.label}
+                            </span>
+                          </div>
+                          <div className="space-y-0.5">
+                            {group.chats.map((chat) => (
+                              <Link
+                                key={chat.public_id}
+                                href={`/chat/${chat.public_id}`}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors group
+                                  ${pathname === `/chat/${chat.public_id}` 
+                                    ? 'bg-sidebar-active text-foreground' 
+                                    : 'text-foreground-secondary hover:text-foreground hover:bg-sidebar-hover'
+                                  }
+                                `}
+                              >
+                                <svg
+                                  className={`w-4 h-4 flex-shrink-0 ${
+                                    pathname === `/chat/${chat.public_id}` 
+                                      ? 'text-primary-500' 
+                                      : 'text-foreground-muted group-hover:text-foreground-tertiary'
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                                  />
+                                </svg>
+                                <span className="text-sm truncate flex-1">
+                                  {chat.chat_topic || 'Conversation'}
+                                </span>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="flex-1 overflow-y-auto px-2 pb-2 hide-scrollbar">
-              {status === 'loading' ? (
-                /* Loading skeleton for chat history */
-                <div className="space-y-3">
-                  <SkeletonChatHistoryGroup count={2} />
-                  <SkeletonChatHistoryGroup count={3} />
-                </div>
-              ) : chatSessions.length === 0 ? (
-                <div className="px-3 py-4 text-center">
-                  <p className="text-xs text-foreground-muted">No conversations yet</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {groupedChats.map((group) => (
-                    <div key={group.label}>
-                      <div className="px-3 py-1.5">
-                        <span className="text-[10px] font-medium text-foreground-muted uppercase tracking-wider">
-                          {group.label}
-                        </span>
-                      </div>
-                      <div className="space-y-0.5">
-                        {group.chats.map((chat) => (
+
+            {/* Recently Viewed - Max 50% when both expanded */}
+            {browsingHistory.length > 0 && (
+              <div className={`flex flex-col overflow-hidden px-2 mt-3 ${
+                !isRecentChatsCollapsed && !isRecentlyViewedCollapsed
+                  ? 'flex-1 max-h-[50%]'
+                  : !isRecentlyViewedCollapsed
+                  ? 'flex-1'
+                  : 'flex-shrink-0'
+              }`}>
+                <button
+                  onClick={toggleRecentlyViewed}
+                  className="flex items-center justify-between px-2 py-2 hover:bg-sidebar-hover transition-colors rounded-lg w-full flex-shrink-0"
+                >
+                  <h3 className="text-xs font-semibold text-foreground-tertiary uppercase tracking-wider">
+                    Recently Viewed
+                  </h3>
+                  <svg
+                    className={`w-4 h-4 text-foreground-tertiary transition-transform ${
+                      isRecentlyViewedCollapsed ? '-rotate-90' : ''
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {!isRecentlyViewedCollapsed && (
+                  <div className="overflow-y-auto hide-scrollbar flex-1 min-h-0 mt-1">
+                    <div className="space-y-0.5">
+                      {browsingHistory
+                        .sort((a, b) => b.last_accessed_on - a.last_accessed_on)
+                        .map((item) => (
                           <Link
-                            key={chat.public_id}
-                            href={`/chat/${chat.public_id}`}
+                            key={item.public_id}
+                            href={`/transcript/${item.transcript_id}`}
                             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors group
-                              ${pathname === `/chat/${chat.public_id}` 
+                              ${pathname === `/transcript/${item.transcript_id}` 
                                 ? 'bg-sidebar-active text-foreground' 
                                 : 'text-foreground-secondary hover:text-foreground hover:bg-sidebar-hover'
                               }
@@ -269,7 +398,7 @@ export default function AppSidebar({
                           >
                             <svg
                               className={`w-4 h-4 flex-shrink-0 ${
-                                pathname === `/chat/${chat.public_id}` 
+                                pathname === `/transcript/${item.transcript_id}` 
                                   ? 'text-primary-500' 
                                   : 'text-foreground-muted group-hover:text-foreground-tertiary'
                               }`}
@@ -281,20 +410,19 @@ export default function AppSidebar({
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth={2}
-                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
                               />
                             </svg>
                             <span className="text-sm truncate flex-1">
-                              {chat.chat_topic || 'Conversation'}
+                              {item.transcript_semantic_title}
                             </span>
                           </Link>
                         ))}
-                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 

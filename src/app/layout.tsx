@@ -5,8 +5,8 @@ import SidebarLayout from "@/components/SidebarLayout";
 import ViewportHeightFix from "@/components/ViewportHeightFix";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { auth } from "@/auth";
-import { chatSessionsProtectedChatSessionsGet, transcriptsProtectedTranscriptsGet } from "@/api/generated/endpoints/default/default";
-import type { ChatSession } from "@/api/generated/schemas";
+import { chatSessionsProtectedChatSessionsGet, transcriptsProtectedTranscriptsGet, browsingHistoryProtectedBrowsingHistoryGet } from "@/api/generated/endpoints/default/default";
+import type { ChatSession, BrowsingHistory } from "@/api/generated/schemas";
 
 export const metadata = {
   title: "The Bhakti Vault",
@@ -26,14 +26,15 @@ async function getLayoutData() {
   const session = await auth();
   
   if (!session?.idToken) {
-    return { chatSessions: [], transcriptCount: 0, chatCount: 0 };
+    return { chatSessions: [], transcriptCount: 0, chatCount: 0, browsingHistory: [] };
   }
 
   let chatSessions: ChatSession[] = [];
   let transcriptCount = 0;
+  let browsingHistory: BrowsingHistory[] = [];
 
   try {
-    const [chatResponse, transcriptResponse] = await Promise.all([
+    const [chatResponse, transcriptResponse, browsingHistoryResponse] = await Promise.all([
       chatSessionsProtectedChatSessionsGet({
         headers: {
           Authorization: session.idToken.trim(),
@@ -55,6 +56,12 @@ async function getLayoutData() {
           },
         }
       ),
+      browsingHistoryProtectedBrowsingHistoryGet({
+        headers: {
+          Authorization: session.idToken.trim(),
+        },
+        cache: 'no-store',
+      }),
     ]);
 
     if (chatResponse.status === 200) {
@@ -64,6 +71,10 @@ async function getLayoutData() {
     if (transcriptResponse.status === 200) {
       transcriptCount = transcriptResponse.data.total_count;
     }
+
+    if (browsingHistoryResponse.status === 200) {
+      browsingHistory = browsingHistoryResponse.data;
+    }
   } catch (error) {
     console.error('Error fetching layout data:', error);
   }
@@ -72,6 +83,7 @@ async function getLayoutData() {
     chatSessions, 
     transcriptCount,
     chatCount: chatSessions.length,
+    browsingHistory,
   };
 }
 
@@ -80,7 +92,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { chatSessions, transcriptCount, chatCount } = await getLayoutData();
+  const { chatSessions, transcriptCount, chatCount, browsingHistory } = await getLayoutData();
 
   return (
     <html lang="en" className="light" suppressHydrationWarning>
@@ -92,6 +104,7 @@ export default async function RootLayout({
               chatSessions={chatSessions}
               transcriptCount={transcriptCount}
               chatCount={chatCount}
+              browsingHistory={browsingHistory}
             >
               {children}
             </SidebarLayout>

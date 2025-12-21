@@ -68,35 +68,34 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
     const handlePlay = () => {
       setIsPlaying(true);
       // Refresh metadata when playback starts - iOS sometimes needs this
-      if ('mediaSession' in navigator && artworkBlobUrlRef.current) {
+      if ('mediaSession' in navigator) {
         const blobUrl = artworkBlobUrlRef.current;
-        const artworkUrl = artwork || `${window.location.origin}/apple-icon.png`;
-        try {
+        if (blobUrl) {
+          try {
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: title,
+              artist: artist,
+              artwork: [
+                { src: blobUrl, sizes: '96x96', type: 'image/png' },
+                { src: blobUrl, sizes: '128x128', type: 'image/png' },
+                { src: blobUrl, sizes: '192x192', type: 'image/png' },
+                { src: blobUrl, sizes: '256x256', type: 'image/png' },
+                { src: blobUrl, sizes: '384x384', type: 'image/png' },
+                { src: blobUrl, sizes: '512x512', type: 'image/png' },
+              ],
+            });
+          } catch {
+            // Fallback to metadata without artwork
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: title,
+              artist: artist,
+            });
+          }
+        } else {
+          // No artwork available, set basic metadata
           navigator.mediaSession.metadata = new MediaMetadata({
             title: title,
             artist: artist,
-            artwork: [
-              { src: blobUrl, sizes: '96x96', type: 'image/png' },
-              { src: blobUrl, sizes: '128x128', type: 'image/png' },
-              { src: blobUrl, sizes: '192x192', type: 'image/png' },
-              { src: blobUrl, sizes: '256x256', type: 'image/png' },
-              { src: blobUrl, sizes: '384x384', type: 'image/png' },
-              { src: blobUrl, sizes: '512x512', type: 'image/png' },
-            ],
-          });
-        } catch {
-          // Fallback to URL if blob URL is invalid
-          navigator.mediaSession.metadata = new MediaMetadata({
-            title: title,
-            artist: artist,
-            artwork: [
-              { src: artworkUrl, sizes: '96x96', type: 'image/png' },
-              { src: artworkUrl, sizes: '128x128', type: 'image/png' },
-              { src: artworkUrl, sizes: '192x192', type: 'image/png' },
-              { src: artworkUrl, sizes: '256x256', type: 'image/png' },
-              { src: artworkUrl, sizes: '384x384', type: 'image/png' },
-              { src: artworkUrl, sizes: '512x512', type: 'image/png' },
-            ],
           });
         }
       }
@@ -582,7 +581,7 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
         artworkBlobUrlRef.current = null;
       }
 
-      const artworkUrl = artwork || `${window.location.origin}/apple-icon.png`;
+      const artworkUrl = artwork || '/apple-icon.png';
       
       try {
         // For iOS, we need to fetch the image and convert it to a blob URL
@@ -609,21 +608,11 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
             { src: blobUrl, sizes: '512x512', type: blob.type || 'image/png' },
           ],
         });
-      } catch (error) {
-        console.warn('Failed to load artwork as blob, falling back to URL:', error);
-        // Fallback to original URL if blob loading fails
-        const fallbackUrl = artwork || `${window.location.origin}/apple-icon.png`;
+      } catch {
+        // Fallback: set metadata without artwork if loading fails
         navigator.mediaSession.metadata = new MediaMetadata({
           title: title,
           artist: artist,
-          artwork: [
-            { src: fallbackUrl, sizes: '96x96', type: 'image/png' },
-            { src: fallbackUrl, sizes: '128x128', type: 'image/png' },
-            { src: fallbackUrl, sizes: '192x192', type: 'image/png' },
-            { src: fallbackUrl, sizes: '256x256', type: 'image/png' },
-            { src: fallbackUrl, sizes: '384x384', type: 'image/png' },
-            { src: fallbackUrl, sizes: '512x512', type: 'image/png' },
-          ],
         });
       }
     };

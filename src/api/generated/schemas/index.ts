@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
+export * from './browsingHistory';
 export * from './chatContent';
 export * from './chatObject';
 export * from './chatObjectData';

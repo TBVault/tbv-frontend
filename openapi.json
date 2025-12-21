@@ -429,6 +429,83 @@
         }
       }
     },
+    "/protected/browsing_history/{transcript_id}": {
+      "post": {
+        "summary": "Add Browsing History",
+        "operationId": "add_browsing_history_protected_browsing_history__transcript_id__post",
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "transcript_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Transcript Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/protected/browsing_history": {
+      "get": {
+        "summary": "Browsing History",
+        "operationId": "browsing_history_protected_browsing_history_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BrowsingHistory"
+                  },
+                  "type": "array",
+                  "title": "Response Browsing History Protected Browsing History Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OpenIdConnect": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/auth/login": {
       "post": {
         "summary": "Login",
@@ -486,6 +563,39 @@
   },
   "components": {
     "schemas": {
+      "BrowsingHistory": {
+        "properties": {
+          "public_id": {
+            "type": "string",
+            "title": "Public Id"
+          },
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "transcript_id": {
+            "type": "string",
+            "title": "Transcript Id"
+          },
+          "transcript_semantic_title": {
+            "type": "string",
+            "title": "Transcript Semantic Title"
+          },
+          "last_accessed_on": {
+            "type": "integer",
+            "title": "Last Accessed On"
+          }
+        },
+        "type": "object",
+        "required": [
+          "public_id",
+          "user_id",
+          "transcript_id",
+          "transcript_semantic_title",
+          "last_accessed_on"
+        ],
+        "title": "BrowsingHistory"
+      },
       "ChatObject": {
         "properties": {
           "data": {

@@ -18,16 +18,22 @@ export const customFetch = async <T>(
   const fullUrl = `${BACKEND_URL}${url}`;
 
   // Default to Next.js caching - can be overridden in options
-  // For auth-required endpoints, we typically want shorter cache times or revalidation tags
-  const response = await fetch(fullUrl, {
+  // Don't set next options if cache is explicitly set (they conflict)
+  const fetchOptions: RequestInit = {
     ...options,
     headers: {
       "Content-Type": "application/json",
       ...options?.headers,
     },
-    // Allow Next.js to cache by default, override with options.cache or options.next
-    next: options?.next || { revalidate: 60 }, // Cache for 60 seconds by default
-  });
+  };
+  
+  // Only add default next options if cache is not explicitly set
+  if (!options?.cache) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (fetchOptions as any).next = options?.next || { revalidate: 60 };
+  }
+  
+  const response = await fetch(fullUrl, fetchOptions);
 
   if (!response.ok) {
     const errorText = await response.text();

@@ -30,30 +30,30 @@ export default function Icon() {
           xmlns="http://www.w3.org/2000/svg"
         >
           {/* Outer vault ring */}
-          <circle cx="24" cy="24" r="20" fill="#1f2937" stroke="#3b82f6" strokeWidth="2"/>
+          <circle cx="24" cy="24" r="20" fill="#1a1a1e" stroke="#f09432" strokeWidth="2"/>
           
           {/* Inner dial */}
-          <circle cx="24" cy="24" r="16" fill="#374151" stroke="#6b7280" strokeWidth="1"/>
+          <circle cx="24" cy="24" r="16" fill="#252529" stroke="#3a3a3e" strokeWidth="1"/>
           
           {/* Dial markers at 12, 3, 6, 9 positions */}
-          <circle cx="24" cy="8" r="1.5" fill="#3b82f6"/>
-          <circle cx="40" cy="24" r="1.5" fill="#3b82f6"/>
-          <circle cx="24" cy="40" r="1.5" fill="#3b82f6"/>
-          <circle cx="8" cy="24" r="1.5" fill="#3b82f6"/>
+          <circle cx="24" cy="8" r="1.5" fill="#f09432"/>
+          <circle cx="40" cy="24" r="1.5" fill="#f09432"/>
+          <circle cx="24" cy="40" r="1.5" fill="#f09432"/>
+          <circle cx="8" cy="24" r="1.5" fill="#f09432"/>
           
           {/* Dial pointer/handle */}
-          <line x1="24" y1="24" x2="24" y2="12" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round"/>
-          <circle cx="24" cy="12" r="2" fill="#9333ea"/>
+          <line x1="24" y1="24" x2="24" y2="12" stroke="#21ada0" strokeWidth="2" strokeLinecap="round"/>
+          <circle cx="24" cy="12" r="2" fill="#21ada0"/>
           
           {/* Center lock */}
-          <circle cx="24" cy="24" r="4" fill="#2563eb"/>
-          <circle cx="24" cy="24" r="2" fill="#1f2937"/>
+          <circle cx="24" cy="24" r="4" fill="#ec7912"/>
+          <circle cx="24" cy="24" r="2" fill="#1a1a1e"/>
           
           {/* Decorative notches around edge */}
-          <path d="M 24 4 L 24 7" stroke="#9ca3af" strokeWidth="1"/>
-          <path d="M 44 24 L 41 24" stroke="#9ca3af" strokeWidth="1"/>
-          <path d="M 24 44 L 24 41" stroke="#9ca3af" strokeWidth="1"/>
-          <path d="M 4 24 L 7 24" stroke="#9ca3af" strokeWidth="1"/>
+          <path d="M 24 4 L 24 7" stroke="#6e6e73" strokeWidth="1"/>
+          <path d="M 44 24 L 41 24" stroke="#6e6e73" strokeWidth="1"/>
+          <path d="M 24 44 L 24 41" stroke="#6e6e73" strokeWidth="1"/>
+          <path d="M 4 24 L 7 24" stroke="#6e6e73" strokeWidth="1"/>
         </svg>
       </div>
     ),
