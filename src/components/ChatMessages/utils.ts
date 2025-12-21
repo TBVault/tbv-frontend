@@ -8,7 +8,13 @@ import type { CitationMetadata } from './types';
 // Helper function to format timestamp
 export function formatTimestamp(timestamp: number): string {
   const date = new Date(timestamp * 1000); // Convert Unix timestamp to milliseconds
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
 }
 
 // Helper to extract citations from a message

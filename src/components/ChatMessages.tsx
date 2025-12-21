@@ -290,7 +290,7 @@ function ChatMessages({
             <div
               className={`${
                 message.role === 'user'
-                  ? 'max-w-[70%] bg-primary-500/20 text-foreground rounded-2xl px-4 py-3'
+                  ? 'max-w-[70%] bg-background-secondary text-foreground rounded-2xl px-4 py-3'
                   : 'w-full text-foreground'
               }`}
             >
