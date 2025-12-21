@@ -218,7 +218,7 @@ export default function NewChatInterface() {
   };
 
   return (
-    <div className="h-screen-mobile flex flex-col">
+    <div className="h-screen-mobile flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 border-b border-border px-4 py-3 lg:px-6 flex items-center gap-3 min-h-[56px]">
         <button

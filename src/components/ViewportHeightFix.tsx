@@ -5,7 +5,15 @@ import { useEffect } from 'react';
 export default function ViewportHeightFix() {
   useEffect(() => {
     function setViewportHeight() {
-      const vh = window.innerHeight * 0.01;
+      // Use visualViewport.height if available (accounts for keyboard)
+      // Otherwise fall back to window.innerHeight
+      let height: number;
+      if (window.visualViewport) {
+        height = window.visualViewport.height;
+      } else {
+        height = window.innerHeight;
+      }
+      const vh = height * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);
     }
 
@@ -25,7 +33,7 @@ export default function ViewportHeightFix() {
     window.addEventListener('resize', handleResize, { passive: true });
     window.addEventListener('orientationchange', handleOrientationChange);
     
-    // Also listen for visual viewport changes (mobile browser UI show/hide)
+    // Listen for visual viewport changes (mobile browser UI show/hide and keyboard)
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', setViewportHeight);
     }

@@ -32,7 +32,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled =
     },
   }));
 
-  // Prevent excessive scrolling on mobile when input is focused
+  // Prevent excessive scrolling and scrollable space below input on mobile when keyboard appears
   useEffect(() => {
     const textarea = textareaRef.current;
     const container = inputContainerRef.current;
@@ -44,11 +44,28 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled =
     let scrollTimeout: NodeJS.Timeout;
     let initialScrollY = 0;
     let isUserScrolling = false;
+    let keyboardVisible = false;
+
+    // Prevent scrolling below the input when keyboard is visible
+    const preventScrollBelow = () => {
+      const viewportHeight = window.visualViewport?.height || window.innerHeight;
+      const maxScroll = document.documentElement.scrollHeight - viewportHeight;
+      const currentScroll = window.scrollY || window.pageYOffset;
+      
+      // If scrolled past the input area, prevent it
+      if (currentScroll > maxScroll) {
+        window.scrollTo({
+          top: maxScroll,
+          behavior: 'auto'
+        });
+      }
+    };
 
     const handleFocus = (e: FocusEvent) => {
       // Store initial scroll position before browser's automatic scroll
       initialScrollY = window.scrollY || window.pageYOffset;
       isUserScrolling = false;
+      keyboardVisible = true;
       
       // Clear any pending scroll adjustments
       clearTimeout(scrollTimeout);
@@ -58,17 +75,20 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled =
         if (isUserScrolling) return; // Don't adjust if user is manually scrolling
         
         const containerRect = container.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
+        const viewportHeight = window.visualViewport?.height || window.innerHeight;
         const inputBottom = containerRect.bottom;
         const currentScrollY = window.scrollY || window.pageYOffset;
         const scrollDelta = Math.abs(currentScrollY - initialScrollY);
+        
+        // Prevent scrolling below the input
+        preventScrollBelow();
         
         // If browser scrolled too much (more than 100px), adjust back
         if (scrollDelta > 100) {
           // Calculate how much we should scroll (keep input visible but not too far)
           const targetScroll = initialScrollY + Math.min(100, scrollDelta * 0.5);
           window.scrollTo({
-            top: targetScroll,
+            top: Math.min(targetScroll, document.documentElement.scrollHeight - viewportHeight),
             behavior: 'smooth'
           });
         } else {
@@ -77,8 +97,9 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled =
           // If input is too high (less than 60px from bottom), adjust slightly
           if (distanceFromBottom < 60 && distanceFromBottom > -20) {
             const adjustment = 60 - distanceFromBottom;
+            const maxScroll = document.documentElement.scrollHeight - viewportHeight;
             window.scrollTo({
-              top: currentScrollY + adjustment,
+              top: Math.min(currentScrollY + adjustment, maxScroll),
               behavior: 'smooth'
             });
           }
@@ -87,6 +108,19 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled =
     };
 
     const handleScroll = () => {
+      if (keyboardVisible) {
+        // Prevent scrolling below input when keyboard is visible
+        const viewportHeight = window.visualViewport?.height || window.innerHeight;
+        const maxScroll = document.documentElement.scrollHeight - viewportHeight;
+        const currentScroll = window.scrollY || window.pageYOffset;
+        
+        if (currentScroll > maxScroll) {
+          window.scrollTo({
+            top: maxScroll,
+            behavior: 'auto'
+          });
+        }
+      }
       isUserScrolling = true;
       clearTimeout(scrollTimeout);
     };
@@ -94,17 +128,32 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled =
     const handleBlur = () => {
       clearTimeout(scrollTimeout);
       isUserScrolling = false;
+      keyboardVisible = false;
+    };
+
+    // Listen for visual viewport changes (keyboard show/hide)
+    const handleVisualViewportResize = () => {
+      if (keyboardVisible) {
+        preventScrollBelow();
+      }
     };
 
     textarea.addEventListener('focus', handleFocus);
     textarea.addEventListener('blur', handleBlur);
     window.addEventListener('scroll', handleScroll, { passive: true });
     
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleVisualViewportResize);
+    }
+    
     return () => {
       clearTimeout(scrollTimeout);
       textarea.removeEventListener('focus', handleFocus);
       textarea.removeEventListener('blur', handleBlur);
       window.removeEventListener('scroll', handleScroll);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleVisualViewportResize);
+      }
     };
   }, []);
 
