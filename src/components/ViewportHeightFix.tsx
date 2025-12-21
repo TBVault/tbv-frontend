@@ -46,7 +46,7 @@ export default function ViewportHeightFix() {
     // Listen for visual viewport changes (mobile browser UI show/hide and keyboard)
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', setViewportHeight);
-      window.visualViewport.addEventListener('scroll', (e) => {
+      window.visualViewport.addEventListener('scroll', () => {
         // Prevent visual viewport scrolling from causing document scroll
         if (window.scrollY !== 0) {
           window.scrollTo(0, 0);

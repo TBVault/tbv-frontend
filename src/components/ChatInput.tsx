@@ -61,7 +61,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled =
       }
     };
 
-    const handleFocus = (e: FocusEvent) => {
+    const handleFocus = () => {
       // Store initial scroll position before browser's automatic scroll
       initialScrollY = window.scrollY || window.pageYOffset;
       isUserScrolling = false;
