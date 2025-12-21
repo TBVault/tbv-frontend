@@ -35,6 +35,9 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
   const progressBarTouchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const playerTouchStartRef = useRef<{ x: number; y: number; time: number; target: EventTarget | null } | null>(null);
 
+  // Store artwork blob URL for reuse
+  const artworkBlobUrlRef = useRef<string | null>(null);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -60,7 +63,44 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
       }
     };
     const handleEnded = () => setIsPlaying(false);
-    const handlePlay = () => setIsPlaying(true);
+    
+    // Update artwork when playback starts (important for iOS)
+    const handlePlay = () => {
+      setIsPlaying(true);
+      // Refresh metadata when playback starts - iOS sometimes needs this
+      if ('mediaSession' in navigator && artworkBlobUrlRef.current) {
+        const blobUrl = artworkBlobUrlRef.current;
+        const artworkUrl = artwork || `${window.location.origin}/apple-icon.png`;
+        try {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: title,
+            artist: artist,
+            artwork: [
+              { src: blobUrl, sizes: '96x96', type: 'image/png' },
+              { src: blobUrl, sizes: '128x128', type: 'image/png' },
+              { src: blobUrl, sizes: '192x192', type: 'image/png' },
+              { src: blobUrl, sizes: '256x256', type: 'image/png' },
+              { src: blobUrl, sizes: '384x384', type: 'image/png' },
+              { src: blobUrl, sizes: '512x512', type: 'image/png' },
+            ],
+          });
+        } catch (error) {
+          // Fallback to URL if blob URL is invalid
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: title,
+            artist: artist,
+            artwork: [
+              { src: artworkUrl, sizes: '96x96', type: 'image/png' },
+              { src: artworkUrl, sizes: '128x128', type: 'image/png' },
+              { src: artworkUrl, sizes: '192x192', type: 'image/png' },
+              { src: artworkUrl, sizes: '256x256', type: 'image/png' },
+              { src: artworkUrl, sizes: '384x384', type: 'image/png' },
+              { src: artworkUrl, sizes: '512x512', type: 'image/png' },
+            ],
+          });
+        }
+      }
+    };
     const handlePause = () => setIsPlaying(false);
     const handleLoadStart = () => setIsLoading(true);
     const handleCanPlay = () => {
@@ -97,7 +137,7 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
     };
-  }, [recordingUrl]);
+  }, [recordingUrl, title, artist, artwork]);
 
   const skipTime = useCallback((seconds: number) => {
     const audio = audioRef.current;
@@ -310,7 +350,7 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
   
   useLayoutEffect(() => {
     // Refs are mutable by design - this is a valid pattern for storing callback functions
-    // eslint-disable-next-line react-hooks/immutability
+     
     handlePlayerTouchMoveRef.current = handlePlayerTouchMove;
   }, [handlePlayerTouchMove]);
 
@@ -386,9 +426,9 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
   useLayoutEffect(() => {
     // Refs are mutable by design - this is a valid pattern for storing callback functions
     handleEndDragRef.current = handleEndDrag;
-    // eslint-disable-next-line react-hooks/immutability
+     
     handlePlayerMouseUpRef.current = handleEndDrag;
-    // eslint-disable-next-line react-hooks/immutability
+     
     handlePlayerTouchEndRef.current = handleEndDrag;
   }, [handleEndDrag]);
 
@@ -528,23 +568,81 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
     };
   }, [isPlaying, isDragging, currentTime]);
 
+  // Load artwork image as blob to avoid CORS issues on iOS
   useEffect(() => {
-    if ('mediaSession' in navigator) {
+    if (!('mediaSession' in navigator)) return;
+
+    let blobUrl: string | null = null;
+    let cancelled = false;
+
+    const loadArtwork = async () => {
+      // Clean up previous blob URL
+      if (artworkBlobUrlRef.current) {
+        URL.revokeObjectURL(artworkBlobUrlRef.current);
+        artworkBlobUrlRef.current = null;
+      }
+
       const artworkUrl = artwork || `${window.location.origin}/apple-icon.png`;
       
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: title,
-        artist: artist,
-        artwork: [
-          { src: artworkUrl, sizes: '96x96', type: 'image/png' },
-          { src: artworkUrl, sizes: '128x128', type: 'image/png' },
-          { src: artworkUrl, sizes: '192x192', type: 'image/png' },
-          { src: artworkUrl, sizes: '256x256', type: 'image/png' },
-          { src: artworkUrl, sizes: '384x384', type: 'image/png' },
-          { src: artworkUrl, sizes: '512x512', type: 'image/png' },
-        ],
-      });
+      try {
+        // For iOS, we need to fetch the image and convert it to a blob URL
+        // This avoids CORS issues and ensures the image is accessible
+        const response = await fetch(artworkUrl);
+        if (!response.ok) throw new Error('Failed to fetch artwork');
+        
+        const blob = await response.blob();
+        if (cancelled) return;
+        
+        blobUrl = URL.createObjectURL(blob);
+        artworkBlobUrlRef.current = blobUrl;
+        
+        // Update metadata with blob URL
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: title,
+          artist: artist,
+          artwork: [
+            { src: blobUrl, sizes: '96x96', type: blob.type || 'image/png' },
+            { src: blobUrl, sizes: '128x128', type: blob.type || 'image/png' },
+            { src: blobUrl, sizes: '192x192', type: blob.type || 'image/png' },
+            { src: blobUrl, sizes: '256x256', type: blob.type || 'image/png' },
+            { src: blobUrl, sizes: '384x384', type: blob.type || 'image/png' },
+            { src: blobUrl, sizes: '512x512', type: blob.type || 'image/png' },
+          ],
+        });
+      } catch (error) {
+        console.warn('Failed to load artwork as blob, falling back to URL:', error);
+        // Fallback to original URL if blob loading fails
+        const fallbackUrl = artwork || `${window.location.origin}/apple-icon.png`;
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: title,
+          artist: artist,
+          artwork: [
+            { src: fallbackUrl, sizes: '96x96', type: 'image/png' },
+            { src: fallbackUrl, sizes: '128x128', type: 'image/png' },
+            { src: fallbackUrl, sizes: '192x192', type: 'image/png' },
+            { src: fallbackUrl, sizes: '256x256', type: 'image/png' },
+            { src: fallbackUrl, sizes: '384x384', type: 'image/png' },
+            { src: fallbackUrl, sizes: '512x512', type: 'image/png' },
+          ],
+        });
+      }
+    };
 
+    loadArtwork();
+
+    return () => {
+      cancelled = true;
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
+      if (artworkBlobUrlRef.current === blobUrl) {
+        artworkBlobUrlRef.current = null;
+      }
+    };
+  }, [title, artist, artwork]);
+
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
       navigator.mediaSession.setActionHandler('play', () => {
         audioRef.current?.play().catch(console.error);
       });
@@ -573,7 +671,7 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
         }
       });
     }
-  }, [title, artist, artwork, audioDuration]);
+  }, [audioDuration]);
 
   useEffect(() => {
     if ('mediaSession' in navigator) {
