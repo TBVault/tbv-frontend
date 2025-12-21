@@ -132,19 +132,37 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
           const chunkElement = chunkRefs.current.get(matchingChunkStart);
           
           if (chunkElement) {
-            const headerHeight = 78;
+            const scrollContainer = document.querySelector('main');
             
-            const chunkHeight = chunkElement.offsetHeight;
-            const viewportHeight = window.innerHeight - headerHeight;
-            
-            const elementTop = chunkElement.getBoundingClientRect().top + window.pageYOffset;
-            const offset = headerHeight + (chunkHeight > viewportHeight ? 0 : (viewportHeight - chunkHeight) / 2);
-            const scrollTo = elementTop - offset;
-            
-            window.scrollTo({
-              top: scrollTo,
-              behavior: 'smooth',
-            });
+            if (scrollContainer) {
+              const headerHeight = 78;
+              const playerHeight = 160; // Approximate height of fixed audio player + buffer
+              
+              const chunkHeight = chunkElement.offsetHeight;
+              const viewportHeight = scrollContainer.clientHeight - headerHeight - playerHeight;
+              
+              const elementRect = chunkElement.getBoundingClientRect();
+              const containerRect = scrollContainer.getBoundingClientRect();
+              const relativeTop = elementRect.top - containerRect.top;
+              
+              const offset = headerHeight + (chunkHeight > viewportHeight ? 0 : (viewportHeight - chunkHeight) / 2);
+              const scrollTo = scrollContainer.scrollTop + relativeTop - offset;
+              
+              scrollContainer.scrollTo({
+                top: scrollTo,
+                behavior: 'smooth',
+              });
+            } else {
+              // Fallback to window scroll if no main container found
+              const headerHeight = 78;
+              const offset = headerHeight;
+              const elementTop = chunkElement.getBoundingClientRect().top + window.pageYOffset;
+              
+              window.scrollTo({
+                top: elementTop - offset,
+                behavior: 'smooth',
+              });
+            }
           }
         }
       } else {
@@ -231,7 +249,9 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
               id={`chunk-${startIndex}`}
               ref={(el) => {
                 if (el) {
-                  chunkRefs.current.set(firstChunk.start, el);
+                  group.forEach(chunk => {
+                    chunkRefs.current.set(chunk.start, el);
+                  });
                 }
               }}
               onDoubleClick={handleSeekToTimestamp}
