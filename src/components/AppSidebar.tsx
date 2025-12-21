@@ -501,7 +501,7 @@ export default function AppSidebar({
                       <p className="text-xs text-foreground-tertiary mt-0.5">{userEmail}</p>
                     )}
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="px-2 py-0.5 text-xs font-medium bg-primary-500/20 text-primary-400 rounded-full capitalize">
+                      <span className="py-0.5 text-xs font-medium text-primary-400">
                         {userRole}
                       </span>
                     </div>
