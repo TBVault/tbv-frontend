@@ -95,13 +95,13 @@ function AuthErrorContent() {
           <div className="flex gap-3">
             <button
               onClick={() => signIn("oidc", { callbackUrl: "/" })}
-              className="flex-1 border border-border bg-background-elevated hover:bg-sidebar-hover text-foreground font-medium py-2.5 px-4 rounded-xl transition-colors"
+              className="flex-1 border border-border bg-background-elevated hover:bg-sidebar-hover text-foreground font-medium py-2.5 px-3 rounded-xl transition-colors"
             >
               Try Different Account
             </button>
             <Link
               href="/"
-              className="flex-1 bg-primary-500 hover:bg-primary-600 text-white font-medium py-2.5 px-4 rounded-xl transition-colors text-center"
+              className="flex-1 bg-primary-500 hover:bg-primary-600 text-white font-medium py-2.5 px-3 rounded-xl transition-colors text-center"
             >
               Return Home
             </Link>
