@@ -20,6 +20,7 @@ export default function NewChatInterface() {
   const [chatTopic, setChatTopic] = useState<string | null>(null);
   const chatSessionIdRef = useRef<string | null>(null);
   const chatInputRef = useRef<ChatInputRef>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Handle chat topic updates - revalidate sidebar when a new topic is received
   const handleChatTopic = useCallback(async (topic: string) => {
@@ -134,6 +135,9 @@ export default function NewChatInterface() {
 
       setMessages((prev) => [...prev, userMessage, assistantMessage]);
 
+      // Create AbortController for this request
+      abortControllerRef.current = new AbortController();
+
       const response = await fetch(`/api/chat/${chatSessionId}/new_message`, {
         method: 'POST',
         headers: {
@@ -141,6 +145,7 @@ export default function NewChatInterface() {
           'Authorization': session.idToken,
         },
         body: JSON.stringify({ user_query: content }),
+        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {
@@ -207,13 +212,61 @@ export default function NewChatInterface() {
         });
       }
     } catch (error: unknown) {
-      console.error('Error sending message:', error);
-      handleAuthError(error as { status?: number; message?: string });
+      // Don't log abort errors as they are intentional
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('Request was aborted by user');
+      } else {
+        console.error('Error sending message:', error);
+        handleAuthError(error as { status?: number; message?: string });
+      }
     } finally {
+      abortControllerRef.current = null;
       setIsLoading(false);
       setTimeout(() => {
         chatInputRef.current?.focus();
       }, 100);
+    }
+  };
+
+  const handleStopStreaming = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      
+      setMessages((prev) => {
+        const updated = [...prev];
+        const lastAssistantIdx = updated.findLastIndex(
+          (msg) => msg.role === 'assistant'
+        );
+        
+        if (lastAssistantIdx !== -1) {
+          const lastMessage = updated[lastAssistantIdx];
+          
+          // Filter out progress messages
+          const cleanedContent = lastMessage.content.filter(
+            (obj) => obj.data.type !== 'chat_progress'
+          );
+          
+          // Ensure there's at least one text delta to stop the "typing" indicator
+          // if there's no other content
+          const hasTextContent = cleanedContent.some(
+            (obj) => obj.data.type === 'text_delta'
+          );
+          
+          if (!hasTextContent) {
+            cleanedContent.push({
+              data: { type: 'text_delta', delta: '' }
+            });
+          }
+          
+          updated[lastAssistantIdx] = {
+            ...lastMessage,
+            content: cleanedContent
+          };
+        }
+        
+        return updated;
+      });
     }
   };
 
@@ -265,7 +318,13 @@ export default function NewChatInterface() {
         {/* Input */}
         <div className="flex-shrink-0 border-t border-border bg-background-secondary p-4">
           <div className="max-w-3xl mx-auto">
-            <ChatInput ref={chatInputRef} onSend={handleSendMessage} disabled={isLoading} />
+            <ChatInput 
+              ref={chatInputRef} 
+              onSend={handleSendMessage} 
+              onStop={handleStopStreaming}
+              disabled={isLoading} 
+              isStreaming={isLoading}
+            />
           </div>
         </div>
       </div>

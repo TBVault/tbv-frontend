@@ -4,14 +4,16 @@ import { useState, useRef, useImperativeHandle, forwardRef, useEffect } from 're
 
 interface ChatInputProps {
   onSend: (message: string) => void;
+  onStop?: () => void;
   disabled?: boolean;
+  isStreaming?: boolean;
 }
 
 export interface ChatInputRef {
   focus: () => void;
 }
 
-const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled = false }, ref) => {
+const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, onStop, disabled = false, isStreaming = false }, ref) => {
   const [message, setMessage] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
@@ -216,25 +218,42 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled =
           />
         </div>
         <div>
-          <button
-            type="submit"
-            disabled={!message.trim() || disabled}
-            className="w-12 h-12 bg-primary-500 text-white rounded-xl hover:bg-primary-600 disabled:bg-foreground-muted disabled:cursor-not-allowed transition-all"
-          >
-            <svg
-              className="w-12 h-12 transform group-hover:scale-110 transition-transform"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          {isStreaming ? (
+            <button
+              type="button"
+              onClick={onStop}
+              className="w-12 h-12 bg-error-500 text-white rounded-xl hover:bg-error-600 transition-all"
+              aria-label="Stop generating"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M12 16V8M8 12l4-4 4 4"
-              />
-            </svg>
-          </button>
+              <svg
+                className="w-12 h-12"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <rect x="8" y="8" width="8" height="8" rx="2" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={!message.trim() || disabled}
+              className="w-12 h-12 bg-primary-500 text-white rounded-xl hover:bg-primary-600 disabled:bg-foreground-muted disabled:cursor-not-allowed transition-all"
+            >
+              <svg
+                className="w-12 h-12 transform group-hover:scale-110 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M12 16V8M8 12l4-4 4 4"
+                />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
       <p className="text-xs text-foreground-tertiary mt-2 text-center">
