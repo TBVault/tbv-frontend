@@ -68,10 +68,30 @@ export default function AppSidebar({
   const { theme, setTheme } = useTheme();
   const [internalIsCollapsed, setInternalIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Detect mobile view (below lg breakpoint, which is 1024px in Tailwind)
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    // Check on mount
+    checkMobile();
+    
+    // Listen for resize events
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Use controlled state if provided, otherwise use internal state
-  const isCollapsed = controlledIsCollapsed !== undefined ? controlledIsCollapsed : internalIsCollapsed;
+  // On mobile, always use false (not collapsed) regardless of state
+  const isCollapsed = isMobile ? false : (controlledIsCollapsed !== undefined ? controlledIsCollapsed : internalIsCollapsed);
   const setIsCollapsed = (collapsed: boolean) => {
+    // Don't allow collapsing on mobile
+    if (isMobile) return;
+    
     if (onCollapsedChange) {
       onCollapsedChange(collapsed);
     } else {
