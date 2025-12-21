@@ -435,7 +435,7 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
   return (
     <>
       <div
-        className="fixed bottom-0 left-0 right-0 bg-background-elevated border-t border-border shadow-lg z-50 hover:bg-background-tertiary transition-colors select-none lg:ml-sidebar"
+        className="fixed bottom-0 left-0 right-0 bg-background-elevated border-t border-border shadow-lg z-30 hover:bg-background-tertiary transition-colors select-none lg:ml-sidebar"
         onMouseDown={handlePlayerMouseDown}
         style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
       >
