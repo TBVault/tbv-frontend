@@ -14,12 +14,99 @@ export interface ChatInputRef {
 const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled = false }, ref) => {
   const [message, setMessage] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
 
   useImperativeHandle(ref, () => ({
     focus: () => {
-      textareaRef.current?.focus();
+      if (textareaRef.current) {
+        // On mobile, use scrollIntoView with better options to prevent excessive scrolling
+        if (window.innerWidth <= 768) {
+          textareaRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'nearest',
+            inline: 'nearest'
+          });
+        }
+        textareaRef.current.focus();
+      }
     },
   }));
+
+  // Prevent excessive scrolling on mobile when input is focused
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    const container = inputContainerRef.current;
+    if (!textarea || !container) return;
+
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile) return;
+
+    let scrollTimeout: NodeJS.Timeout;
+    let initialScrollY = 0;
+    let isUserScrolling = false;
+
+    const handleFocus = (e: FocusEvent) => {
+      // Store initial scroll position before browser's automatic scroll
+      initialScrollY = window.scrollY || window.pageYOffset;
+      isUserScrolling = false;
+      
+      // Clear any pending scroll adjustments
+      clearTimeout(scrollTimeout);
+      
+      // Wait for browser's automatic scroll to complete, then adjust if needed
+      scrollTimeout = setTimeout(() => {
+        if (isUserScrolling) return; // Don't adjust if user is manually scrolling
+        
+        const containerRect = container.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const inputBottom = containerRect.bottom;
+        const currentScrollY = window.scrollY || window.pageYOffset;
+        const scrollDelta = Math.abs(currentScrollY - initialScrollY);
+        
+        // If browser scrolled too much (more than 100px), adjust back
+        if (scrollDelta > 100) {
+          // Calculate how much we should scroll (keep input visible but not too far)
+          const targetScroll = initialScrollY + Math.min(100, scrollDelta * 0.5);
+          window.scrollTo({
+            top: targetScroll,
+            behavior: 'smooth'
+          });
+        } else {
+          // Check if input is properly positioned at bottom
+          const distanceFromBottom = viewportHeight - inputBottom;
+          // If input is too high (less than 60px from bottom), adjust slightly
+          if (distanceFromBottom < 60 && distanceFromBottom > -20) {
+            const adjustment = 60 - distanceFromBottom;
+            window.scrollTo({
+              top: currentScrollY + adjustment,
+              behavior: 'smooth'
+            });
+          }
+        }
+      }, 250);
+    };
+
+    const handleScroll = () => {
+      isUserScrolling = true;
+      clearTimeout(scrollTimeout);
+    };
+
+    const handleBlur = () => {
+      clearTimeout(scrollTimeout);
+      isUserScrolling = false;
+    };
+
+    textarea.addEventListener('focus', handleFocus);
+    textarea.addEventListener('blur', handleBlur);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      clearTimeout(scrollTimeout);
+      textarea.removeEventListener('focus', handleFocus);
+      textarea.removeEventListener('blur', handleBlur);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -49,7 +136,13 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled =
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="flex gap-3 items-end">
+      <div 
+        ref={inputContainerRef} 
+        className="flex gap-3 items-end"
+        style={{
+          scrollMarginBottom: '20px',
+        }}
+      >
         <div className="flex-1 relative">
           <textarea
             ref={textareaRef}
