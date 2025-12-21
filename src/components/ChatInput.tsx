@@ -109,12 +109,13 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(({ onSend, disabled =
 
     const handleScroll = () => {
       if (keyboardVisible) {
-        // Prevent scrolling below input when keyboard is visible
+        // Prevent scrolling when keyboard is visible - lock scroll position
         const viewportHeight = window.visualViewport?.height || window.innerHeight;
-        const maxScroll = document.documentElement.scrollHeight - viewportHeight;
+        const maxScroll = Math.max(0, document.documentElement.scrollHeight - viewportHeight);
         const currentScroll = window.scrollY || window.pageYOffset;
         
-        if (currentScroll > maxScroll) {
+        // If trying to scroll past the max, prevent it
+        if (currentScroll > maxScroll + 10) {
           window.scrollTo({
             top: maxScroll,
             behavior: 'auto'

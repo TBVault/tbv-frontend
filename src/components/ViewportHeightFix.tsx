@@ -15,6 +15,16 @@ export default function ViewportHeightFix() {
       }
       const vh = height * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);
+      
+      // On mobile, also set body and html height directly to prevent scrolling
+      if (window.innerWidth <= 768) {
+        document.body.style.height = `${height}px`;
+        document.body.style.maxHeight = `${height}px`;
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.height = `${height}px`;
+        document.documentElement.style.maxHeight = `${height}px`;
+        document.documentElement.style.overflow = 'hidden';
+      }
     }
 
     // Set initial value immediately
@@ -36,6 +46,12 @@ export default function ViewportHeightFix() {
     // Listen for visual viewport changes (mobile browser UI show/hide and keyboard)
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', setViewportHeight);
+      window.visualViewport.addEventListener('scroll', (e) => {
+        // Prevent visual viewport scrolling from causing document scroll
+        if (window.scrollY !== 0) {
+          window.scrollTo(0, 0);
+        }
+      });
     }
 
     // Cleanup
@@ -44,7 +60,15 @@ export default function ViewportHeightFix() {
       window.removeEventListener('orientationchange', handleOrientationChange);
       if (window.visualViewport) {
         window.visualViewport.removeEventListener('resize', setViewportHeight);
+        window.visualViewport.removeEventListener('scroll', () => {});
       }
+      // Reset styles on cleanup
+      document.body.style.height = '';
+      document.body.style.maxHeight = '';
+      document.body.style.overflow = '';
+      document.documentElement.style.height = '';
+      document.documentElement.style.maxHeight = '';
+      document.documentElement.style.overflow = '';
     };
   }, []);
 
