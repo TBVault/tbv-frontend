@@ -403,10 +403,10 @@ export default function TranscriptsView({ transcripts, searchResults, chunkResul
                 )}
               </div>
               <div className={`${viewMode === 'grid' ? 'mt-4 pt-4 border-t border-border flex items-center gap-2' : 'flex flex-col items-end gap-2 min-w-[120px]'}`}>
-                <span className="px-2 py-1 bg-foreground-muted/20 text-foreground-secondary rounded-md text-xs font-medium">
+                <span className="px-2 py-1 bg-background-elevated border-[1px] border-border text-foreground-secondary rounded-md text-xs font-medium">
                   {formatTime(result.duration)}
                 </span>
-                <span className="px-2 py-1 bg-secondary-500/20 text-secondary-400 rounded-md text-xs font-medium">
+                <span className="px-2 py-1 bg-[#21ada01a] border-[1px] border-[#21ada033] dark:border-[#21ada00d] text-secondary-600 dark:text-secondary-400 rounded-md text-xs font-medium">
                   {formatSource(result.source)}
                 </span>
               </div>
@@ -441,10 +441,10 @@ export default function TranscriptsView({ transcripts, searchResults, chunkResul
                 )}
               </div>
               <div className={`${viewMode === 'grid' ? 'mt-4 pt-4 border-t border-border flex items-center gap-2' : 'flex flex-col items-end gap-2 min-w-[120px]'}`}>
-                <span className="px-2 py-1 bg-foreground-muted/20 text-foreground-secondary rounded-md text-xs font-medium">
+                <span className="px-2 py-1 bg-background-elevated border-[1px] border-border text-foreground-secondary rounded-md text-xs font-medium">
                   {formatTime(result.duration)}
                 </span>
-                <span className="px-2 py-1 bg-secondary-500/20 text-secondary-400 rounded-md text-xs font-medium">
+                <span className="px-2 py-1 bg-[#21ada01a] border-[1px] border-[#21ada033] dark:border-[#21ada00d] text-secondary-600 dark:text-secondary-400 rounded-md text-xs font-medium">
                   {formatSource(result.source)}
                 </span>
               </div>
@@ -476,10 +476,10 @@ export default function TranscriptsView({ transcripts, searchResults, chunkResul
                 )}
               </div>
               <div className={`${viewMode === 'grid' ? 'mt-4 pt-4 border-t border-border flex items-center gap-2' : 'flex flex-col items-end gap-2 min-w-[120px]'}`}>
-                <span className="px-2 py-1 bg-foreground-muted/20 text-foreground-secondary rounded-md text-xs font-medium">
+                <span className="px-2 py-1 bg-background-elevated border-[1px] border-border text-foreground-secondary rounded-md text-xs font-medium">
                   {formatTime(transcript.duration)}
                 </span>
-                <span className="px-2 py-1 bg-secondary-500/20 text-secondary-400 rounded-md text-xs font-medium">
+                <span className="px-2 py-1 bg-[#21ada01a] border-[1px] border-[#21ada033] dark:border-[#21ada00d] text-secondary-600 dark:text-secondary-400 rounded-md text-xs font-medium">
                   {formatSource(transcript.source)}
                 </span>
               </div>

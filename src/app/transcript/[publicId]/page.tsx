@@ -113,12 +113,12 @@ export default async function TranscriptPage({ params }: PageProps) {
               {/* Tags */}
               <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="px-3 py-1 bg-foreground-muted/20 text-foreground-secondary rounded-full text-sm font-medium">
+                  <span className="px-3 py-1 bg-[#ec79121a] border-[1px] border-[#ec791233] dark:border-[#ec79120d] text-primary-700 dark:text-primary-400 rounded-full text-sm font-medium">
                     Spirituality
                   </span>
                 </div>
                 {transcriptData.data.source && (
-                  <span className="px-3 py-1 bg-secondary-500/20 text-secondary-400 rounded-full text-sm font-medium">
+                  <span className="px-3 py-1 bg-[#21ada01a] border-[1px] border-[#21ada033] dark:border-[#21ada00d] text-secondary-600 dark:text-secondary-400 rounded-full text-sm font-medium">
                     {transcriptData.data.source === 'otterai' ? 'OtterAI' : transcriptData.data.source.charAt(0).toUpperCase() + transcriptData.data.source.slice(1)}
                   </span>
                 )}

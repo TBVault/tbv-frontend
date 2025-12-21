@@ -131,16 +131,19 @@ export default async function Home() {
                   {userName[0]?.toUpperCase()}
                 </div>
               )}
-              <div className="absolute -bottom-2 -right-2 px-2.5 py-1 bg-background-elevated border border-border rounded-full">
-                <span className="text-xs font-medium text-primary-400 capitalize">{userRole}</span>
-              </div>
+
             </div>
 
             {/* Info */}
             <div className="flex-1 text-center sm:text-left">
-              <h1 className="text-2xl font-bold text-foreground mb-1">
-                {userName}
-              </h1>
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-1">
+                <h1 className="text-2xl font-bold text-foreground">
+                  {userName}
+                </h1>
+                <div className="px-2.5 py-1 bg-background-elevated border border-border rounded-full">
+                  <span className="text-xs font-medium text-primary-400 capitalize">{userRole}</span>
+                </div>
+              </div>
               {userEmail && (
                 <p className="text-foreground-secondary mb-4">{userEmail}</p>
               )}
