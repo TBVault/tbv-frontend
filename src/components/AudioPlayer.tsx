@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import formatTime from '@/utils/formatTime';
 
 interface AudioPlayerProps {
@@ -32,6 +32,8 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
   const skipIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const rafRef = useRef<number | null>(null);
   const progressBarFillRef = useRef<HTMLDivElement>(null);
+  const progressBarTouchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const playerTouchStartRef = useRef<{ x: number; y: number; time: number; target: EventTarget | null } | null>(null);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -199,10 +201,8 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
     }
   };
 
-  const handlePlayerMouseMove = useCallback((e: MouseEvent) => {
+  const handlePlayerMove = useCallback((clientX: number) => {
     if (!progressBarRef.current || !audioDuration) return;
-    
-    e.preventDefault();
     
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
@@ -215,7 +215,7 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
       if (!progressBarElement) return;
       
       const barRect = progressBarElement.getBoundingClientRect();
-      const x = e.clientX - barRect.left;
+      const x = clientX - barRect.left;
       
       if (x >= 0 && x <= barRect.width) {
         const percentage = x / barRect.width;
@@ -232,57 +232,14 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
     });
   }, [audioDuration]);
 
-  const handlePlayerMouseUpRef = useRef<((e: MouseEvent) => void) | null>(null);
-
-  useEffect(() => {
-    const handleMouseUp = () => {
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-      
-      const audio = audioRef.current;
-      if (!audio) {
-        setIsDragging(false);
-        return;
-      }
-      
-      const hasBeenWithinBounds = hasBeenWithinBoundsRef.current;
-      const lastValidDragTime = lastValidDragTimeRef.current;
-      
-      let finalTime: number;
-      if (hasBeenWithinBounds && lastValidDragTime > 0) {
-        finalTime = lastValidDragTime;
-      } else {
-        finalTime = audio.currentTime;
-      }
-      
-      audio.currentTime = finalTime;
-      setCurrentTime(finalTime);
-      
-      if (progressBarFillRef.current && audioDuration > 0) {
-        const percentage = (finalTime / audioDuration) * 100;
-        progressBarFillRef.current.style.width = `${percentage}%`;
-      }
-      
-      setIsDragging(false);
-      isDraggingRef.current = false;
-      
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-      
-      window.removeEventListener('mousemove', handlePlayerMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-    
-    handlePlayerMouseUpRef.current = handleMouseUp;
-  }, [handlePlayerMouseMove, audioDuration]);
-
-  const handlePlayerMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('button')) return;
-    
+  const handlePlayerMouseMove = useCallback((e: MouseEvent) => {
     e.preventDefault();
-    
+    handlePlayerMove(e.clientX);
+  }, [handlePlayerMove]);
+
+  const handleStartDragRef = useRef<((clientX: number) => void) | undefined>(undefined);
+  
+  const handleStartDrag = useCallback((clientX: number) => {
     if (!audioDuration || !progressBarRef.current) return;
     
     setIsDragging(true);
@@ -291,7 +248,7 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
     if (!progressBarElement) return;
     
     const barRect = progressBarElement.getBoundingClientRect();
-    const x = e.clientX - barRect.left;
+    const x = clientX - barRect.left;
     
     hasBeenWithinBoundsRef.current = false;
     
@@ -309,16 +266,179 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
     
     document.body.style.userSelect = 'none';
     document.body.style.cursor = 'grabbing';
+    document.body.style.touchAction = 'none';
     
     window.addEventListener('mousemove', handlePlayerMouseMove);
+    if (handlePlayerTouchMoveRef.current) {
+      window.addEventListener('touchmove', handlePlayerTouchMoveRef.current, { passive: false });
+    }
     if (handlePlayerMouseUpRef.current) {
       window.addEventListener('mouseup', handlePlayerMouseUpRef.current);
     }
+    if (handlePlayerTouchEndRef.current) {
+      window.addEventListener('touchend', handlePlayerTouchEndRef.current);
+      window.addEventListener('touchcancel', handlePlayerTouchEndRef.current);
+    }
+  }, [audioDuration, currentTime, handlePlayerMouseMove]);
+  
+  useLayoutEffect(() => {
+    handleStartDragRef.current = handleStartDrag;
+  }, [handleStartDrag]);
+  
+  const handlePlayerTouchMoveRef = useRef<((e: TouchEvent) => void) | undefined>(undefined);
+
+  const handlePlayerTouchMove = useCallback((e: TouchEvent) => {
+    e.preventDefault();
+    
+    // If dragging hasn't started yet but we have movement, start dragging
+    if (!isDraggingRef.current && playerTouchStartRef.current && e.touches.length > 0) {
+      const touch = e.touches[0];
+      const start = playerTouchStartRef.current;
+      const deltaX = Math.abs(touch.clientX - start.x);
+      const deltaY = Math.abs(touch.clientY - start.y);
+      
+      // If moved more than 5px, start dragging
+      if ((deltaX > 5 || deltaY > 5) && handleStartDragRef.current) {
+        handleStartDragRef.current(touch.clientX);
+      }
+    }
+    
+    if (e.touches.length > 0 && isDraggingRef.current) {
+      handlePlayerMove(e.touches[0].clientX);
+    }
+  }, [handlePlayerMove]);
+  
+  useLayoutEffect(() => {
+    // Refs are mutable by design - this is a valid pattern for storing callback functions
+    // eslint-disable-next-line react-hooks/immutability
+    handlePlayerTouchMoveRef.current = handlePlayerTouchMove;
+  }, [handlePlayerTouchMove]);
+
+  const handlePlayerMouseUpRef = useRef<(() => void) | null>(null);
+  const handlePlayerTouchEndRef = useRef<((e: TouchEvent) => void) | null>(null);
+  const handleEndDragRef = useRef<(() => void) | null>(null);
+
+  const handleEndDrag = useCallback(() => {
+    const handleEndDragFn = handleEndDragRef.current;
+    if (!handleEndDragFn) return;
+    
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+    document.body.style.touchAction = '';
+    
+    const audio = audioRef.current;
+    const wasDragging = isDraggingRef.current;
+    
+    // If we weren't dragging but had a touch start, it might have been a cancelled tap
+    if (!wasDragging) {
+      playerTouchStartRef.current = null;
+      if (handlePlayerTouchMoveRef.current) {
+        window.removeEventListener('touchmove', handlePlayerTouchMoveRef.current);
+      }
+      window.removeEventListener('touchend', handleEndDragFn);
+      window.removeEventListener('touchcancel', handleEndDragFn);
+      return;
+    }
+    
+    if (!audio) {
+      setIsDragging(false);
+      isDraggingRef.current = false;
+      playerTouchStartRef.current = null;
+      return;
+    }
+    
+    const hasBeenWithinBounds = hasBeenWithinBoundsRef.current;
+    const lastValidDragTime = lastValidDragTimeRef.current;
+    
+    let finalTime: number;
+    if (hasBeenWithinBounds && lastValidDragTime > 0) {
+      finalTime = lastValidDragTime;
+    } else {
+      finalTime = audio.currentTime;
+    }
+    
+    audio.currentTime = finalTime;
+    setCurrentTime(finalTime);
+    
+    if (progressBarFillRef.current && audioDuration > 0) {
+      const percentage = (finalTime / audioDuration) * 100;
+      progressBarFillRef.current.style.width = `${percentage}%`;
+    }
+    
+    setIsDragging(false);
+    isDraggingRef.current = false;
+    playerTouchStartRef.current = null;
+    
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    
+    window.removeEventListener('mousemove', handlePlayerMouseMove);
+    window.removeEventListener('mouseup', handleEndDragFn);
+    if (handlePlayerTouchMoveRef.current) {
+      window.removeEventListener('touchmove', handlePlayerTouchMoveRef.current);
+    }
+    window.removeEventListener('touchend', handleEndDragFn);
+    window.removeEventListener('touchcancel', handleEndDragFn);
+  }, [handlePlayerMouseMove, audioDuration]);
+
+  useLayoutEffect(() => {
+    // Refs are mutable by design - this is a valid pattern for storing callback functions
+    handleEndDragRef.current = handleEndDrag;
+    // eslint-disable-next-line react-hooks/immutability
+    handlePlayerMouseUpRef.current = handleEndDrag;
+    // eslint-disable-next-line react-hooks/immutability
+    handlePlayerTouchEndRef.current = handleEndDrag;
+  }, [handleEndDrag]);
+
+
+  const handlePlayerMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    
+    e.preventDefault();
+    handleStartDrag(e.clientX);
   };
 
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isDragging) return;
+  const handlePlayerTouchStart = (e: React.TouchEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
+    
+    if (e.touches.length > 0) {
+      const touch = e.touches[0];
+      const target = e.target;
+      const isProgressBar = (target as HTMLElement).closest('[class*="progress"]') !== null;
+      
+      // Store touch start info to detect if it's a tap or drag
+      playerTouchStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        time: Date.now(),
+        target: target,
+      };
+      
+      // Always prevent default to avoid scrolling, and attach touch move handler
+      e.preventDefault();
+      document.body.style.touchAction = 'none';
+      
+      // If it's not on the progress bar, start dragging immediately
+      // Otherwise, wait for movement in touchmove handler
+      if (!isProgressBar) {
+        handleStartDrag(touch.clientX);
+      } else {
+        // Attach touch move handler to detect drag vs tap
+        if (handlePlayerTouchMoveRef.current) {
+          window.addEventListener('touchmove', handlePlayerTouchMoveRef.current, { passive: false });
+        }
+        if (handlePlayerTouchEndRef.current) {
+          window.addEventListener('touchend', handlePlayerTouchEndRef.current);
+          window.addEventListener('touchcancel', handlePlayerTouchEndRef.current);
+        }
+      }
+    }
+  };
+
+  const handleProgressClick = (clientX: number) => {
+    if (isDragging) return;
     
     const audio = audioRef.current;
     if (!audio || !audioDuration || !progressBarRef.current) return;
@@ -327,12 +447,51 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
     if (!progressBarElement) return;
     
     const barRect = progressBarElement.getBoundingClientRect();
-    const x = e.clientX - barRect.left;
+    const x = clientX - barRect.left;
     const percentage = Math.max(0, Math.min(1, x / barRect.width));
     const newTime = percentage * audioDuration;
     
     audio.currentTime = newTime;
     setCurrentTime(newTime);
+  };
+
+  const handleProgressClickMouse = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    handleProgressClick(e.clientX);
+  };
+
+  const handleProgressTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    if (e.touches.length > 0) {
+      progressBarTouchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        time: Date.now(),
+      };
+    }
+  };
+
+  const handleProgressTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    
+    const touchStart = progressBarTouchStartRef.current;
+    if (!touchStart || e.changedTouches.length === 0) {
+      progressBarTouchStartRef.current = null;
+      return;
+    }
+
+    const touch = e.changedTouches[0];
+    const deltaX = Math.abs(touch.clientX - touchStart.x);
+    const deltaY = Math.abs(touch.clientY - touchStart.y);
+    const deltaTime = Date.now() - touchStart.time;
+
+    // If it was a quick tap (within 300ms and less than 10px movement), treat as click
+    if (deltaTime < 300 && deltaX < 10 && deltaY < 10 && !isDragging) {
+      e.stopPropagation();
+      handleProgressClick(touch.clientX);
+    }
+    
+    progressBarTouchStartRef.current = null;
   };
 
   const progressPercentage = audioDuration > 0 
@@ -437,7 +596,8 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
       <div
         className="fixed bottom-0 left-0 right-0 bg-background-elevated border-t border-border shadow-lg z-30 hover:bg-background-tertiary transition-colors select-none lg:ml-sidebar"
         onMouseDown={handlePlayerMouseDown}
-        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        onTouchStart={handlePlayerTouchStart}
+        style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
       >
         <div className="max-w-4xl mx-auto px-6 py-3">
           <div className="flex items-center gap-3">
@@ -448,6 +608,7 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
               className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-500 hover:bg-primary-600 text-white flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed z-10"
               aria-label={isPlaying ? 'Pause' : 'Play'}
               onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
             >
               {isLoading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -465,7 +626,9 @@ export default function AudioPlayer({ recordingUrl, title = 'The Bhakti Vault', 
             {/* Progress Bar */}
             <div className="flex-1 relative" ref={progressBarRef}>
               <div
-                onClick={handleProgressClick}
+                onClick={handleProgressClickMouse}
+                onTouchStart={handleProgressTouchStart}
+                onTouchEnd={handleProgressTouchEnd}
                 className="h-2 bg-foreground-muted/30 rounded-full cursor-pointer hover:h-3 transition-all relative group"
               >
                 <div

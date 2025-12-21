@@ -31,6 +31,7 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
   const [activeChunkStart, setActiveChunkStart] = useState<number | null>(null);
   const chunkRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const lastScrolledTimeRef = useRef<number | null>(null);
+  const lastTapRef = useRef<{ time: number; x: number; y: number } | null>(null);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -192,6 +193,38 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
           
           const isActive = group.some(chunk => chunk.start === activeChunkStart);
           
+          const handleSeekToTimestamp = () => {
+            const win = window as unknown as WindowWithAudio;
+            if (win.__audioSeekTo) {
+              win.__audioSeekTo(firstChunk.start);
+            }
+          };
+
+          const handleTouchStart = (e: React.TouchEvent) => {
+            const touch = e.touches[0];
+            const now = Date.now();
+            const lastTap = lastTapRef.current;
+
+            if (lastTap && now - lastTap.time < 300) {
+              // Check if taps are close enough (within 50px)
+              const deltaX = Math.abs(touch.clientX - lastTap.x);
+              const deltaY = Math.abs(touch.clientY - lastTap.y);
+              
+              if (deltaX < 50 && deltaY < 50) {
+                e.preventDefault();
+                handleSeekToTimestamp();
+                lastTapRef.current = null;
+                return;
+              }
+            }
+
+            lastTapRef.current = {
+              time: now,
+              x: touch.clientX,
+              y: touch.clientY,
+            };
+          };
+
           return (
             <div 
               key={groupIndex}
@@ -201,13 +234,9 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
                   chunkRefs.current.set(firstChunk.start, el);
                 }
               }}
-              onDoubleClick={() => {
-                const win = window as unknown as WindowWithAudio;
-                if (win.__audioSeekTo) {
-                  win.__audioSeekTo(firstChunk.start);
-                }
-              }}
-className={`group px-6 py-4 transition-all duration-200 cursor-pointer border-l-4 ${
+              onDoubleClick={handleSeekToTimestamp}
+              onTouchStart={handleTouchStart}
+              className={`group px-6 py-4 transition-all duration-200 cursor-pointer border-l-4 ${
                 isActive 
                   ? '' 
                   : 'border-transparent hover:bg-background-tertiary'
