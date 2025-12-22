@@ -1,6 +1,5 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
 import AppSidebar from '@/components/AppSidebar';
 import { MobileSidebarProvider } from '@/contexts/MobileSidebarContext';
 import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext';
