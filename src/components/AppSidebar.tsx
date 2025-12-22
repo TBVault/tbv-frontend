@@ -291,13 +291,7 @@ export default function AppSidebar({
               </button>
               {!isRecentChatsCollapsed && (
                 <div className="overflow-y-auto hide-scrollbar flex-1 min-h-0 mt-1">
-                  {status === 'loading' ? (
-                    /* Loading skeleton for chat history */
-                    <div className="space-y-3">
-                      <SkeletonChatHistoryGroup count={2} />
-                      <SkeletonChatHistoryGroup count={3} />
-                    </div>
-                  ) : chatSessions.length === 0 ? (
+                  {chatSessions.length === 0 ? (
                     <div className="px-3 py-4 text-center">
                       <p className="text-xs text-foreground-muted">No conversations yet</p>
                     </div>
