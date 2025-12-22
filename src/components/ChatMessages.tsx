@@ -312,10 +312,25 @@ function ChatMessages({
                       
                       if (message.role === 'assistant' && !hasActualContent) {
                         if (chatProgressMessages.length > 0) {
-                          const latestProgress = chatProgressMessages[chatProgressMessages.length - 1];
+                          const uniqueProgressMessages = chatProgressMessages.reduce((acc, curr) => {
+                            if (acc.length === 0 || acc[acc.length - 1].progress !== curr.progress) {
+                              acc.push(curr);
+                            }
+                            return acc;
+                          }, [] as ChatProgress[]);
+
                           return (
-                            <div className="text-foreground-secondary animate-pulse">
-                              {latestProgress.progress}
+                            <div className="flex flex-col gap-1">
+                              {uniqueProgressMessages.map((msg, idx) => (
+                                <div 
+                                  key={idx} 
+                                  className={`text-foreground-secondary ${
+                                    idx === uniqueProgressMessages.length - 1 ? 'animate-pulse' : 'opacity-70'
+                                  }`}
+                                >
+                                  {msg.progress}
+                                </div>
+                              ))}
                             </div>
                           );
                         }
