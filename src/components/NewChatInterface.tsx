@@ -26,13 +26,11 @@ export default function NewChatInterface() {
   const handleChatTopic = useCallback(async (topic: string) => {
     setChatTopic(topic);
     
-    // Revalidate chat sessions cache and refresh the page to update sidebar
+    // Refresh the page to update sidebar to show new chat topic
     try {
-      await fetch('/api/revalidate/chat-sessions', { method: 'POST' });
       router.refresh();
     } catch (error) {
-      console.error('Error revalidating chat sessions:', error);
-      router.refresh();
+      console.error('Error refreshing router:', error);
     }
   }, [router]);
 

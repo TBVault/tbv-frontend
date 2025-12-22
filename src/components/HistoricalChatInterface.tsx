@@ -43,11 +43,9 @@ export default function HistoricalChatInterface({
     setChatTopic(topic);
     
     try {
-      await fetch('/api/revalidate/chat-sessions', { method: 'POST' });
       router.refresh();
     } catch (error) {
-      console.error('Error revalidating chat sessions:', error);
-      router.refresh();
+      console.error('Error refreshing router:', error);
     }
   }, [router]);
 

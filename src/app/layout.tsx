@@ -39,10 +39,7 @@ async function getLayoutData() {
         headers: {
           Authorization: session.idToken.trim(),
         },
-        next: {
-          revalidate: 10,
-          tags: ['chat-sessions'],
-        },
+        cache: 'no-store',
       }),
       transcriptsProtectedTranscriptsGet(
         { page_number: 1 },

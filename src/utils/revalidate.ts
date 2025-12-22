@@ -39,18 +39,3 @@ export async function revalidateTranscriptsList() {
   revalidatePath('/transcripts', 'page');
   revalidateTag('transcripts', 'max');
 }
-
-/**
- * Revalidate chat sessions cache
- */
-export async function revalidateChatSessions() {
-  revalidateTag('chat-sessions', 'max');
-  revalidatePath('/chat', 'page');
-}
-
-/**
- * Revalidate browsing history cache (for sidebar "Recently Viewed" section)
- */
-export async function revalidateBrowsingHistory() {
-  revalidateTag('browsing-history', 'max');
-}

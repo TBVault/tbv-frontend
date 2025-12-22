@@ -28,10 +28,7 @@ const getChatSessionData = cache(async (chatSessionId: string) => {
         headers: {
           Authorization: session.idToken.trim(),
         },
-        next: {
-          revalidate: 0,
-          tags: ['chat-session', `chat-session-${chatSessionId}`],
-        },
+        cache: 'no-store',
       }
     );
 
