@@ -39,7 +39,7 @@ function groupChatsByDate(chatSessions: ChatSession[]): { label: string; chats: 
   ];
 
   chatSessions.forEach(chat => {
-    const chatDate = new Date(chat.created_on * 1000);
+    const chatDate = new Date(chat.updated_on * 1000);
     if (chatDate >= today) {
       groups[0].chats.push(chat);
     } else if (chatDate >= yesterday) {
