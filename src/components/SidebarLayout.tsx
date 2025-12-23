@@ -18,9 +18,8 @@ function SidebarLayoutContent({
   chatSessions = [],
   transcriptCount = 0,
   chatCount = 0,
-  browsingHistory = [],
 }: SidebarLayoutProps) {
-  const { isCollapsed, setIsCollapsed } = useSidebar();
+  const { isCollapsed, setIsCollapsed, browsingHistory } = useSidebar();
   
   return (
     <div className="flex min-h-screen-mobile h-screen-mobile">
@@ -42,7 +41,7 @@ function SidebarLayoutContent({
 
 export default function SidebarLayout(props: SidebarLayoutProps) {
   return (
-    <SidebarProvider>
+    <SidebarProvider initialBrowsingHistory={props.browsingHistory}>
       <MobileSidebarProvider>
         <SidebarLayoutContent {...props} />
       </MobileSidebarProvider>

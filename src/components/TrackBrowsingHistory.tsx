@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRef, useEffect } from 'react';
 import { trackTranscriptView } from '@/app/actions';
+import { useSidebar } from '@/contexts/SidebarContext';
 
 interface TrackBrowsingHistoryProps {
   transcriptId: string;
@@ -13,7 +13,7 @@ interface TrackBrowsingHistoryProps {
  * Uses a server action to properly handle revalidation.
  */
 export default function TrackBrowsingHistory({ transcriptId }: TrackBrowsingHistoryProps) {
-  const router = useRouter();
+  const { refreshBrowsingHistory } = useSidebar();
   const hasTracked = useRef(false);
 
   useEffect(() => {
@@ -23,13 +23,13 @@ export default function TrackBrowsingHistory({ transcriptId }: TrackBrowsingHist
     trackTranscriptView(transcriptId)
       .then((result) => {
         if (result.success) {
-          router.refresh();
+          refreshBrowsingHistory();
         }
       })
       .catch(() => {
         // Silently ignore errors - browsing history is non-critical
       });
-  }, [transcriptId, router]);
+  }, [transcriptId, refreshBrowsingHistory]);
 
   return null;
 }
