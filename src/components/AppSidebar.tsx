@@ -153,7 +153,9 @@ export default function AppSidebar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
-  const groupedChats = groupChatsByDate(chatSessions);
+  const sortedChatSessions = [...chatSessions].sort((a, b) => b.updated_on - a.updated_on);
+
+  const groupedChats = groupChatsByDate(sortedChatSessions);
 
   // Handle clicking "New Chat" button
   const handleNewChat = (e: React.MouseEvent<HTMLAnchorElement>) => {

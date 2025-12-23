@@ -9,12 +9,14 @@ import type { ChatSessionMessage } from '@/api/generated/schemas';
 import { chatSessionProtectedCreateChatSessionPost } from '@/api/generated/endpoints/default/default';
 import { processStreamBuffer } from '@/utils/streamingHelpers';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
+import { useSidebar } from '@/contexts/SidebarContext';
 
 export default function NewChatInterface() {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toggleMobileSidebar } = useMobileSidebar();
+  const { chatSessions, updateChatSessions } = useSidebar();
   const [messages, setMessages] = useState<ChatSessionMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [chatTopic, setChatTopic] = useState<string | null>(null);
@@ -154,6 +156,33 @@ export default function NewChatInterface() {
         }
         throw new Error(`Failed to send message: ${response.statusText}`);
       }
+      
+      // Optimistically update sidebar
+      // We do this after successful response start to avoid jumping if it fails immediately
+      const now = Math.floor(Date.now() / 1000);
+      const updatedSessions = [...chatSessions];
+      const existingSessionIndex = updatedSessions.findIndex(s => s.public_id === chatSessionId);
+      
+      const sessionToUpdate = existingSessionIndex !== -1 
+        ? updatedSessions[existingSessionIndex] 
+        : {
+            public_id: chatSessionId,
+            chat_topic: chatTopic || 'New Chat',
+            created_on: now,
+            updated_on: now,
+            user_id: 0, // Placeholder
+            messages: []
+          };
+
+      if (existingSessionIndex !== -1) {
+        updatedSessions.splice(existingSessionIndex, 1);
+      }
+      
+      const newestTime = updatedSessions.reduce((max, s) => Math.max(max, s.updated_on), 0);
+      sessionToUpdate.updated_on = Math.max(now, newestTime + 1);
+      
+      updatedSessions.unshift(sessionToUpdate);
+      updateChatSessions(updatedSessions);
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();

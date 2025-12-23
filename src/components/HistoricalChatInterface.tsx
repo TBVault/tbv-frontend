@@ -10,6 +10,7 @@ import { chatSessionHistoryProtectedChatSessionChatSessionIdGet } from '@/api/ge
 import { processStreamBuffer } from '@/utils/streamingHelpers';
 import { Skeleton, SkeletonChatMessage, SkeletonText } from '@/components/Skeleton';
 import { useMobileSidebar } from '@/contexts/MobileSidebarContext';
+import { useSidebar } from '@/contexts/SidebarContext';
 
 interface HistoricalChatInterfaceProps {
   chatSessionId: string;
@@ -29,6 +30,7 @@ export default function HistoricalChatInterface({
   const { data: session } = useSession();
   const router = useRouter();
   const { toggleMobileSidebar } = useMobileSidebar();
+  const { chatSessions, updateChatSessions } = useSidebar();
   const [chatSession, setChatSession] = useState<ChatSession | null>(initialChatSession);
   const [messages, setMessages] = useState<ChatSessionMessage[]>(initialMessages);
   const [loading, setLoading] = useState(initialLoading);
@@ -144,6 +146,33 @@ export default function HistoricalChatInterface({
       if (!response.ok) {
         throw new Error(`Failed to send message: ${response.statusText}`);
       }
+
+      // Optimistically update sidebar
+      // We do this after successful response start to avoid jumping if it fails immediately
+      const now = Math.floor(Date.now() / 1000);
+      const updatedSessions = [...chatSessions];
+      const existingSessionIndex = updatedSessions.findIndex(s => s.public_id === chatSessionId);
+      
+      const sessionToUpdate = existingSessionIndex !== -1 
+        ? updatedSessions[existingSessionIndex] 
+        : {
+            public_id: chatSessionId,
+            chat_topic: chatTopic || chatSession?.chat_topic || 'Conversation',
+            created_on: now,
+            updated_on: now,
+            user_id: 0, // Placeholder
+            messages: []
+          };
+
+      if (existingSessionIndex !== -1) {
+        updatedSessions.splice(existingSessionIndex, 1);
+      }
+      
+      const newestTime = updatedSessions.reduce((max, s) => Math.max(max, s.updated_on), 0);
+      sessionToUpdate.updated_on = Math.max(now, newestTime + 1);
+      
+      updatedSessions.unshift(sessionToUpdate);
+      updateChatSessions(updatedSessions);
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
