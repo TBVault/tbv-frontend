@@ -301,7 +301,7 @@ export default function HistoricalChatInterface({
 
           {/* Input area skeleton */}
           <div className="flex-shrink-0 border-t border-border bg-background-secondary p-4">
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-5xl mx-auto">
               <div className="flex items-end gap-3">
                 <Skeleton className="flex-1 h-12 rounded-xl" />
                 <Skeleton className="h-10 w-10 rounded-lg" />
@@ -369,7 +369,7 @@ export default function HistoricalChatInterface({
 
         {/* Input */}
         <div className="flex-shrink-0 border-t border-border bg-background-secondary p-4">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <ChatInput 
               ref={chatInputRef} 
               onSend={handleSendMessage} 
