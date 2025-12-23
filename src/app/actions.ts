@@ -1,7 +1,6 @@
 'use server';
 
 import { auth } from '@/auth';
-import { revalidatePath } from 'next/cache';
 import { addBrowsingHistoryProtectedBrowsingHistoryTranscriptIdPost } from '@/api/generated/endpoints/default/default';
 
 /**
@@ -21,7 +20,23 @@ export async function trackTranscriptView(transcriptId: string) {
       },
     });
 
-    return { success: true };
+    // Small delay to ensure DB propagation
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Fetch updated browsing history immediately to return to client
+    const { browsingHistoryProtectedBrowsingHistoryGet } = await import('@/api/generated/endpoints/default/default');
+    const response = await browsingHistoryProtectedBrowsingHistoryGet({
+      headers: {
+        Authorization: session.idToken.trim(),
+      },
+      cache: 'no-store',
+    });
+
+    if (response.status === 200) {
+      return { success: true, data: response.data };
+    }
+
+    return { success: true, data: [] }; // Fallback if fetch fails but track succeeded
   } catch (error) {
     console.error('Failed to track browsing history:', error);
     return { success: false, error: 'Failed to track view' };

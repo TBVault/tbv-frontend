@@ -10,6 +10,7 @@ interface SidebarContextType {
   toggleSidebar: () => void;
   browsingHistory: BrowsingHistory[];
   refreshBrowsingHistory: () => Promise<void>;
+  updateBrowsingHistory: (history: BrowsingHistory[]) => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
@@ -31,9 +32,13 @@ export function SidebarProvider({ children, initialBrowsingHistory = [] }: Sideb
       if (result.success && result.data) {
         setBrowsingHistory(result.data);
       }
-    } catch (err) {
-      console.error('Failed to refresh browsing history:', err);
+    } catch {
+      // Silently ignore errors
     }
+  }, []);
+
+  const updateBrowsingHistory = useCallback((history: BrowsingHistory[]) => {
+    setBrowsingHistory(history);
   }, []);
 
   return (
@@ -42,7 +47,8 @@ export function SidebarProvider({ children, initialBrowsingHistory = [] }: Sideb
       setIsCollapsed, 
       toggleSidebar,
       browsingHistory,
-      refreshBrowsingHistory 
+      refreshBrowsingHistory,
+      updateBrowsingHistory
     }}>
       {children}
     </SidebarContext.Provider>
