@@ -4,7 +4,9 @@
 
 // Get backend URL from environment variable
 // This will be replaced at build time by Next.js
-export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+export const BACKEND_URL = typeof window !== 'undefined'
+  ? '/api/proxy'
+  : (process.env.NEXT_PUBLIC_BACKEND_URL || '');
 
 /**
  * Constructs a full URL from a relative API path

@@ -3,7 +3,9 @@
  * Handles base URL configuration and can be extended for auth headers.
  */
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+const BACKEND_URL = typeof window !== 'undefined' 
+  ? '/api/proxy' 
+  : (process.env.NEXT_PUBLIC_BACKEND_URL ?? "");
 
 /**
  * Custom fetch function that Orval uses for all API calls.
