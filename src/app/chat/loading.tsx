@@ -30,7 +30,7 @@ export default function ChatLoading() {
 
         {/* Input */}
         <div className="flex-shrink-0 border-t border-border bg-background-secondary p-4">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <Skeleton className="w-full h-14 rounded-xl" />
           </div>
         </div>

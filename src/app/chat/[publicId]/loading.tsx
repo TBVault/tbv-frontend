@@ -47,7 +47,7 @@ export default function HistoricalChatLoading() {
 
         {/* Input area */}
         <div className="flex-shrink-0 border-t border-border bg-background-secondary p-4">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <div className="flex items-end gap-3">
               <Skeleton className="flex-1 h-12 rounded-xl" />
               <Skeleton className="h-10 w-10 rounded-lg" />

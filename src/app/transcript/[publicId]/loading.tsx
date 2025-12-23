@@ -6,9 +6,6 @@ export default function TranscriptLoading() {
       <div className="max-w-4xl mx-auto">
         {/* Hero Section */}
         <div className="mb-10">
-          {/* Badge */}
-          <Skeleton className="h-6 w-24 rounded-full mb-4" />
-          
           {/* Title */}
           <Skeleton className="h-10 w-3/4 mb-6" />
           
