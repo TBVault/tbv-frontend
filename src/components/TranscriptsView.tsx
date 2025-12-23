@@ -319,7 +319,7 @@ export default function TranscriptsView({ transcripts, searchResults, chunkResul
               <button
                 type="button"
                 onClick={() => handleSearchModeChange('metadata')}
-                className={`flex-1 px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`flex-2 px-3 py-1.5 text-sm font-medium transition-colors ${
                   searchMode === 'metadata'
                     ? 'bg-primary-500 text-white'
                     : 'text-foreground-secondary hover:bg-sidebar-hover hover:text-foreground'
