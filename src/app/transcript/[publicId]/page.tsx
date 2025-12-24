@@ -126,7 +126,7 @@ export default async function TranscriptPage({ params }: PageProps) {
 
               {/* Summary */}
               {transcriptData.data.summary && (
-                <div className="bg-gradient-to-br from-primary-500/10 to-secondary-500/10 border-0 lg:border lg:border-primary-500/20 rounded-none lg:rounded-xl p-0 lg:p-5">
+                <div className="bg-gradient-to-br from-primary-500/10 to-secondary-500/10 border-0 lg:border lg:border-primary-500/20 dark:lg:border-primary-500/10 rounded-none lg:rounded-xl p-0 lg:p-5">
                   <div className="text-sm font-semibold text-foreground-tertiary mb-2 px-0 lg:px-4 pt-4 lg:pt-0">AI-generated Summary:</div>
                   <p className="text-foreground-secondary leading-relaxed px-0 lg:px-4 pb-4 lg:pb-0">{transcriptData.data.summary}</p>
                 </div>
