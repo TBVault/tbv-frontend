@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 /**
  * Scrolls to top when the component mounts, but only if there's no hash anchor.
@@ -11,19 +12,26 @@ import { useEffect } from 'react';
  * to be hydrated and then scroll to it.
  */
 export default function ScrollToTop() {
+  const pathname = usePathname();
+
   useEffect(() => {
     const hash = window.location.hash;
+    const main = document.querySelector('main');
+    const scrollTarget = main || window;
     
     // By default, scroll to top immediately if there's no anchor
     if (!hash) {
-      window.scrollTo(0, 0);
+      scrollTarget.scrollTo(0, 0);
       
       // Also check and scroll after a brief moment to catch any
       // scroll restoration that happens asynchronously
       const timeoutId = setTimeout(() => {
         // Double-check that hash wasn't added in the meantime
-        if (!window.location.hash && window.scrollY > 0) {
-          window.scrollTo(0, 0);
+        if (!window.location.hash) {
+          const currentScroll = main ? main.scrollTop : window.scrollY;
+          if (currentScroll > 0) {
+            scrollTarget.scrollTo(0, 0);
+          }
         }
       }, 0);
       
@@ -35,18 +43,28 @@ export default function ScrollToTop() {
     
     // Prevent browser's default scroll-to-anchor behavior initially
     // by scrolling to top first, then we'll scroll to the anchor once hydrated
-    window.scrollTo(0, 0);
+    scrollTarget.scrollTo(0, 0);
     
     const scrollToAnchor = () => {
       const element = document.getElementById(targetId);
       if (element) {
         // Element is hydrated, scroll to it
         const headerHeight = 78; // Match the header height used elsewhere
-        const elementTop = element.getBoundingClientRect().top + window.pageYOffset;
-        const offset = headerHeight;
-        const scrollTo = elementTop - offset;
         
-        window.scrollTo({
+        // Calculate offset based on container
+        let scrollTo = 0;
+        
+        if (main) {
+           const elementTop = element.getBoundingClientRect().top;
+           const containerTop = main.getBoundingClientRect().top;
+           // Relative position inside the container + current scroll
+           scrollTo = main.scrollTop + (elementTop - containerTop) - headerHeight;
+        } else {
+           const elementTop = element.getBoundingClientRect().top + window.pageYOffset;
+           scrollTo = elementTop - headerHeight;
+        }
+        
+        scrollTarget.scrollTo({
           top: scrollTo,
           behavior: 'smooth',
         });
@@ -71,7 +89,7 @@ export default function ScrollToTop() {
     }, 100);
     
     return () => clearInterval(pollInterval);
-  }, []);
+  }, [pathname]);
 
   return null;
 }
