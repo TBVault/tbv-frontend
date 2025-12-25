@@ -216,7 +216,7 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
 
   return (
     <div className="bg-background-elevated rounded-none lg:rounded-2xl border border-border overflow-hidden">
-      <div className="bg-background-tertiary px-0 lg:px-6 py-4 border-b border-border flex justify-between items-center">
+      <div className="bg-background-tertiary px-0 lg:px-6 py-4 flex justify-between items-center">
         {duration && (
           <div className="flex items-center gap-2 pl-4 lg:pl-0">
             <div className="text-sm font-medium text-foreground-tertiary uppercase tracking-wide">Duration</div>
@@ -242,7 +242,7 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
         </div>
       </div>
       
-      <div className="divide-y divide-border">
+      <div>
         {groupedChunks.map(({ group, startIndex }, groupIndex) => {
           const firstChunk = group[0];
           const hasSpeaker = firstChunk.speaker?.trim();
@@ -295,10 +295,10 @@ export default function TranscriptContent({ content, duration }: TranscriptConte
               }}
               onDoubleClick={handleSeekToTimestamp}
               onTouchStart={handleTouchStart}
-              className={`group px-0 lg:px-6 py-4 transition-all duration-200 cursor-pointer border-l-4 ${
+              className={`group px-0 lg:px-6 py-4 transition-all duration-200 cursor-pointer border-l-4 border-t border-border ${
                 isActive 
                   ? '' 
-                  : 'border-transparent hover:bg-background-tertiary'
+                  : 'border-l-transparent hover:bg-background-tertiary'
               }`}
               style={isActive ? { borderLeftColor: '#f97316' } : undefined}
             >

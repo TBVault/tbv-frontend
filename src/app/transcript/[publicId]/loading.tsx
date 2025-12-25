@@ -32,7 +32,7 @@ export default function TranscriptLoading() {
         {/* Transcript Content */}
         <div className="bg-background-elevated rounded-none lg:rounded-2xl border border-border overflow-hidden">
           {/* Header */}
-          <div className="bg-background-tertiary px-0 lg:px-6 py-4 border-b border-border flex justify-between items-center">
+          <div className="bg-background-tertiary px-0 lg:px-6 py-4 flex justify-between items-center">
             <div className="flex items-center gap-2 pl-4 lg:pl-0">
               <Skeleton className="h-4 w-16" />
               <Skeleton className="h-4 w-20" />
@@ -44,9 +44,9 @@ export default function TranscriptLoading() {
           </div>
           
           {/* Transcript chunks */}
-          <div className="divide-y divide-border">
+          <div>
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="px-0 lg:px-6 py-4 border-l-4 border-transparent">
+              <div key={i} className="px-0 lg:px-6 py-4 border-l-4 border-t border-border border-l-transparent">
                 <div className="mb-3 flex items-center justify-between gap-3 px-4 lg:px-0">
                   <Skeleton className="h-5 w-32" />
                   <Skeleton className="h-7 w-20 rounded-lg" />
