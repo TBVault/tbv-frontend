@@ -28,13 +28,27 @@ export default function NewChatInterface() {
   const handleChatTopic = useCallback(async (topic: string) => {
     setChatTopic(topic);
     
+    // Optimistically update sidebar topic
+    if (chatSessionIdRef.current) {
+      const updatedSessions = [...chatSessions];
+      const sessionIndex = updatedSessions.findIndex(s => s.public_id === chatSessionIdRef.current);
+      
+      if (sessionIndex !== -1) {
+        updatedSessions[sessionIndex] = {
+          ...updatedSessions[sessionIndex],
+          chat_topic: topic
+        };
+        updateChatSessions(updatedSessions);
+      }
+    }
+    
     // Refresh the page to update sidebar to show new chat topic
     try {
       router.refresh();
     } catch (error) {
       console.error('Error refreshing router:', error);
     }
-  }, [router]);
+  }, [router, chatSessions, updateChatSessions]);
 
   // Handle page reload: redirect to chat history if there's an active session
   useEffect(() => {

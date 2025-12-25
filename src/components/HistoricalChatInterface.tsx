@@ -44,12 +44,24 @@ export default function HistoricalChatInterface({
   const handleChatTopic = useCallback(async (topic: string) => {
     setChatTopic(topic);
     
+    // Optimistically update sidebar topic
+    const updatedSessions = [...chatSessions];
+    const sessionIndex = updatedSessions.findIndex(s => s.public_id === chatSessionId);
+    
+    if (sessionIndex !== -1) {
+      updatedSessions[sessionIndex] = {
+        ...updatedSessions[sessionIndex],
+        chat_topic: topic
+      };
+      updateChatSessions(updatedSessions);
+    }
+    
     try {
       router.refresh();
     } catch (error) {
       console.error('Error refreshing router:', error);
     }
-  }, [router]);
+  }, [router, chatSessions, updateChatSessions, chatSessionId]);
 
   const handleError = useCallback((error: { status?: number; message?: string }) => {
     const status = error?.status;
