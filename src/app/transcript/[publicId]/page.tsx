@@ -106,7 +106,7 @@ export default async function TranscriptPage({ params }: PageProps) {
 
               {transcriptData.data.semantic_title && transcriptData.data.semantic_title !== transcriptData.data.title && (
                 <div className="mb-4">
-                  <p className="text-foreground-secondary italic">{transcriptData.data.title}</p>
+                  <p className="text-foreground-secondary italic break-words">{transcriptData.data.title}</p>
                 </div>
               )}
 
