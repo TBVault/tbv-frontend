@@ -11,15 +11,6 @@ import type { ChatSession, BrowsingHistory } from "@/api/generated/schemas";
 export const metadata = {
   title: "The Bhakti Vault",
   description: "H.G. Vaiśeṣika Dāsa's Lecture Archive",
-  icons: {
-    icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/icon.png', sizes: '512x512', type: 'image/png' },
-    ],
-    apple: [
-      { url: '/apple-icon.png', sizes: '512x512', type: 'image/png' },
-    ],
-  },
 };
 
 async function getLayoutData() {
