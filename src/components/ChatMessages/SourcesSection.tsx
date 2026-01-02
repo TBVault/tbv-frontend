@@ -67,7 +67,7 @@ export function SourcesSection({
               const title = webTitles.get(citation.url);
               const fallbackTitle = new URL(citation.url).hostname.replace('www.', '');
               const displayTitle = title || fallbackTitle;
-              const displayText = `${displayTitle} | ${citation.url}`;
+              const displayText = `${displayTitle} | ${citation.url.split('#')[0]}`;
               return (
                 <a
                   key={`source-web-${citation.url}`}
