@@ -386,42 +386,15 @@ function ChatMessages({
                               return null;
                             }
 
-                            if (message.role === 'assistant') {
-                              return (
-                                <MarkdownWithCitations
-                                  segments={segments}
-                                  citationMap={citationMap}
-                                  transcriptTitles={transcriptTitles}
-                                  webTitles={webTitles}
-                                  onTranscriptClick={handleTranscriptClick}
-                                />
-                              );
-                            } else {
-                              return (
-                                <span>
-                                  {segments.map((segment, idx) => {
-                                    if (segment.type === 'text') {
-                                      return <span key={idx}>{segment.content as string}</span>;
-                                    } else {
-                                      const rendered = (
-                                        <ChatObjectRenderer
-                                          chatObject={segment.content as ChatObject}
-                                          citationMap={citationMap}
-                                          transcriptTitles={transcriptTitles}
-                                          webTitles={webTitles}
-                                          onTranscriptClick={handleTranscriptClick}
-                                        />
-                                      );
-                                      return rendered ? (
-                                        <span key={idx} className="inline-flex align-baseline mx-0.5">
-                                          {rendered}
-                                        </span>
-                                      ) : null;
-                                    }
-                                  })}
-                                </span>
-                              );
-                            }
+                            return (
+                              <MarkdownWithCitations
+                                segments={segments}
+                                citationMap={citationMap}
+                                transcriptTitles={transcriptTitles}
+                                webTitles={webTitles}
+                                onTranscriptClick={handleTranscriptClick}
+                              />
+                            );
                           })()}
                         </>
                       );
