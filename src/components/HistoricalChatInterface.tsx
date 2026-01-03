@@ -406,6 +406,7 @@ export default function HistoricalChatInterface({
           messages={messages}
           preFetchedTranscripts={preFetchedTranscripts}
           onChatTopic={handleChatTopic}
+          isStreaming={isLoading}
         />
 
         {/* Input */}
