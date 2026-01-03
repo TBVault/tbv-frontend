@@ -353,6 +353,7 @@ export default function NewChatInterface() {
             key={chatSessionIdRef.current || 'new-chat'}
             messages={messages}
             onChatTopic={handleChatTopic}
+            isStreaming={isLoading}
           />
         )}
 

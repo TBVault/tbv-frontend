@@ -22,7 +22,8 @@ import { SourcesSection } from './ChatMessages/SourcesSection';
 function ChatMessages({
   messages,
   preFetchedTranscripts = new Map<string, Transcript>(),
-  onChatTopic
+  onChatTopic,
+  isStreaming = false
 }: ChatMessagesProps) {
 
   const { data: session } = useSession();
@@ -265,7 +266,7 @@ function ChatMessages({
           </div>
         </div>
       ) : (
-          messages.map((message) => {
+          messages.map((message, index) => {
             const citations = extractCitations(message);
             const citationMap = new Map<string, CitationMetadata>();
             
@@ -414,36 +415,38 @@ function ChatMessages({
                             transcriptTitles={transcriptTitles}
                             webTitles={webTitles}
                           />
-                          <div className="flex justify-start mt-2">
-                            <button
-                              onClick={() => {
-                                const text = generateCopyText(
-                                  message,
-                                  citations,
-                                  citationMap,
-                                  transcriptTitles,
-                                  webTitles
-                                );
-                                navigator.clipboard.writeText(text);
-                                setCopiedMessageId(message.public_id);
-                                setTimeout(() => setCopiedMessageId(null), 2000);
-                              }}
-                              className="p-1.5 text-foreground-tertiary hover:text-foreground-secondary hover:bg-background-tertiary rounded-lg transition-colors group relative"
-                            >
-                              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-sm">
-                                {copiedMessageId === message.public_id ? 'Copied!' : 'Copy'}
-                              </span>
-                              {copiedMessageId === message.public_id ? (
-                                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                              ) : (
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                              )}
-                            </button>
-                          </div>
+                          {!(isStreaming && index === messages.length - 1) && (
+                            <div className="flex justify-start mt-2">
+                              <button
+                                onClick={() => {
+                                  const text = generateCopyText(
+                                    message,
+                                    citations,
+                                    citationMap,
+                                    transcriptTitles,
+                                    webTitles
+                                  );
+                                  navigator.clipboard.writeText(text);
+                                  setCopiedMessageId(message.public_id);
+                                  setTimeout(() => setCopiedMessageId(null), 2000);
+                                }}
+                                className="p-1.5 text-foreground-tertiary hover:text-foreground-secondary hover:bg-background-tertiary rounded-lg transition-colors group relative"
+                              >
+                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-sm">
+                                  {copiedMessageId === message.public_id ? 'Copied!' : 'Copy'}
+                                </span>
+                                {copiedMessageId === message.public_id ? (
+                                  <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                )}
+                              </button>
+                            </div>
+                          )}
                         </>
                       )}
 
@@ -513,7 +516,8 @@ function ChatMessages({
 
 export default memo(ChatMessages, (prevProps, nextProps) => {
   if (prevProps.messages === nextProps.messages && 
-      prevProps.preFetchedTranscripts === nextProps.preFetchedTranscripts) {
+      prevProps.preFetchedTranscripts === nextProps.preFetchedTranscripts &&
+      prevProps.isStreaming === nextProps.isStreaming) {
     return true;
   }
   

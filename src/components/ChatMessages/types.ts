@@ -9,6 +9,7 @@ export interface ChatMessagesProps {
   messages: ChatSessionMessage[];
   preFetchedTranscripts?: Map<string, Transcript>;
   onChatTopic?: (topic: string) => void;
+  isStreaming?: boolean;
 }
 
 export interface TranscriptOverlayProps {
