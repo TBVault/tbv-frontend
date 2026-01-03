@@ -32,6 +32,7 @@ function ChatMessages({
   } | null>(null);
   const [transcriptData, setTranscriptData] = useState<Map<string, Transcript>>(preFetchedTranscripts);
   const [webTitles, setWebTitles] = useState<Map<string, string>>(new Map());
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const fetchedIds = useRef<Set<string>>(new Set());
   const fetchedWebUrls = useRef<Set<string>>(new Set());
   const notifiedTopicsRef = useRef<Set<string>>(new Set());
@@ -402,11 +403,79 @@ function ChatMessages({
                   </div>
                       
                       {message.role === 'assistant' && (
-                        <SourcesSection 
-                          citations={citations}
-                          transcriptTitles={transcriptTitles}
-                          webTitles={webTitles}
-                        />
+                        <>
+                          <SourcesSection 
+                            citations={citations}
+                            transcriptTitles={transcriptTitles}
+                            webTitles={webTitles}
+                          />
+                          <div className="flex justify-start mt-2">
+                            <button
+                              onClick={() => {
+                                let text = '';
+                                message.content.forEach((item) => {
+                                  if (item.data.type === 'text_delta') {
+                                    text += (item.data as TextDelta).delta;
+                                  } else if (item.data.type === 'transcript_citation') {
+                                    const citation = item.data as TranscriptCitation;
+                                    const key = `transcript-${citation.transcript_id}-${citation.chunk_index}`;
+                                    const metadata = citationMap.get(key);
+                                    if (metadata) {
+                                      const url = `${window.location.origin}/transcript/${citation.transcript_id}${citation.chunk_index >= 0 ? `#chunk-${citation.chunk_index}` : ''}`;
+                                      text += ` [[${metadata.number}]](${url})`;
+                                    }
+                                  } else if (item.data.type === 'web_search_citation') {
+                                    const citation = item.data as WebSearchCitation;
+                                    const key = `web-${citation.url}`;
+                                    const metadata = citationMap.get(key);
+                                    if (metadata) {
+                                      text += ` [[${metadata.number}]](${citation.url})`;
+                                    }
+                                  }
+                                });
+
+                                if (citations.length > 0) {
+                                  text += '\n\nSources:';
+                                  citations.forEach((metadata) => {
+                                    text += '\n';
+                                    if (metadata.type === 'transcript') {
+                                      const citation = metadata.citation as TranscriptCitation;
+                                      const title = transcriptTitles.get(citation.transcript_id) || 'Transcript';
+                                      const url = `${window.location.origin}/transcript/${citation.transcript_id}${citation.chunk_index >= 0 ? `#chunk-${citation.chunk_index}` : ''}`;
+                                      const detail = citation.chunk_index >= 0 ? `Paragraph ${citation.chunk_index + 1}` : 'Transcript Summary';
+                                      text += `[${metadata.number}] ${title} | ${detail}: ${url}`;
+                                    } else {
+                                      const citation = metadata.citation as WebSearchCitation;
+                                      const title = webTitles.get(citation.url);
+                                      const fallbackTitle = new URL(citation.url).hostname.replace('www.', '');
+                                      const displayTitle = title || fallbackTitle;
+                                      const displayText = `${displayTitle} | ${citation.url.split('#')[0]}`;
+                                      text += `[${metadata.number}] ${displayText}: ${citation.url}`;
+                                    }
+                                  });
+                                }
+
+                                navigator.clipboard.writeText(text);
+                                setCopiedMessageId(message.public_id);
+                                setTimeout(() => setCopiedMessageId(null), 2000);
+                              }}
+                              className="p-1.5 text-foreground-tertiary hover:text-foreground-secondary hover:bg-background-tertiary rounded-lg transition-colors group relative"
+                            >
+                              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-sm">
+                                {copiedMessageId === message.public_id ? 'Copied!' : 'Copy'}
+                              </span>
+                              {copiedMessageId === message.public_id ? (
+                                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              ) : (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        </>
                       )}
 
                   {message.role === 'user' && (
