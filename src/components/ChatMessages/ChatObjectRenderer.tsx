@@ -2,21 +2,23 @@ import type {
   ChatObject,
   TranscriptCitation,
   WebSearchCitation,
+  Transcript,
 } from '@/api/generated/schemas';
 import type { CitationMetadata } from './types';
+import { TranscriptPreviewPopover } from './TranscriptPreviewPopover';
 
 export function ChatObjectRenderer({ 
   chatObject, 
   citationMap,
   transcriptTitles,
   webTitles,
-  onTranscriptClick
+  transcriptData,
 }: { 
   chatObject: ChatObject;
   citationMap: Map<string, CitationMetadata>;
   transcriptTitles: Map<string, string>;
   webTitles: Map<string, string>;
-  onTranscriptClick: (citation: TranscriptCitation, number: number) => void;
+  transcriptData?: Map<string, Transcript>;
 }) {
   const data = chatObject.data;
 
@@ -35,11 +37,12 @@ export function ChatObjectRenderer({
     const title = transcriptTitles.get(citation.transcript_id) || 'Transcript';
     const truncatedTitleMobile = title.length > 8 ? title.substring(0, 8) + '...' : title;
     const truncatedTitleDesktop = title.length > 20 ? title.substring(0, 20) + '...' : title;
+    const transcript = transcriptData?.get(citation.transcript_id);
+    const isLoading = !transcript && transcriptData !== undefined;
     
-    return (
-      <button
-        onClick={() => onTranscriptClick(citation, metadata?.number || 0)}
-        className="inline-flex items-center gap-1 px-2 py-1 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded-full text-sm font-medium transition-colors cursor-pointer"
+    const pillContent = (
+      <span
+        className="inline-flex items-center gap-1 px-2 py-1 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded-full text-sm font-medium transition-colors cursor-pointer select-none"
       >
         <span className="inline-flex items-center justify-center w-4 h-4 bg-primary-500 text-white text-xs font-bold rounded-full">
           {metadata?.number || '?'}
@@ -49,7 +52,19 @@ export function ChatObjectRenderer({
         </svg>
         <span className="text-xs sm:hidden">{truncatedTitleMobile}</span>
         <span className="text-xs hidden sm:inline">{truncatedTitleDesktop}</span>
-      </button>
+      </span>
+    );
+    
+    return (
+      <TranscriptPreviewPopover
+        citation={citation}
+        citationNumber={metadata?.number || 0}
+        transcript={transcript}
+        transcriptTitle={title}
+        isLoading={isLoading}
+      >
+        {pillContent}
+      </TranscriptPreviewPopover>
     );
   }
 
@@ -67,7 +82,7 @@ export function ChatObjectRenderer({
         href={citation.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 px-2 py-1 bg-secondary-500/20 hover:bg-secondary-500/30 text-secondary-400 rounded-full text-sm font-medium transition-colors"
+        className="inline-flex items-center gap-1 px-2 py-1 bg-secondary-500/20 hover:bg-secondary-500/30 text-secondary-400 rounded-full text-sm font-medium transition-colors select-none"
         title={title || citation.url}
       >
         <span className="inline-flex items-center justify-center w-4 h-4 bg-secondary-500 text-white text-xs font-bold rounded-full">

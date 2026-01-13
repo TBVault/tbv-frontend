@@ -1,5 +1,6 @@
 import ReactMarkdown from 'react-markdown';
-import type { ChatObject, TranscriptCitation } from '@/api/generated/schemas';
+import remarkGfm from 'remark-gfm';
+import type { ChatObject, Transcript } from '@/api/generated/schemas';
 import type { CitationMetadata } from './types';
 import { ChatObjectRenderer } from './ChatObjectRenderer';
 
@@ -8,13 +9,13 @@ export function MarkdownWithCitations({
   citationMap,
   transcriptTitles,
   webTitles,
-  onTranscriptClick
+  transcriptData,
 }: { 
   segments: Array<{ type: 'text' | 'citation'; content: string | ChatObject }>;
   citationMap: Map<string, CitationMetadata>;
   transcriptTitles: Map<string, string>;
   webTitles: Map<string, string>;
-  onTranscriptClick: (citation: TranscriptCitation, number: number) => void;
+  transcriptData: Map<string, Transcript>;
 }) {
   let combinedText = '';
   const citations: ChatObject[] = [];
@@ -42,7 +43,7 @@ export function MarkdownWithCitations({
         citationMap={citationMap}
         transcriptTitles={transcriptTitles}
         webTitles={webTitles}
-        onTranscriptClick={onTranscriptClick}
+        transcriptData={transcriptData}
       />
     );
     
@@ -73,6 +74,7 @@ export function MarkdownWithCitations({
 
   return (
     <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
       components={{
         p: ({ children }) => <p className="mb-2 mt-4 first:mt-0 last:mb-0 leading-normal">{children}</p>,
         ul: ({ children }) => <ul className="list-disc pl-5 mb-1 space-y-0">{children}</ul>,
@@ -159,6 +161,38 @@ export function MarkdownWithCitations({
         hr: () => <hr className="mt-8 mb-4 border-border" />,
         strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
         em: ({ children }) => <em className="italic">{children}</em>,
+        table: ({ children }) => (
+          <div className="overflow-x-auto my-4">
+            <table className="min-w-full border-collapse border border-border rounded-lg text-sm">
+              {children}
+            </table>
+          </div>
+        ),
+        thead: ({ children }) => (
+          <thead className="bg-background-tertiary">
+            {children}
+          </thead>
+        ),
+        tbody: ({ children }) => (
+          <tbody className="divide-y divide-border">
+            {children}
+          </tbody>
+        ),
+        tr: ({ children }) => (
+          <tr className="hover:bg-background-secondary/50 transition-colors">
+            {children}
+          </tr>
+        ),
+        th: ({ children }) => (
+          <th className="px-4 py-2 text-left font-semibold text-foreground border-b border-border">
+            {children}
+          </th>
+        ),
+        td: ({ children }) => (
+          <td className="px-4 py-2 text-foreground-secondary border-b border-border">
+            {children}
+          </td>
+        ),
       }}
     >
       {processedText}

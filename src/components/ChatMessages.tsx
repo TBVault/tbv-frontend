@@ -14,9 +14,7 @@ import type {
 import { transcriptProtectedTranscriptGet } from '@/api/generated/endpoints/default/default';
 import type { ChatMessagesProps, CitationMetadata } from './ChatMessages/types';
 import { formatTimestamp, extractCitations, generateCopyText } from './ChatMessages/utils';
-import { TranscriptOverlay } from './ChatMessages/TranscriptOverlay';
 import { MarkdownWithCitations } from './ChatMessages/MarkdownWithCitations';
-import { ChatObjectRenderer } from './ChatMessages/ChatObjectRenderer';
 import { SourcesSection } from './ChatMessages/SourcesSection';
 
 function ChatMessages({
@@ -27,10 +25,6 @@ function ChatMessages({
 }: ChatMessagesProps) {
 
   const { data: session } = useSession();
-  const [selectedTranscript, setSelectedTranscript] = useState<{
-    citation: TranscriptCitation;
-    number: number;
-  } | null>(null);
   const [transcriptData, setTranscriptData] = useState<Map<string, Transcript>>(preFetchedTranscripts);
   const [webTitles, setWebTitles] = useState<Map<string, string>>(new Map());
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
@@ -232,14 +226,6 @@ function ChatMessages({
       });
     });
   }, [messages, onChatTopic]);
-
-  const handleTranscriptClick = (citation: TranscriptCitation, number: number) => {
-    setSelectedTranscript({ citation, number });
-  };
-
-  const handleCloseOverlay = () => {
-    setSelectedTranscript(null);
-  };
   
   return (
     <>
@@ -399,7 +385,7 @@ function ChatMessages({
                                 citationMap={citationMap}
                                 transcriptTitles={transcriptTitles}
                                 webTitles={webTitles}
-                                onTranscriptClick={handleTranscriptClick}
+                                transcriptData={transcriptData}
                               />
                             );
                           })()}
@@ -498,18 +484,6 @@ function ChatMessages({
       <div ref={messagesEndRef} />
       </div>
     </div>
-
-      {selectedTranscript && (
-        <TranscriptOverlay
-          citation={selectedTranscript.citation}
-          citationNumber={selectedTranscript.number}
-          authToken={session?.idToken}
-          preFetchedTranscript={transcriptData.get(selectedTranscript.citation.transcript_id)}
-          fetchingPromise={fetchingTranscripts.current.get(selectedTranscript.citation.transcript_id)}
-          getTranscript={(id) => transcriptData.get(id)}
-          onClose={handleCloseOverlay}
-        />
-      )}
     </>
   );
 }
